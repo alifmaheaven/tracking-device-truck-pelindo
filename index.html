@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking Truck Pelindo</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons (FontAwesome) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Kiri -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-truck-fast"></i> Device Tracker</h2>
+                <p>Tracking Posisi Truck Teluk Lamong</p>
+            </div>
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Cari Truk / Device ID...">
+            </div>
+            <div class="device-list" id="deviceList">
+                <!-- Data device akan di-generate oleh javascript -->
+            </div>
+        </aside>
+        
+        <!-- Maps Kanan -->
+        <main class="map-container">
+            <button id="toggleSidebarBtn" class="toggle-btn" title="Toggle Sidebar">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div id="map"></div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="script.js"></script>
+</body>
+</html>
