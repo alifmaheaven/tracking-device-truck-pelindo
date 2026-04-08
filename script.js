@@ -102,6 +102,12 @@ function renderMarkers() {
                 <p><strong>Koordinat:</strong> ${device.coordinates[0]}, ${device.coordinates[1]}</p>
                 <p><strong>Status:</strong> <span style="text-transform: capitalize;">${device.status}</span></p>
                 <p><strong>Update:</strong> ${device.lastUpdate}</p>
+                <button class="history-btn" onclick="openHistoryModal('${device.id}', '${device.truckNumber}')">
+                    <i class="fa-solid fa-route"></i> Riwayat Perjalanan
+                </button>
+                <a href="https://www.google.com/maps/search/?api=1&query=${device.coordinates[0]},${device.coordinates[1]}" target="_blank" class="gmaps-link">
+                    <i class="fa-solid fa-location-arrow"></i> Buka di Google Maps
+                </a>
             </div>
         `;
         
@@ -217,4 +223,118 @@ toggleBtn.addEventListener('click', () => {
     setTimeout(() => {
         map.invalidateSize();
     }, 400);
+});
+
+// ==========================================
+// LOGIKA MODAL RIWAYAT PERJALANAN (HISTORY)
+// ==========================================
+
+const historyModal = document.getElementById('historyModal');
+const closeHistoryModalBtn = document.getElementById('closeHistoryModalBtn');
+const loadingHistory = document.getElementById('loadingHistory');
+let historyMapInstance = null;
+let historyLayerGroup = null;
+
+// Setup Icon Start & End secara dinamis
+const startIcon = L.divIcon({
+    html: `<div style="background-color: #10b981; color: white; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white;"><i class="fa-solid fa-play" style="margin-left: 2px;"></i></div>`,
+    className: 'custom-div-icon',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+});
+
+const endIcon = L.divIcon({
+    html: `<div style="background-color: #ef4444; color: white; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white;"><i class="fa-solid fa-flag-checkered"></i></div>`,
+    className: 'custom-div-icon',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+});
+
+// Fungsi memanggil API histori dan merender garis
+async function openHistoryModal(deviceId, truckNumber) {
+    historyModal.classList.add('active'); // Tampilkan Modal
+    loadingHistory.style.display = 'flex'; // Tampilkan Loading
+    
+    // Inisiasi History Map jika belum pernah dirender
+    if (!historyMapInstance) {
+        historyMapInstance = L.map('historyMap').setView([-7.195, 112.68], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(historyMapInstance);
+        historyLayerGroup = L.layerGroup().addTo(historyMapInstance);
+    }
+    
+    // Karena container modal baru muncul (display:flex), map API sering kali belum ngeh perubahan ukurannya.
+    // InvalidateSize memastikan kotak peta merender sempurna tanpa tersendat kelabu.
+    setTimeout(() => {
+        historyMapInstance.invalidateSize();
+    }, 300);
+
+    // Hapus rute histori sebelumnya (jika pengguna mengklik device lain)
+    historyLayerGroup.clearLayers();
+
+    try {
+        const response = await fetch(`https://n8n.freeat.me/webhook/device-history?deviceId=${deviceId}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            // Urutkan data track berdasarkan waktu (createdDate) atau fallback ke ObjectID (_id)
+            data.sort((a,b) => {
+                if (a.createdDate && b.createdDate) {
+                    return new Date(a.createdDate) - new Date(b.createdDate);
+                } else if (a._id && b._id) {
+                    return a._id.localeCompare(b._id);
+                }
+                return 0;
+            });
+
+            // Ekstrak koordinat
+            const latlngs = data.map(item => [parseFloat(item.latitude), parseFloat(item.longitude)]);
+            
+            // Gambar lintasan rute (Polyline)
+            const polyline = L.polyline(latlngs, {
+                color: '#2563eb', // warna biru
+                weight: 5,        // ketebalan garis
+                opacity: 0.8,
+                smoothFactor: 1
+            }).addTo(historyLayerGroup);
+            
+            // Marker Titik Mulai (Start - Indeks 0)
+            L.marker(latlngs[0], { icon: startIcon })
+             .bindPopup(`<b>Kendaraan Mulai Berangkat</b><br>Truck: ${truckNumber}`)
+             .addTo(historyLayerGroup);
+            
+            // Marker Titik Berhenti Saat Ini (End - Indeks Terakhir)
+            if (latlngs.length > 1) {
+                L.marker(latlngs[latlngs.length - 1], { icon: endIcon })
+                 .bindPopup(`<b>Posisi Terakhir</b><br>Truck: ${truckNumber}`)
+                 .addTo(historyLayerGroup);
+            }
+
+            // Pastikan peta terukur otomatis (zoom-out) agar seluruh panjang batas lintasan terlihat 
+            historyMapInstance.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+        } else {
+            console.warn('Tidak ada data histori ditemukan untuk ID device ini');
+            loadingHistory.innerHTML = `Tidak ada rekam data histori perjalanan.<br><button onclick="closeHistoryModalBtn.click()" style="margin-top:10px; padding:6px 12px; cursor:pointer;">Tutup</button>`;
+            return;
+        }
+    } catch (e) {
+        console.error("Gagal mendapatkan riwayat:", e);
+        loadingHistory.innerHTML = `Terjadi kesalahan jaringan saat mengambil riwayat API.<br><button onclick="closeHistoryModalBtn.click()" style="margin-top:10px; padding:6px 12px; cursor:pointer;">Tutup</button>`;
+        return;
+    } finally {
+        // Jika sukses merender lintasan, Sembunyikan layar loading
+        if(loadingHistory.innerHTML.includes("Sedang")) {
+            loadingHistory.style.display = 'none';
+        }
+    }
+}
+
+// Tutup History Modal
+closeHistoryModalBtn.addEventListener('click', () => {
+    historyModal.classList.remove('active');
+    // Kembalikan text loading untuk dibaca next time
+    setTimeout(() => {
+        loadingHistory.innerHTML = 'Sedang memuat data rute perjalanan...';
+    }, 500);
 });

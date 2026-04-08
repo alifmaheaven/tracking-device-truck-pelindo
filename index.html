@@ -38,6 +38,20 @@
         </main>
     </div>
 
+    <!-- History Modal -->
+    <div id="historyModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-route"></i> Riwayat Perjalanan Kendaraan</h3>
+                <button id="closeHistoryModalBtn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="loadingHistory" class="loading-state" style="display:none;">Sedang memuat data rute perjalanan...</div>
+                <div id="historyMap"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="script.js"></script>
