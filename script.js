@@ -250,10 +250,46 @@ const endIcon = L.divIcon({
     iconAnchor: [15, 15]
 });
 
+const distanceInfoBox = document.getElementById('distanceInfo');
+const totalDistanceText = document.getElementById('totalDistance');
+
+// Fungsi untuk menyederhanakan array titik jika melebihi batas OSRM (100 koordinat)
+function simplifyCoordinates(latlngs, maxPoints = 90) {
+    if (latlngs.length <= maxPoints) return latlngs;
+    const result = [];
+    const step = (latlngs.length - 1) / (maxPoints - 1);
+    for (let i = 0; i < maxPoints; i++) {
+        result.push(latlngs[Math.round(step * i)]);
+    }
+    // Pastikan titik terakhir selalu ada
+    if (result[result.length - 1] !== latlngs[latlngs.length - 1]) {
+        result[result.length - 1] = latlngs[latlngs.length - 1];
+    }
+    return result;
+}
+
+// Dekode polyline string (Google Polyline Algorithm) dari OSRM
+function decodePolyline(str, precision) {
+    var index = 0, lat = 0, lng = 0, coordinates = [], shift = 0, result = 0, byte = null, latitude_change, longitude_change, factor = Math.pow(10, Number.isInteger(precision) ? precision : 5);
+    while (index < str.length) {
+        byte = null; shift = 0; result = 0;
+        do { byte = str.charCodeAt(index++) - 63; result |= (byte & 0x1f) << shift; shift += 5; } while (byte >= 0x20);
+        latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        shift = result = 0;
+        do { byte = str.charCodeAt(index++) - 63; result |= (byte & 0x1f) << shift; shift += 5; } while (byte >= 0x20);
+        longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lat += latitude_change; lng += longitude_change;
+        coordinates.push([lat / factor, lng / factor]);
+    }
+    return coordinates;
+}
+
 // Fungsi memanggil API histori dan merender garis
 async function openHistoryModal(deviceId, truckNumber) {
     historyModal.classList.add('active'); // Tampilkan Modal
     loadingHistory.style.display = 'flex'; // Tampilkan Loading
+    distanceInfoBox.style.display = 'none'; // Sembunyikan jarak sementara
+    totalDistanceText.innerText = '-';
     
     // Inisiasi History Map jika belum pernah dirender
     if (!historyMapInstance) {
@@ -265,12 +301,11 @@ async function openHistoryModal(deviceId, truckNumber) {
     }
     
     // Karena container modal baru muncul (display:flex), map API sering kali belum ngeh perubahan ukurannya.
-    // InvalidateSize memastikan kotak peta merender sempurna tanpa tersendat kelabu.
     setTimeout(() => {
         historyMapInstance.invalidateSize();
     }, 300);
 
-    // Hapus rute histori sebelumnya (jika pengguna mengklik device lain)
+    // Hapus rute histori sebelumnya
     historyLayerGroup.clearLayers();
 
     try {
@@ -288,31 +323,80 @@ async function openHistoryModal(deviceId, truckNumber) {
                 return 0;
             });
 
-            // Ekstrak koordinat
-            const latlngs = data.map(item => [parseFloat(item.latitude), parseFloat(item.longitude)]);
+            // Ekstrak koordinat asli
+            let rawLatlngs = data.map(item => [parseFloat(item.latitude), parseFloat(item.longitude)]);
             
-            // Gambar lintasan rute (Polyline)
-            const polyline = L.polyline(latlngs, {
-                color: '#2563eb', // warna biru
-                weight: 5,        // ketebalan garis
-                opacity: 0.8,
-                smoothFactor: 1
-            }).addTo(historyLayerGroup);
+            // Batasi koordinat untuk mencegah OSRM menolak request jika poin terlalu banyak (maks 100)
+            let sampledLatlngs = simplifyCoordinates(rawLatlngs, 90);
+
+            // Rangkai URL OSRM: format {lon},{lat};{lon},{lat}
+            const coordinatesString = sampledLatlngs.map(coord => `${coord[1]},${coord[0]}`).join(';');
+            
+            // Mengambil rute perjalanan jalan raya via public API OSRM
+            try {
+                loadingHistory.innerHTML = 'Sedang mencari lintasan jalan (Mencocokkan rute)...';
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordinatesString}?overview=full&geometries=polyline`;
+                
+                const osrmResponse = await fetch(osrmUrl);
+                const osrmData = await osrmResponse.json();
+
+                if (osrmData.code === 'Ok' && osrmData.routes.length > 0) {
+                    const route = osrmData.routes[0];
+                    // Decoding polyline menjadi koordinat Leaflet
+                    const routeCoordinates = decodePolyline(route.geometry);
+                    
+                    // Jarak jarak aslinya
+                    const distanceKm = (route.distance / 1000).toFixed(2);
+                    totalDistanceText.innerText = distanceKm;
+                    distanceInfoBox.style.display = 'block';
+
+                    // Gambar rute lintasan yang mengikuti jalan raya
+                    const polyline = L.polyline(routeCoordinates, {
+                        color: '#2563eb', // warna biru
+                        weight: 5,        
+                        opacity: 0.8,
+                        smoothFactor: 1
+                    }).addTo(historyLayerGroup);
+                    
+                    // Paskan peta zoom nya
+                    historyMapInstance.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+                } else {
+                    // Fallback jika API OSRM tidak bisa meresolusi rute (error / no routes)
+                    throw new Error("No OSRM Route found");
+                }
+            } catch (osrmError) {
+                console.warn('Gagal merute via OSRM, kembali ke mode garis lurus.', osrmError);
+                // Hitung manual secara kasar jarak garis lurus 
+                let manualDistance = 0;
+                for (let i = 0; i < rawLatlngs.length - 1; i++) {
+                    manualDistance += historyMapInstance.distance(rawLatlngs[i], rawLatlngs[i+1]);
+                }
+                totalDistanceText.innerText = (manualDistance / 1000).toFixed(2) + " (Garis Lurus)";
+                distanceInfoBox.style.display = 'block';
+
+                // Gambar lintasan lurus seperti semula
+                const polyline = L.polyline(rawLatlngs, {
+                    color: '#ef4444', // beri warna beda jika fallback (merah)
+                    weight: 4,
+                    opacity: 0.8,
+                    dashArray: '10, 10' // Putus-putus tanda tidak ada jalan
+                }).addTo(historyLayerGroup);
+                
+                historyMapInstance.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+            }
             
             // Marker Titik Mulai (Start - Indeks 0)
-            L.marker(latlngs[0], { icon: startIcon })
+            L.marker(rawLatlngs[0], { icon: startIcon })
              .bindPopup(`<b>Kendaraan Mulai Berangkat</b><br>Truck: ${truckNumber}`)
              .addTo(historyLayerGroup);
             
             // Marker Titik Berhenti Saat Ini (End - Indeks Terakhir)
-            if (latlngs.length > 1) {
-                L.marker(latlngs[latlngs.length - 1], { icon: endIcon })
+            if (rawLatlngs.length > 1) {
+                L.marker(rawLatlngs[rawLatlngs.length - 1], { icon: endIcon })
                  .bindPopup(`<b>Posisi Terakhir</b><br>Truck: ${truckNumber}`)
                  .addTo(historyLayerGroup);
             }
 
-            // Pastikan peta terukur otomatis (zoom-out) agar seluruh panjang batas lintasan terlihat 
-            historyMapInstance.fitBounds(polyline.getBounds(), { padding: [50, 50] });
         } else {
             console.warn('Tidak ada data histori ditemukan untuk ID device ini');
             loadingHistory.innerHTML = `Tidak ada rekam data histori perjalanan.<br><button onclick="closeHistoryModalBtn.click()" style="margin-top:10px; padding:6px 12px; cursor:pointer;">Tutup</button>`;
@@ -333,8 +417,10 @@ async function openHistoryModal(deviceId, truckNumber) {
 // Tutup History Modal
 closeHistoryModalBtn.addEventListener('click', () => {
     historyModal.classList.remove('active');
-    // Kembalikan text loading untuk dibaca next time
+    // Kembalikan text loading dan sembunyikan jarak
+    distanceInfoBox.style.display = 'none';
     setTimeout(() => {
         loadingHistory.innerHTML = 'Sedang memuat data rute perjalanan...';
+        loadingHistory.style.display = 'none'; // Tambahkan ini agar tidak melayang kalau sedang ditutup
     }, 500);
 });
