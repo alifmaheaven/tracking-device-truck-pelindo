@@ -45,8 +45,31 @@
                 <h3><i class="fa-solid fa-route"></i> Riwayat Perjalanan Kendaraan</h3>
                 <button id="closeHistoryModalBtn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="modal-info" id="distanceInfo" style="display:none; padding: 12px 20px; background-color: #f8fafc; color: #334155; border-bottom: 1px solid #e2e8f0; font-weight: 500; font-size: 14px; top: 0; z-index: 10;">
-                <i class="fa-solid fa-ruler-combined" style="color: #2563eb; margin-right: 5px;"></i> Total Jarak Tempuh: <span id="totalDistance" style="font-weight: 700; color: #0f172a;">-</span> km
+            <div class="modal-info" style="display: flex; flex-direction: column; gap: 10px; padding: 12px 20px; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; z-index: 10;">
+                
+                <!-- Filter Section -->
+                <div class="history-filter" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <label style="font-size: 13px; font-weight: 600; color: #475569;"><i class="fa-solid fa-filter"></i> Filter Waktu:</label>
+                    <select id="historyTimePreset" style="padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;">
+                        <option value="1day" selected>1 Hari Terakhir</option>
+                        <option value="1week">1 Minggu Terakhir</option>
+                        <option value="1month">1 Bulan Terakhir</option>
+                        <option value="custom">Pilih Tanggal Manual</option>
+                    </select>
+
+                    <div id="customDateRange" style="display: none; gap: 8px; align-items: center; font-size: 13px;">
+                        <input type="datetime-local" id="histStartDate" style="padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                        <span>sampai</span>
+                        <input type="datetime-local" id="histEndDate" style="padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                    </div>
+
+                    <button id="applyHistoryFilterBtn" style="padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;"><i class="fa-solid fa-arrow-rotate-right"></i> Terapkan</button>
+                </div>
+
+                <!-- Distance Info -->
+                <div id="distanceInfo" style="display:none; color: #334155; font-weight: 500; font-size: 14px;">
+                    <i class="fa-solid fa-ruler-combined" style="color: #2563eb; margin-right: 5px;"></i> Total Jarak Tempuh: <span id="totalDistance" style="font-weight: 700; color: #0f172a;">-</span> km
+                </div>
             </div>
             <div class="modal-body">
                 <div id="loadingHistory" class="loading-state" style="display:none;">Sedang memuat data rute perjalanan...</div>

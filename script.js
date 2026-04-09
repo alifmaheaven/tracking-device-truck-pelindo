@@ -284,9 +284,73 @@ function decodePolyline(str, precision) {
     return coordinates;
 }
 
+let currentModalDeviceId = null;
+let currentModalTruckNumber = null;
+
+// Filter DOM
+const historyTimePreset = document.getElementById('historyTimePreset');
+const customDateRange = document.getElementById('customDateRange');
+const histStartDate = document.getElementById('histStartDate');
+const histEndDate = document.getElementById('histEndDate');
+const applyHistoryFilterBtn = document.getElementById('applyHistoryFilterBtn');
+
+if (historyTimePreset) {
+    historyTimePreset.addEventListener('change', (e) => {
+        if (e.target.value === 'custom') {
+            customDateRange.style.display = 'flex';
+        } else {
+            customDateRange.style.display = 'none';
+        }
+    });
+}
+
+if (applyHistoryFilterBtn) {
+    applyHistoryFilterBtn.addEventListener('click', () => {
+        if (currentModalDeviceId && currentModalTruckNumber) {
+            openHistoryModal(currentModalDeviceId, currentModalTruckNumber);
+        }
+    });
+}
+
+function buildHistoryUrl(deviceId) {
+    let baseUrl = `https://n8n.freeat.me/webhook/device-history?deviceId=${deviceId}`;
+    if (!historyTimePreset) return baseUrl;
+
+    const preset = historyTimePreset.value;
+    let startDate = new Date();
+    let endDate = new Date();
+    
+    if (preset === '1day') {
+        startDate.setDate(endDate.getDate() - 1);
+    } else if (preset === '1week') {
+        startDate.setDate(endDate.getDate() - 7);
+    } else if (preset === '1month') {
+        startDate.setMonth(endDate.getMonth() - 1);
+    } else if (preset === 'custom') {
+        if (!histStartDate.value || !histEndDate.value) {
+            alert('Peringatan: Silakan isikan tanggal mulai dan selesai untuk custom range. Mengambil data 1 hari terakhir sebagai default.');
+            startDate.setDate(endDate.getDate() - 1);
+        } else {
+            startDate = new Date(histStartDate.value);
+            endDate = new Date(histEndDate.value);
+        }
+    } else {
+        // Fallback default
+        startDate.setDate(endDate.getDate() - 1);
+    }
+
+    const startIso = startDate.toISOString();
+    const endIso = endDate.toISOString();
+    return `${baseUrl}&createdDate_gte=${startIso}&createdDate_lte=${endIso}`;
+}
+
 // Fungsi memanggil API histori dan merender garis
 async function openHistoryModal(deviceId, truckNumber) {
+    currentModalDeviceId = deviceId;
+    currentModalTruckNumber = truckNumber;
+
     historyModal.classList.add('active'); // Tampilkan Modal
+    loadingHistory.innerHTML = 'Sedang memuat data rute perjalanan...';
     loadingHistory.style.display = 'flex'; // Tampilkan Loading
     distanceInfoBox.style.display = 'none'; // Sembunyikan jarak sementara
     totalDistanceText.innerText = '-';
@@ -309,7 +373,8 @@ async function openHistoryModal(deviceId, truckNumber) {
     historyLayerGroup.clearLayers();
 
     try {
-        const response = await fetch(`https://n8n.freeat.me/webhook/device-history?deviceId=${deviceId}`);
+        const fetchUrl = buildHistoryUrl(deviceId);
+        const response = await fetch(fetchUrl);
         const data = await response.json();
         
         if (data && data.length > 0) {
@@ -419,6 +484,13 @@ closeHistoryModalBtn.addEventListener('click', () => {
     historyModal.classList.remove('active');
     // Kembalikan text loading dan sembunyikan jarak
     distanceInfoBox.style.display = 'none';
+    
+    // Reset Filter UI kembali ke default (1 Hari)
+    if (historyTimePreset) historyTimePreset.value = '1day';
+    if (customDateRange) customDateRange.style.display = 'none';
+    if (histStartDate) histStartDate.value = '';
+    if (histEndDate) histEndDate.value = '';
+
     setTimeout(() => {
         loadingHistory.innerHTML = 'Sedang memuat data rute perjalanan...';
         loadingHistory.style.display = 'none'; // Tambahkan ini agar tidak melayang kalau sedang ditutup
