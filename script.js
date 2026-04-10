@@ -57,7 +57,7 @@ async function fetchDeviceData() {
                 coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)],
                 status: status,
                 speed: '- km/h', // API saat ini belum memberikan value speed
-                lastUpdate: connDate.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' })
+                lastUpdate: connDate.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB'
             };
         });
 
@@ -450,15 +450,42 @@ async function openHistoryModal(deviceId, truckNumber) {
                 historyMapInstance.fitBounds(polyline.getBounds(), { padding: [50, 50] });
             }
             
+            // Titik penghubung (Waypoints) beserta jam/waktu
+            data.forEach((item, index) => {
+                // Lewati titik ujung agar tidak bentrok dengan marker stard/end yang besar
+                if (index === 0 || index === data.length - 1) return;
+
+                const lat = parseFloat(item.latitude);
+                const lng = parseFloat(item.longitude);
+
+                let timeStr = "Waktu Tidak Diketahui";
+                if (item.createdDate) {
+                    const d = new Date(item.createdDate);
+                    timeStr = d.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB';
+                }
+
+                L.circleMarker([lat, lng], {
+                    radius: 4,
+                    color: '#2563eb', // biru agar senada dengan polyline
+                    fillColor: '#ffffff',
+                    fillOpacity: 1,
+                    weight: 2
+                })
+                .bindTooltip(`<b>${timeStr}</b><br>Truck: ${truckNumber}`, { direction: 'top', opacity: 0.9 })
+                .addTo(historyLayerGroup);
+            });
+
             // Marker Titik Mulai (Start - Indeks 0)
+            let startTime = data[0].createdDate ? new Date(data[0].createdDate).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB' : '-';
             L.marker(rawLatlngs[0], { icon: startIcon })
-             .bindPopup(`<b>Kendaraan Mulai Berangkat</b><br>Truck: ${truckNumber}`)
+             .bindPopup(`<b>Kendaraan Mulai Berangkat</b><br>Truck: ${truckNumber}<br>Waktu: ${startTime}`)
              .addTo(historyLayerGroup);
             
             // Marker Titik Berhenti Saat Ini (End - Indeks Terakhir)
             if (rawLatlngs.length > 1) {
+                let endTime = data[data.length - 1].createdDate ? new Date(data[data.length - 1].createdDate).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB' : '-';
                 L.marker(rawLatlngs[rawLatlngs.length - 1], { icon: endIcon })
-                 .bindPopup(`<b>Posisi Terakhir</b><br>Truck: ${truckNumber}`)
+                 .bindPopup(`<b>Posisi Terakhir</b><br>Truck: ${truckNumber}<br>Waktu: ${endTime}`)
                  .addTo(historyLayerGroup);
             }
 

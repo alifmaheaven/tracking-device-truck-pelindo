@@ -36,8 +36,8 @@ Kode ini mengkonsumsi data dari dua *endpoint* Webhooks N8N via metode HTTP `GET
   ```
 
 ### B. Endpoint 2: *Device Tracking History Path*
-* **URL:** `https://n8n.freeat.me/webhook/device-history?deviceId={deviceId}`
-* **Sifat Eksekusi:** Sesuai permintaan (*on-demand*) alias ketika tombol "Riwayat Perjalanan" ditekan pada popup objek Marker.
+* **URL:** `https://n8n.freeat.me/webhook/device-history?deviceId={deviceId}&createdDate_gte={startIso}&createdDate_lte={endIso}`
+* **Sifat Eksekusi:** Sesuai permintaan (*on-demand*) yang terikat kepada rentang waktu UI Filter di modal (default 1 Hari Terakhir).
 * **Expected JSON Contract:**
   ```json
   [
@@ -65,9 +65,16 @@ Setiap asisten AI yang memodifikasi sistem ini **HARUS MEMATUHI** aturan mutlak 
    - Logika urutan saat ini (*Current Sorting Strategy*): **Utamakan properti `a.createdDate`** -> Fallback ke struktur Native Mongo `a._id.localeCompare`.
 4. **No Direct DOM Mutations on Real-time Events:**
    - Karena array perangkat (`devicesData`) di *refresh* setiap satu menit, **seluruh Markers akan di-`clearLayers()`**, dihapus dan dibuat ulang dari nol. Jika Anda ingin menambah status UI pada satu *marker* (misalnya animasi klip CSS), terapkan di *loop* rendering (`renderMarkers()`), bukan *hard-coding* merubah elemennya.
+5. **OSRM Route Snapping:**
+   - Garis rute dari data history dialirkan (`fetch`) ke Leaflet menggunakan *Open Source Routing Machine* (OSRM). Jika API OSRM menolak karena koordinat tidak berada di tepi jalan raya (*off-road*) atau error lainnya, terdapat *try...catch* yang memundurkannya (*fallback*) ke metode garis lurus manual bawaan array asli (`L.polyline` lurus putus-putus).
+   - Penguraian *Polyline format* dari OSRM memanfaatkan decoder Google Polyline pada fungsi `decodePolyline(str, precision)`. Jangan hapus fungsi dasar ini.
+6. **Timezone (WIB) UI Layering:**
+   - Karena API N8N tetap mendasarkan perhitungan secara murni lewat `ISO Timestamp / UTC`, fungsi `toLocaleDateString` di Javascript telah direkayasa keras (*hardcoded*) untuk memaksakan pemformatan waktu Asia Barat (`timeZone: 'Asia/Jakarta'`) hanya pada *layer interface*.
+   - Filter parameter yang meluncur via API URL haruslah dikirim menggunakan format `.toISOString()`.
 
 ## 5. Known Pending Features / Todos
 Area iterasi masa depan (Jika Klien Meminta):
 * Fitur Kluster Lanjutan (Marker Clustering) jika populasi alat > 300.
 * Animasi *Moving Marker Backend* layaknya Ojek Online ketimbang efek melompat (*teleportation*).
-* Filter Tanggal / Waktu dalam fitur modal Riwayat (Saat ini *history webhook* me-load semua rute mentah).
+* Integrasi *Geofencing Alert* berbasis *Polygon Layer* di Leaflet untuk area terlarang di pelabuhan.
+* *Export to CSV/PDF* untuk laporan riwayat perjalanan harian.
