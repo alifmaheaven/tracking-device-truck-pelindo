@@ -57,7 +57,8 @@ async function fetchDeviceData() {
                 coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)],
                 status: status,
                 speed: '- km/h', // API saat ini belum memberikan value speed
-                lastUpdate: connDate.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB'
+                lastUpdate: connDate.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB',
+                tags: item.deviceTags || []
             };
         });
 
@@ -139,6 +140,12 @@ function renderDeviceList(devices) {
 
         const statusClass = device.status === 'active' ? 'status-active' : 'status-idle';
         
+        let tagsHtml = '';
+        if (device.tags && device.tags.length > 0) {
+            const badges = device.tags.map(tag => `<span class="tag-badge"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+            tagsHtml = `<div class="device-tags">${badges}</div>`;
+        }
+
         card.innerHTML = `
             <div class="card-header">
                 <div class="truck-id">
@@ -146,6 +153,7 @@ function renderDeviceList(devices) {
                 </div>
                 <div class="status-badge ${statusClass}">${device.status}</div>
             </div>
+            ${tagsHtml}
             <div class="device-details">
                 <div class="detail-row">
                     <i class="fa-solid fa-barcode"></i>
