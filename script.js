@@ -66,10 +66,12 @@ async function fetchDeviceData() {
         renderMarkers();
         // Reset Search Input dan render list
         const keyword = searchInput.value.toLowerCase();
-        const filtered = devicesData.filter(d => 
-            d.truckNumber.toLowerCase().includes(keyword) || 
-            d.id.toLowerCase().includes(keyword)
-        );
+        const filtered = devicesData.filter(d => {
+            const tagMatch = d.tags && d.tags.some(tag => (tag.tagValue || tag).toString().toLowerCase().includes(keyword));
+            return d.truckNumber.toLowerCase().includes(keyword) || 
+                   d.id.toLowerCase().includes(keyword) ||
+                   tagMatch;
+        });
         renderDeviceList(filtered);
 
     } catch (error) {
@@ -205,10 +207,12 @@ function focusDevice(deviceId) {
 searchInput.addEventListener('input', (e) => {
     const keyword = e.target.value.toLowerCase();
     
-    const filteredDevices = devicesData.filter(d => 
-        (d.truckNumber && d.truckNumber.toLowerCase().includes(keyword)) || 
-        (d.id && d.id.toLowerCase().includes(keyword))
-    );
+    const filteredDevices = devicesData.filter(d => {
+        const tagMatch = d.tags && d.tags.some(tag => (tag.tagValue || tag).toString().toLowerCase().includes(keyword));
+        return (d.truckNumber && d.truckNumber.toLowerCase().includes(keyword)) || 
+               (d.id && d.id.toLowerCase().includes(keyword)) ||
+               tagMatch;
+    });
     
     renderDeviceList(filteredDevices);
 });
