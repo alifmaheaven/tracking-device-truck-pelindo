@@ -3,5 +3,5 @@ services:
     build: .
     container_name: pelindo-tracker-ui
     ports:
-      - "8080:80"
+      - "8123:80"
     restart: unless-stopped
