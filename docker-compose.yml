@@ -1,9 +1,7 @@
 services:
   nginx-web:
-    image: nginx:alpine
+    build: .
     container_name: pelindo-tracker-ui
     ports:
       - "8080:80"
-    volumes:
-      - ./:/usr/share/nginx/html
     restart: unless-stopped
