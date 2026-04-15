@@ -97,7 +97,7 @@ function renderMarkers() {
         const customIcon = device.status === 'active' ? truckActiveIcon : truckIdleIcon;
         const marker = L.marker(device.coordinates, { icon: customIcon }).addTo(map);
         
-        // Setup popup konten
+        // Setup popup konten (Hapus onclick dari sini)
         const popupContent = `
             <div class="custom-popup-content">
                 <h3><i class="fa-solid fa-truck"></i> ${device.truckNumber}</h3>
@@ -105,7 +105,7 @@ function renderMarkers() {
                 <p><strong>Koordinat:</strong> ${device.coordinates[0]}, ${device.coordinates[1]}</p>
                 <p><strong>Status:</strong> <span style="text-transform: capitalize;">${device.status}</span></p>
                 <p><strong>Update:</strong> ${device.lastUpdate}</p>
-                <button class="history-btn" onclick="openHistoryModal('${device.id}', '${device.truckNumber}')">
+                <button class="history-btn" id="hist-btn-${device.id}">
                     <i class="fa-solid fa-route"></i> Riwayat Perjalanan
                 </button>
                 <a href="https://www.google.com/maps/search/?api=1&query=${device.coordinates[0]},${device.coordinates[1]}" target="_blank" class="gmaps-link">
@@ -115,6 +115,17 @@ function renderMarkers() {
         `;
         
         marker.bindPopup(popupContent);
+        
+        // Pasang event listener saat popup dibuka
+        marker.on('popupopen', () => {
+            const btn = document.getElementById(`hist-btn-${device.id}`);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    openHistoryModal(device.id, device.truckNumber);
+                });
+            }
+        });
+
         markersList[device.id] = marker;
     });
 }
@@ -138,7 +149,7 @@ function renderDeviceList(devices) {
         card.id = `card-${device.id}`; // untuk keperluan highlight
         
         // Event click untuk fokus ke maps
-        card.onclick = () => focusDevice(device.id);
+        card.addEventListener('click', () => focusDevice(device.id));
 
         const statusClass = device.status === 'active' ? 'status-active' : 'status-idle';
         
@@ -503,12 +514,20 @@ async function openHistoryModal(deviceId, truckNumber) {
 
         } else {
             console.warn('Tidak ada data histori ditemukan untuk ID device ini');
-            loadingHistory.innerHTML = `Tidak ada rekam data histori perjalanan.<br><button onclick="closeHistoryModalBtn.click()" style="margin-top:10px; padding:6px 12px; cursor:pointer;">Tutup</button>`;
+            loadingHistory.innerHTML = `Tidak ada rekam data histori perjalanan.<br><button id="errorCloseBtn" style="margin-top:10px; padding:6px 12px; cursor:pointer;">Tutup</button>`;
+            const btn = document.getElementById('errorCloseBtn');
+            if (btn) {
+                btn.addEventListener('click', () => closeHistoryModalBtn.click());
+            }
             return;
         }
     } catch (e) {
         console.error("Gagal mendapatkan riwayat:", e);
-        loadingHistory.innerHTML = `Terjadi kesalahan jaringan saat mengambil riwayat API.<br><button onclick="closeHistoryModalBtn.click()" style="margin-top:10px; padding:6px 12px; cursor:pointer;">Tutup</button>`;
+        loadingHistory.innerHTML = `Terjadi kesalahan jaringan saat mengambil riwayat API.<br><button id="fatalErrorCloseBtn" style="margin-top:10px; padding:6px 12px; cursor:pointer;">Tutup</button>`;
+        const btn = document.getElementById('fatalErrorCloseBtn');
+        if (btn) {
+            btn.addEventListener('click', () => closeHistoryModalBtn.click());
+        }
         return;
     } finally {
         // Jika sukses merender lintasan, Sembunyikan layar loading
