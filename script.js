@@ -243,8 +243,82 @@ searchInput.addEventListener('input', (e) => {
 // Menjalankan fetch data petama kali
 fetchDeviceData();
 
-// auto update data lokasi secara real-time setiap 15 detik (15.000 ms)
-setInterval(fetchDeviceData, 15000);
+// auto update data lokasi secara real-time dengan counter countdown dinamis
+let refreshInterval = 15;
+let countdown = refreshInterval;
+const refreshCircle = document.getElementById('refreshCircle');
+const refreshText = document.getElementById('refreshText');
+
+const floatingRefreshBtn = document.getElementById('floatingRefreshBtn');
+const refreshOptions = document.getElementById('refreshOptions');
+const timeBtns = document.querySelectorAll('.time-btn');
+
+if (floatingRefreshBtn && refreshOptions) {
+    floatingRefreshBtn.addEventListener('click', () => {
+        refreshOptions.classList.toggle('show');
+    });
+}
+
+if (timeBtns) {
+    // Atur tombol yang aktif pertama kali
+    timeBtns.forEach(b => {
+        if (parseInt(b.getAttribute('data-time')) === refreshInterval) b.classList.add('active');
+    });
+
+    timeBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Hapus status active dari semua tombol lalu pasang yang baru
+            timeBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // Ubah interval
+            const newTime = parseInt(e.target.getAttribute('data-time'));
+            refreshInterval = newTime;
+            countdown = newTime; // Reset timer counter
+            
+            // Tarik data baru dan segarkan UI saat itu juga
+            updateRefreshCounterUI(); 
+            fetchDeviceData();
+            
+            // Tutup menu
+            refreshOptions.classList.remove('show');
+        });
+    });
+}
+
+function updateRefreshCounterUI() {
+    // Animasi Lingkaran
+    let dashValue = (countdown / refreshInterval) * 100;
+    if (refreshCircle) {
+        // Hilangkan efek transisi animasi jika kembali ke 100% supaya tidak terlihat ngelag mundur
+        if (countdown === refreshInterval) {
+            refreshCircle.style.transition = 'none';
+        } else {
+            refreshCircle.style.transition = 'stroke-dasharray 1s linear';
+        }
+        refreshCircle.setAttribute('stroke-dasharray', `${dashValue}, 100`);
+    }
+    
+    // Update Text Angka
+    if (refreshText) refreshText.innerText = countdown;
+}
+
+function updateRefreshCounter() {
+    countdown--;
+    
+    if (countdown <= 0) {
+        countdown = refreshInterval;
+        fetchDeviceData(); // Tarik data API
+    }
+    
+    updateRefreshCounterUI();
+}
+
+// Inisialisasi tampilan awal
+updateRefreshCounterUI();
+
+// Mulai perhitungan mundur setiap 1 detik
+setInterval(updateRefreshCounter, 1000);
 
 // Logika Toggle Sidebar
 const sidebar = document.getElementById('sidebar');
