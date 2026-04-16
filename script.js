@@ -98,9 +98,16 @@ function renderMarkers() {
         const marker = L.marker(device.coordinates, { icon: customIcon }).addTo(map);
         
         // Setup popup konten (Hapus onclick dari sini)
+        let tagsHtml = '';
+        if (device.tags && device.tags.length > 0) {
+            const badges = device.tags.map(tag => `<span class="tag-badge"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+            tagsHtml = `<div class="device-tags" style="margin-bottom: 10px;">${badges}</div>`;
+        }
+
         const popupContent = `
             <div class="custom-popup-content">
                 <h3><i class="fa-solid fa-truck"></i> ${device.truckNumber}</h3>
+                ${tagsHtml}
                 <p><strong>Device ID:</strong> ${device.id.substring(0,8)}...</p>
                 <p><strong>Koordinat:</strong> ${device.coordinates[0]}, ${device.coordinates[1]}</p>
                 <p><strong>Status:</strong> <span style="text-transform: capitalize;">${device.status}</span></p>
