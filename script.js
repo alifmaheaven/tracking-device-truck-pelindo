@@ -94,7 +94,26 @@ function renderMarkers() {
         // Cek jika koordinat invalid
         if (isNaN(device.coordinates[0]) || isNaN(device.coordinates[1])) return;
 
-        const customIcon = device.status === 'active' ? truckActiveIcon : truckIdleIcon;
+        let badgeHtml = '';
+        if (device.tags && device.tags.length > 0) {
+            let firstTag = device.tags[0].tagValue || device.tags[0];
+            badgeHtml = `<div class="marker-floating-badge">${firstTag}</div>`;
+        }
+
+        const bgColor = device.status === 'active' ? '#2563eb' : '#f59e0b';
+        const shadowColor = device.status === 'active' ? 'rgba(37,99,235,0.4)' : 'rgba(245,158,11,0.4)';
+
+        const customIcon = L.divIcon({
+            html: `<div style="position: relative; background-color: ${bgColor}; color: white; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; border-radius: 50%; box-shadow: 0 4px 12px ${shadowColor}; border: 2px solid white;">
+                    <i class="fa-solid fa-truck"></i>
+                    ${badgeHtml}
+                   </div>`,
+            className: 'custom-div-icon',
+            iconSize: [36, 36],
+            iconAnchor: [18, 18],
+            popupAnchor: [0, -18]
+        });
+
         const marker = L.marker(device.coordinates, { icon: customIcon }).addTo(map);
         
         // Setup popup konten (Hapus onclick dari sini)
