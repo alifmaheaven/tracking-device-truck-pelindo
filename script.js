@@ -243,8 +243,8 @@ searchInput.addEventListener('input', (e) => {
 // Menjalankan fetch data petama kali
 fetchDeviceData();
 
-// auto update data lokasi secara real-time setiap 1 menit (60.000 ms)
-setInterval(fetchDeviceData, 60000);
+// auto update data lokasi secara real-time setiap 15 detik (15.000 ms)
+setInterval(fetchDeviceData, 15000);
 
 // Logika Toggle Sidebar
 const sidebar = document.getElementById('sidebar');
