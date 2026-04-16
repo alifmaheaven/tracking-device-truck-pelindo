@@ -140,10 +140,15 @@ function renderMarkers() {
 // DOM Elements
 const deviceListContainer = document.getElementById('deviceList');
 const searchInput = document.getElementById('searchInput');
+const totalDeviceCount = document.getElementById('totalDeviceCount');
 
 // Render list device ke sidebar
 function renderDeviceList(devices) {
     deviceListContainer.innerHTML = '';
+    
+    if (totalDeviceCount) {
+        totalDeviceCount.innerText = devices.length;
+    }
     
     if (devices.length === 0) {
         deviceListContainer.innerHTML = '<p style="text-align:center; color: var(--text-muted); margin-top: 20px;">Tidak ada device/truk ditemukan.</p>';

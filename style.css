@@ -118,6 +118,28 @@ body {
     border-radius: 4px;
 }
 
+.total-device-footer {
+    padding: 16px 24px;
+    background-color: var(--sidebar-bg);
+    border-top: 1px solid var(--border);
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
+    z-index: 10;
+}
+
+.total-device-footer span {
+    margin-left: auto;
+    background-color: #e0e7ff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--primary);
+}
+
 .device-card {
     background-color: var(--card-bg);
     border: 1px solid var(--border);
