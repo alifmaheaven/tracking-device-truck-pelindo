@@ -51,7 +51,13 @@ Kode ini mengkonsumsi data dari dua *endpoint* Webhooks N8N via metode HTTP `GET
   ]
   ```
 
-## 4. Crucial Logic Rules & Constraints (DO NOT BREAK)
+## 4. Newly Added Features (Keep Context)
+   - **SEO Optimization**: `index.html` telah diperkaya dengan standar Meta tags, Open Graph (OG), dan Twitter Cards untuk membantu performa di *Search Engine* dan tampilan saat link dibagikan.
+   - **Floating Marker Badges**: Ikon pada peta (`L.divIcon`) sekarang dibentuk secara dinamis dengan adanya struktur class `.marker-floating-badge` yang diletakkan menumpuk, bertujuan untuk menampilkan isi properti tag pertama dari `device.tags`. Logika dinamis ini dibentuk secara *on-the-fly* di dalam putaran fitur `renderMarkers()`.
+   - **Total Device Counter**: *Sidebar* memuat blok *floating footer* (`.total-device-footer`) yang menampilkan jumlah perangkat truk secara dinamis dan akan otomatis beradaptasi dengan pencarian di *Search Box* yang terikat pada fungsi `renderDeviceList(devices)`.
+   - **Floating Countdown Refresh**: Fitur animasi SVG memutar terletak pada class `.floating-refresh` untuk menghitung mundur kapan tarikan API berjalan. Ini terikat pada fungsi `updateRefreshCounterUI()` dan dieksekusi secara mulus menggunakan CSS transisi `stroke-dasharray`. Terdapat menu pop-up opsi timer tersembunyi (`.refresh-options`) untuk mengubah interval ke 5s, 10s, atau 15s.
+
+## 5. Crucial Logic Rules & Constraints (DO NOT BREAK)
 
 Setiap asisten AI yang memodifikasi sistem ini **HARUS MEMATUHI** aturan mutlak berikut:
 
@@ -64,7 +70,7 @@ Setiap asisten AI yang memodifikasi sistem ini **HARUS MEMATUHI** aturan mutlak 
    - Garis Leaflet (`L.polyline`) membutuhkan array lat/long yang berurutan secara waktu agar lukisan lintasan tidak kusut mondar-mandir. Format API *History* telah berevolusi menggunakan `createdDate`.
    - Logika urutan saat ini (*Current Sorting Strategy*): **Utamakan properti `a.createdDate`** -> Fallback ke struktur Native Mongo `a._id.localeCompare`.
 4. **No Direct DOM Mutations on Real-time Events:**
-   - Karena array perangkat (`devicesData`) di *refresh* setiap satu menit, **seluruh Markers akan di-`clearLayers()`**, dihapus dan dibuat ulang dari nol. Jika Anda ingin menambah status UI pada satu *marker* (misalnya animasi klip CSS), terapkan di *loop* rendering (`renderMarkers()`), bukan *hard-coding* merubah elemennya.
+   - Karena array perangkat (`devicesData`) di *refresh* setiap kali interval hitung mundur nol, **seluruh Markers akan di-`clearLayers()`**, dihapus dan dibuat ulang dari nol. Jika Anda ingin menambah status UI pada satu *marker* (misalnya animasi klip CSS), terapkan di *loop* rendering (`renderMarkers()`), bukan *hard-coding* merubah elemennya.
 5. **OSRM Route Snapping:**
    - Garis rute dari data history dialirkan (`fetch`) ke Leaflet menggunakan *Open Source Routing Machine* (OSRM). Jika API OSRM menolak karena koordinat tidak berada di tepi jalan raya (*off-road*) atau error lainnya, terdapat *try...catch* yang memundurkannya (*fallback*) ke metode garis lurus manual bawaan array asli (`L.polyline` lurus putus-putus).
    - Penguraian *Polyline format* dari OSRM memanfaatkan decoder Google Polyline pada fungsi `decodePolyline(str, precision)`. Jangan hapus fungsi dasar ini.
@@ -72,7 +78,7 @@ Setiap asisten AI yang memodifikasi sistem ini **HARUS MEMATUHI** aturan mutlak 
    - Karena API N8N tetap mendasarkan perhitungan secara murni lewat `ISO Timestamp / UTC`, fungsi `toLocaleDateString` di Javascript telah direkayasa keras (*hardcoded*) untuk memaksakan pemformatan waktu Asia Barat (`timeZone: 'Asia/Jakarta'`) hanya pada *layer interface*.
    - Filter parameter yang meluncur via API URL haruslah dikirim menggunakan format `.toISOString()`.
 
-## 5. Known Pending Features / Todos
+## 6. Known Pending Features / Todos
 Area iterasi masa depan (Jika Klien Meminta):
 * Fitur Kluster Lanjutan (Marker Clustering) jika populasi alat > 300.
 * Animasi *Moving Marker Backend* layaknya Ojek Online ketimbang efek melompat (*teleportation*).
