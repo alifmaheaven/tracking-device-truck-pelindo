@@ -28,8 +28,8 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link rel="icon" href="https://www.teluklamong.co.id/images/favicon.png">
-  <script type="module" crossorigin src="/assets/index-BMp1qzgo.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CjDLtCkQ.css">
+  <script type="module" crossorigin src="/assets/index-CSWvwWgp.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-e6Dw3Bcl.css">
 </head>
 <body>
     <div class="app-container">
@@ -117,6 +117,16 @@
             <div class="modal-body">
                 <div id="loadingHistory" class="loading-state" style="display:none;">Sedang memuat data rute perjalanan...</div>
                 <div id="historyMap"></div>
+                <!-- Routing Toggle Container -->
+                <div id="routingToggleContainer" class="routing-toggle-container">
+                    <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Mode Routing:</div>
+                    <label class="routing-radio">
+                        <input type="radio" name="routingMode" value="manual" checked> <i class="fa-solid fa-ruler"></i> Garis Lurus (Manual)
+                    </label>
+                    <label class="routing-radio">
+                        <input type="radio" name="routingMode" value="osrm"> <i class="fa-solid fa-road"></i> Jalan Raya (OSRM)
+                    </label>
+                </div>
             </div>
         </div>
     </div>
