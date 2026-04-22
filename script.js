@@ -124,11 +124,27 @@ function renderMarkers() {
             tagsHtml = `<div class="device-tags" style="margin-bottom: 10px;">${badges}</div>`;
         }
 
+        let batteryVal = parseFloat(device.battery || 0);
+        let batteryColor = '#ef4444'; // Merah
+        let batteryIcon = 'fa-battery-quarter';
+        
+        if (batteryVal > 70) {
+            batteryColor = '#10b981'; // Hijau
+            batteryIcon = 'fa-battery-full';
+        } else if (batteryVal > 30) {
+            batteryColor = '#f59e0b'; // Kuning
+            batteryIcon = 'fa-battery-half';
+        } else if (batteryVal <= 10) {
+            batteryIcon = 'fa-battery-empty';
+        }
+        const batteryText = !isNaN(batteryVal) ? batteryVal.toFixed(0) + '%' : 'N/A';
+
         const popupContent = `
             <div class="custom-popup-content">
                 <h3><i class="fa-solid fa-truck"></i> ${device.truckNumber}</h3>
                 ${tagsHtml}
                 <p><strong>Device ID:</strong> ${device.id.substring(0,8)}...</p>
+                <p><strong>Baterai:</strong> <span style="color: ${batteryColor}; font-weight: 600;"><i class="fa-solid ${batteryIcon}"></i> ${batteryText}</span></p>
                 <p><strong>Koordinat:</strong> ${device.coordinates[0]}, ${device.coordinates[1]}</p>
                 <p><strong>Status:</strong> <span style="text-transform: capitalize;">${device.status}</span></p>
                 <p><strong>Update:</strong> ${device.lastUpdate}</p>
