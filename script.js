@@ -58,7 +58,8 @@ async function fetchDeviceData() {
                 status: status,
                 speed: '- km/h', // API saat ini belum memberikan value speed
                 lastUpdate: connDate.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB',
-                tags: item.deviceTags || []
+                tags: item.deviceTags || [],
+                battery: item.battery || 0
             };
         });
 
@@ -190,30 +191,32 @@ function renderDeviceList(devices) {
             tagsHtml = `<div class="device-tags">${badges}</div>`;
         }
 
+        let batteryVal = parseFloat(device.battery || 0);
+        let batteryColor = '#ef4444'; // Merah
+        let batteryIcon = 'fa-battery-quarter';
+        
+        if (batteryVal > 70) {
+            batteryColor = '#10b981'; // Hijau
+            batteryIcon = 'fa-battery-full';
+        } else if (batteryVal > 30) {
+            batteryColor = '#f59e0b'; // Kuning
+            batteryIcon = 'fa-battery-half';
+        } else if (batteryVal <= 10) {
+            batteryIcon = 'fa-battery-empty';
+        }
+
+        const batteryText = !isNaN(batteryVal) ? batteryVal.toFixed(0) + '%' : 'N/A';
+
         card.innerHTML = `
-            <div class="card-header">
-                <div class="truck-id">
-                    <i class="fa-solid fa-microchip"></i> ${device.truckNumber}
+            <div class="card-header" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div class="device-id" style="font-weight: 600; font-size: 14px; color: #1e293b; display: flex; align-items: center; gap: 6px;" title="${device.id}">
+                    <i class="fa-solid fa-microchip" style="color: #64748b;"></i> ${device.id.substring(0, 8).toUpperCase()}...
                 </div>
-                <div class="status-badge ${statusClass}">${device.status}</div>
+                <div class="battery-status" title="Battery: ${batteryText}" style="color: ${batteryColor}; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 4px;">
+                    <i class="fa-solid ${batteryIcon}"></i> ${batteryText}
+                </div>
             </div>
             ${tagsHtml}
-            <div class="device-details">
-                <div class="detail-row">
-                    <i class="fa-solid fa-barcode"></i>
-                    <span>Device: ${device.id.substring(0, 10)}...</span>
-                </div>
-                <div class="detail-row">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <span>${device.coordinates[0].toFixed(5)}, ${device.coordinates[1].toFixed(5)}</span>
-                </div>
-                <!-- 
-                <div class="detail-row">
-                    <i class="fa-solid fa-gauge-high"></i>
-                    <span>Speed: ${device.speed}</span>
-                </div>
-                -->
-            </div>
         `;
         deviceListContainer.appendChild(card);
     });
