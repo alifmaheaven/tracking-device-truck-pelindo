@@ -185,10 +185,11 @@ function renderDeviceList(devices) {
 
         const statusClass = device.status === 'active' ? 'status-active' : 'status-idle';
         
-        let tagsHtml = '';
+        let tagsHtml = '<div style="color: var(--text-muted); font-size: 13px; font-style: italic;">No Tag</div>';
         if (device.tags && device.tags.length > 0) {
-            const badges = device.tags.map(tag => `<span class="tag-badge"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
-            tagsHtml = `<div class="device-tags">${badges}</div>`;
+            // Kita buat gaya badge sedikit lebih besar dari ukuran default sebelumnya (16px), namun tidak raksasa
+            const badges = device.tags.map(tag => `<span class="tag-badge" style="font-size: 15px; padding: 6px 12px; border-radius: 6px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+            tagsHtml = `<div class="device-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">${badges}</div>`;
         }
 
         let batteryVal = parseFloat(device.battery || 0);
@@ -208,15 +209,15 @@ function renderDeviceList(devices) {
         const batteryText = !isNaN(batteryVal) ? batteryVal.toFixed(0) + '%' : 'N/A';
 
         card.innerHTML = `
-            <div class="card-header" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div class="device-id" style="font-weight: 600; font-size: 14px; color: #1e293b; display: flex; align-items: center; gap: 6px;" title="${device.id}">
-                    <i class="fa-solid fa-microchip" style="color: #64748b;"></i> ${device.id.substring(0, 8).toUpperCase()}...
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                    ${tagsHtml}
                 </div>
-                <div class="battery-status" title="Battery: ${batteryText}" style="color: ${batteryColor}; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 4px;">
-                    <i class="fa-solid ${batteryIcon}"></i> ${batteryText}
+                <div class="battery-status" title="Battery: ${batteryText}" style="color: ${batteryColor}; font-weight: 700; font-size: 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                    <i class="fa-solid ${batteryIcon}" style="font-size: 20px;"></i>
+                    <span style="font-size: 12px;">${batteryText}</span>
                 </div>
             </div>
-            ${tagsHtml}
         `;
         deviceListContainer.appendChild(card);
     });
@@ -443,6 +444,16 @@ if (applyHistoryFilterBtn) {
     });
 }
 
+// Listener Mode Routing (OSRM vs Manual)
+const routingRadios = document.querySelectorAll('input[name="routingMode"]');
+routingRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        if (currentModalDeviceId && currentModalTruckNumber) {
+            openHistoryModal(currentModalDeviceId, currentModalTruckNumber);
+        }
+    });
+});
+
 function buildHistoryUrl(deviceId) {
     let baseUrl = `https://n8n.freeat.me/webhook/device-history?deviceId=${deviceId}`;
     if (!historyTimePreset) return baseUrl;
@@ -530,6 +541,14 @@ async function openHistoryModal(deviceId, truckNumber) {
             
             // Mengambil rute perjalanan jalan raya via public API OSRM
             try {
+                // Cek toggle radio button
+                const routingModeNode = document.querySelector('input[name="routingMode"]:checked');
+                const routingModeSelected = routingModeNode ? routingModeNode.value : 'manual';
+                
+                if (routingModeSelected === 'manual') {
+                    throw new Error("Force Manual Routing Mode");
+                }
+
                 loadingHistory.innerHTML = 'Sedang mencari lintasan jalan (Mencocokkan rute)...';
                 const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordinatesString}?overview=full&geometries=polyline`;
                 
@@ -561,7 +580,9 @@ async function openHistoryModal(deviceId, truckNumber) {
                     throw new Error("No OSRM Route found");
                 }
             } catch (osrmError) {
-                console.warn('Gagal merute via OSRM, kembali ke mode garis lurus.', osrmError);
+                if (osrmError.message !== "Force Manual Routing Mode") {
+                    console.warn('Gagal merute via OSRM, kembali ke mode garis lurus.', osrmError);
+                }
                 // Hitung manual secara kasar jarak garis lurus 
                 let manualDistance = 0;
                 for (let i = 0; i < rawLatlngs.length - 1; i++) {
