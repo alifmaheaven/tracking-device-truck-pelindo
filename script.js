@@ -1007,6 +1007,122 @@ closeHistoryModalBtn.addEventListener('click', () => {
 
     setTimeout(() => {
         loadingHistory.innerHTML = 'Sedang memuat data rute perjalanan...';
-        loadingHistory.style.display = 'none'; // Tambahkan ini agar tidak melayang kalau sedang ditutup
+        loadingHistory.style.display = 'none';
     }, 500);
 });
+
+// ==========================================
+// PENGATURAN MODE APLIKASI (GEOLOCATION MAP)
+// ==========================================
+const logoMenuToggle = document.getElementById('logoMenuToggle');
+const appModeMenu = document.getElementById('appModeMenu');
+const modeRadios = document.querySelectorAll('input[name="appMode"]');
+
+let userWatchId = null;
+let userMarker = null;
+
+if (logoMenuToggle && appModeMenu) {
+    logoMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        appModeMenu.classList.toggle('show');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!logoMenuToggle.contains(e.target) && !appModeMenu.contains(e.target)) {
+            appModeMenu.classList.remove('show');
+        }
+    });
+}
+
+const createUserIcon = (heading) => {
+    const rotate = heading !== null && !isNaN(heading) ? heading : 0;
+    const svgIcon = `
+        <div style="transform: rotate(${rotate}deg); transform-origin: center center;">
+            <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                <!-- Panah Elegan -->
+                <path d="M16 2 L30 28 L16 22 L2 28 Z" fill="#3b82f6" stroke="white" stroke-width="2"/>
+            </svg>
+        </div>
+    `;
+
+    return L.divIcon({
+        className: 'user-direction-marker',
+        html: svgIcon,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+    });
+}
+
+const stopGeoTracking = () => {
+    if (userWatchId !== null) {
+        navigator.geolocation.clearWatch(userWatchId);
+        userWatchId = null;
+    }
+    if (userMarker) {
+        map.removeLayer(userMarker);
+        userMarker = null;
+    }
+};
+
+const startGeoTracking = () => {
+    if (!navigator.geolocation) {
+        alert("Browser Anda tidak mendukung layanan Geolokasi.");
+        const modeMonitoringRadio = document.querySelector('input[name="appMode"][value="monitoring"]');
+        if(modeMonitoringRadio) modeMonitoringRadio.checked = true;
+        return;
+    }
+
+    let isFirstPan = true;
+
+    userWatchId = navigator.geolocation.watchPosition((position) => {
+        const { latitude, longitude, heading } = position.coords;
+
+        if (!userMarker) {
+            userMarker = L.marker([latitude, longitude], { icon: createUserIcon(heading) }).addTo(map);
+        } else {
+            userMarker.setLatLng([latitude, longitude]);
+            userMarker.setIcon(createUserIcon(heading));
+        }
+
+        if (isFirstPan) {
+            map.flyTo([latitude, longitude], 15, { animate: true, duration: 1.5 });
+            isFirstPan = false;
+        }
+
+    }, (error) => {
+        console.error("Geolokasi Error: ", error);
+        alert("Gagal membaca lokasi. Pastikan izin lokasi (GPS) browser diaktifkan dan dilonggarkan untuk web ini.");
+        const modeMonitoringRadio = document.querySelector('input[name="appMode"][value="monitoring"]');
+        if(modeMonitoringRadio) modeMonitoringRadio.checked = true;
+        stopGeoTracking();
+    }, {
+        enableHighAccuracy: true,
+        maximumAge: 0, 
+        timeout: 10000
+    });
+};
+
+if (modeRadios.length > 0) {
+    modeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            const badge = document.getElementById('appModeBadge');
+            
+            if (mode === 'journey') {
+                startGeoTracking();
+                appModeMenu.classList.remove('show');
+                if (badge) {
+                    badge.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Perjalanan';
+                    badge.classList.add('journey-active');
+                }
+            } else {
+                stopGeoTracking();
+                appModeMenu.classList.remove('show');
+                if (badge) {
+                    badge.innerHTML = '<i class="fa-solid fa-desktop"></i> Monitoring';
+                    badge.classList.remove('journey-active');
+                }
+            }
+        });
+    });
+}

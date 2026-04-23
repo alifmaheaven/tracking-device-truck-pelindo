@@ -54,8 +54,25 @@
         
         <!-- Maps Kanan -->
         <main class="map-container">
-            <div class="floating-logo">
-                <img src="https://www.teluklamong.co.id/images/logo.png" alt="Teluk Lamong Logo">
+            <!-- Floating Logo & App Mode Menu -->
+            <div class="floating-logo-container">
+                <div style="position: relative; display: inline-block;">
+                    <div class="floating-logo" id="logoMenuToggle" title="Pengaturan Mode Aplikasi">
+                        <img src="https://www.teluklamong.co.id/images/logo.png" alt="Teluk Lamong Logo">
+                    </div>
+                    <div class="mode-badge" id="appModeBadge"><i class="fa-solid fa-desktop"></i> Monitoring</div>
+                </div>
+                <div class="app-mode-menu" id="appModeMenu">
+                    <div class="mode-header">Mode Aplikasi</div>
+                    <label class="mode-option">
+                        <input type="radio" name="appMode" value="monitoring" checked>
+                        <span><i class="fa-solid fa-desktop" style="width: 16px;"></i> Monitoring</span>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="appMode" value="journey">
+                        <span><i class="fa-solid fa-location-crosshairs" style="width: 16px;"></i> Perjalanan</span>
+                    </label>
+                </div>
             </div>
             
             <!-- Floating Refresh Counter & Selector -->

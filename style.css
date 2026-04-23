@@ -461,12 +461,19 @@ body {
     font-size: 16px;
 }
 
-/* Floating Logo */
-.floating-logo {
+/* Container untuk Logo + Menu */
+.floating-logo-container {
     position: absolute;
     top: 20px;
     right: 20px;
     z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+/* Floating Logo */
+.floating-logo {
     background: rgba(255, 255, 255, 0.95);
     padding: 8px 24px;
     border-radius: 50px;
@@ -477,6 +484,95 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
+}
+
+/* Mode Badge */
+.mode-badge {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--slate-700);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.3s ease;
+    z-index: 1001;
+}
+
+.mode-badge.journey-active {
+    background: #10b981; /* Emeral Green */
+}
+
+/* App Mode Menu */
+.app-mode-menu {
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.8);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 180px;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.app-mode-menu.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.mode-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+}
+
+.mode-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.mode-option:hover {
+    background: var(--bg-color);
+}
+
+.mode-option input[type="radio"] {
+    accent-color: var(--primary);
+}
+
+/* Geolocation User Marker */
+.user-direction-marker {
+    background: none;
+    border: none;
+    /* transition will make it slide smoothly if needed */
+    transition: transform 0.2s linear;
 }
 
 .floating-logo:hover {
