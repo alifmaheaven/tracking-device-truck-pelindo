@@ -475,6 +475,8 @@ function decodePolyline(str, precision) {
 
 let currentModalDeviceId = null;
 let currentModalTruckNumber = null;
+let lastAppliedStartDate = null;
+let lastAppliedEndDate = null;
 
 // Filter DOM
 const historyTimePreset = document.getElementById('historyTimePreset');
@@ -487,6 +489,15 @@ if (historyTimePreset) {
     historyTimePreset.addEventListener('change', (e) => {
         if (e.target.value === 'custom') {
             customDateRange.style.display = 'flex';
+            
+            // Auto-fill form dengan rentang waktu yang sedang aktif/dipilih
+            if (lastAppliedStartDate && lastAppliedEndDate) {
+                const pad = (n) => n.toString().padStart(2, '0');
+                const toLocalIso = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                
+                histStartDate.value = toLocalIso(lastAppliedStartDate);
+                histEndDate.value = toLocalIso(lastAppliedEndDate);
+            }
         } else {
             customDateRange.style.display = 'none';
         }
@@ -495,6 +506,23 @@ if (historyTimePreset) {
 
 if (applyHistoryFilterBtn) {
     applyHistoryFilterBtn.addEventListener('click', () => {
+        if (currentModalDeviceId && currentModalTruckNumber) {
+            openHistoryModal(currentModalDeviceId, currentModalTruckNumber);
+        }
+    });
+}
+
+const resetHistoryFilterBtn = document.getElementById('resetHistoryFilterBtn');
+if (resetHistoryFilterBtn) {
+    resetHistoryFilterBtn.addEventListener('click', () => {
+        if (historyTimePreset) historyTimePreset.value = '1hour';
+        if (customDateRange) customDateRange.style.display = 'none';
+        if (histStartDate) histStartDate.value = '';
+        if (histEndDate) histEndDate.value = '';
+        
+        const manualRadio = document.querySelector('input[name="routingMode"][value="manual"]');
+        if (manualRadio) manualRadio.checked = true;
+
         if (currentModalDeviceId && currentModalTruckNumber) {
             openHistoryModal(currentModalDeviceId, currentModalTruckNumber);
         }
@@ -519,7 +547,15 @@ function buildHistoryUrl(deviceId) {
     let startDate = new Date();
     let endDate = new Date();
     
-    if (preset === '1day') {
+    if (preset === '1hour') {
+        startDate.setHours(endDate.getHours() - 1);
+    } else if (preset === '3hour') {
+        startDate.setHours(endDate.getHours() - 3);
+    } else if (preset === '6hour') {
+        startDate.setHours(endDate.getHours() - 6);
+    } else if (preset === '12hour') {
+        startDate.setHours(endDate.getHours() - 12);
+    } else if (preset === '1day') {
         startDate.setDate(endDate.getDate() - 1);
     } else if (preset === '1week') {
         startDate.setDate(endDate.getDate() - 7);
@@ -535,11 +571,16 @@ function buildHistoryUrl(deviceId) {
         }
     } else {
         // Fallback default
-        startDate.setDate(endDate.getDate() - 1);
+        startDate.setHours(endDate.getHours() - 1);
     }
 
     const startIso = startDate.toISOString();
     const endIso = endDate.toISOString();
+    
+    // Simpan object date lokal agar bisa dipakai pre-fill UI ketika pindah mode 'custom'
+    lastAppliedStartDate = startDate;
+    lastAppliedEndDate = endDate;
+
     return `${baseUrl}&createdDate_gte=${startIso}&createdDate_lte=${endIso}`;
 }
 
@@ -627,6 +668,104 @@ async function openHistoryModal(deviceId, truckNumber) {
                 }
             }
 
+            // Handler Custom HTML Tooltip
+            const getOrCreateTooltip = (chart) => {
+                let tooltipEl = document.getElementById('customTooltip');
+                if (!tooltipEl) {
+                    tooltipEl = document.createElement('div');
+                    tooltipEl.id = 'customTooltip';
+                    tooltipEl.classList.add('custom-chartjs-tooltip');
+                    document.body.appendChild(tooltipEl);
+                    
+                    // Hover behavior to prevent fading out quickly when moving to tooltip
+                    tooltipEl.addEventListener('mouseenter', () => tooltipEl.classList.add('hovering'));
+                    tooltipEl.addEventListener('mouseleave', () => tooltipEl.classList.remove('hovering'));
+                }
+                return tooltipEl;
+            };
+
+            const externalTooltipHandler = (context) => {
+                const {chart, tooltip} = context;
+                const tooltipEl = getOrCreateTooltip(chart);
+
+                if (tooltipEl.classList.contains('hovering')) {
+                    // Jangan ubah posisi atau hide jika kursor sedang di dalam kotak tooltip (mencegah kejar-kejaran)
+                    return;
+                }
+
+                if (tooltip.opacity === 0) {
+                    tooltipEl.style.opacity = 0;
+                    setTimeout(() => { 
+                        if(tooltipEl.style.opacity == 0) tooltipEl.style.visibility = 'hidden'; 
+                    }, 200); // delay nunggu kursor pindah
+                    return;
+                }
+
+                tooltipEl.style.visibility = 'visible';
+                tooltipEl.style.opacity = 1;
+
+                if (tooltip.body) {
+                    const dataIndex = tooltip.dataPoints[0].dataIndex;
+                    const originalLabel = chart.data.labels[dataIndex];
+                    const speedVal = tooltip.dataPoints[0].raw;
+                    
+                    tooltipEl.innerHTML = `
+                        <button class="tooltip-close-btn" id="tooltipCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                        <div style="margin-bottom: 5px; font-weight: bold; font-size: 13px;">Waktu: ${originalLabel}</div>
+                        <div style="margin-bottom: 8px; font-size: 12px;">Kecepatan: ${speedVal} km/jam</div>
+                        <button id="tooltipRouteBtn" class="tooltip-route-btn">🗺️ Lihat Rute</button>
+                    `;
+
+                    const closeBtn = tooltipEl.querySelector('#tooltipCloseBtn');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', () => {
+                            tooltipEl.classList.remove('hovering');
+                            tooltipEl.style.opacity = 0;
+                            tooltipEl.style.visibility = 'hidden';
+                        });
+                    }
+
+                    const routeBtn = tooltipEl.querySelector('#tooltipRouteBtn');
+                    routeBtn.addEventListener('click', () => {
+                        const startIsoLocal = originalLabel.replace(' ', 'T');
+                        const d = new Date(startIsoLocal);
+                        d.setHours(d.getHours() + 1);
+                        const pad = (n) => n.toString().padStart(2, '0');
+                        const endIsoLocal = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                        
+                        const historyTimePreset = document.getElementById('historyTimePreset');
+                        const customDateRange = document.getElementById('customDateRange');
+                        const histStartDate = document.getElementById('histStartDate');
+                        const histEndDate = document.getElementById('histEndDate');
+                        const applyHistoryFilterBtn = document.getElementById('applyHistoryFilterBtn');
+                        
+                        if (historyTimePreset && customDateRange && histStartDate && histEndDate && applyHistoryFilterBtn) {
+                            historyTimePreset.value = 'custom';
+                            customDateRange.style.display = 'flex';
+                            histStartDate.value = startIsoLocal;
+                            histEndDate.value = endIsoLocal;
+                            
+                            const tMapBtn = document.getElementById('tabMapBtn');
+                            if (tMapBtn) tMapBtn.click();
+                            applyHistoryFilterBtn.click();
+                            tooltipEl.style.opacity = 0;
+                            tooltipEl.style.visibility = 'hidden';
+                        }
+                    });
+                }
+
+                const position = context.chart.canvas.getBoundingClientRect();
+                // Avoid tooltip going offscreen right
+                const tooltipWidth = 160; 
+                let leftPos = position.left + window.scrollX + tooltip.caretX + 15;
+                if(leftPos + tooltipWidth > window.innerWidth) {
+                    leftPos = position.left + window.scrollX + tooltip.caretX - tooltipWidth - 15;
+                }
+
+                tooltipEl.style.left = leftPos + 'px';
+                tooltipEl.style.top = position.top + window.scrollY + tooltip.caretY + 'px';
+            };
+
             // RENDER BAR CHART KECEPATAN
             const ctx = document.getElementById('speedChart');
             if (ctx) {
@@ -664,6 +803,10 @@ async function openHistoryModal(deviceId, truckNumber) {
                         }]
                     },
                     options: {
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
                         layout: {
                             padding: { bottom: 20 }
                         },
@@ -671,11 +814,8 @@ async function openHistoryModal(deviceId, truckNumber) {
                         maintainAspectRatio: false,
                         plugins: {
                             tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `Kecepatan: ${context.parsed.y} km/jam`;
-                                    }
-                                }
+                                enabled: false,
+                                external: externalTooltipHandler
                             },
                             legend: {
                                 display: true,
@@ -859,8 +999,8 @@ closeHistoryModalBtn.addEventListener('click', () => {
         manualRadio.checked = true;
     }
     
-    // Reset Filter UI kembali ke default (1 Hari)
-    if (historyTimePreset) historyTimePreset.value = '1day';
+    // Reset Filter UI kembali ke default (1 Jam)
+    if (historyTimePreset) historyTimePreset.value = '1hour';
     if (customDateRange) customDateRange.style.display = 'none';
     if (histStartDate) histStartDate.value = '';
     if (histEndDate) histEndDate.value = '';

@@ -95,7 +95,11 @@
                 <div class="history-filter" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <label style="font-size: 13px; font-weight: 600; color: #475569;"><i class="fa-solid fa-filter"></i> Filter Waktu:</label>
                     <select id="historyTimePreset" style="padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;">
-                        <option value="1day" selected>1 Hari Terakhir</option>
+                        <option value="1hour" selected>1 Jam Terakhir</option>
+                        <option value="3hour">3 Jam Terakhir</option>
+                        <option value="6hour">6 Jam Terakhir</option>
+                        <option value="12hour">12 Jam Terakhir</option>
+                        <option value="1day">1 Hari Terakhir</option>
                         <option value="1week">1 Minggu Terakhir</option>
                         <option value="1month">1 Bulan Terakhir</option>
                         <option value="custom">Pilih Tanggal Manual</option>
@@ -107,7 +111,10 @@
                         <input type="datetime-local" id="histEndDate" style="padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
                     </div>
 
-                    <button id="applyHistoryFilterBtn" style="padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;"><i class="fa-solid fa-arrow-rotate-right"></i> Terapkan</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="applyHistoryFilterBtn" style="padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;"><i class="fa-solid fa-arrow-rotate-right"></i> Terapkan</button>
+                        <button id="resetHistoryFilterBtn" style="padding: 6px 12px; background-color: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                    </div>
                 </div>
 
                 <!-- Distance Info -->
