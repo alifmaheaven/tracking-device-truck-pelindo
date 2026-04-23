@@ -702,7 +702,7 @@ body {
     }
     
     .toggle-btn {
-        bottom: 24px;
+        bottom: 50px;
         left: 20px;
         z-index: 1010;
         width: 48px;
@@ -712,7 +712,7 @@ body {
     }
     
     .refresh-container {
-        bottom: 24px;
+        bottom: 50px;
         right: 20px;
     }
 
