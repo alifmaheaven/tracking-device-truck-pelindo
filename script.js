@@ -383,6 +383,33 @@ const loadingHistory = document.getElementById('loadingHistory');
 let historyMapInstance = null;
 let historyLayerGroup = null;
 
+// TABS UI DOM
+const tabMapBtn = document.getElementById('tabMapBtn');
+const tabChartBtn = document.getElementById('tabChartBtn');
+const mapTabContent = document.getElementById('mapTabContent');
+const chartTabContent = document.getElementById('chartTabContent');
+let speedChartInstance = null;
+
+// LOGIKA TABS
+if (tabMapBtn && tabChartBtn) {
+    tabMapBtn.addEventListener('click', () => {
+        tabMapBtn.classList.add('active');
+        tabChartBtn.classList.remove('active');
+        mapTabContent.style.display = 'flex'; // Sembunyikan dan Munculkan container fleksibel
+        chartTabContent.style.display = 'none';
+        setTimeout(() => {
+            if (historyMapInstance) historyMapInstance.invalidateSize();
+        }, 300);
+    });
+
+    tabChartBtn.addEventListener('click', () => {
+        tabChartBtn.classList.add('active');
+        tabMapBtn.classList.remove('active');
+        mapTabContent.style.display = 'none';
+        chartTabContent.style.display = 'block';
+    });
+}
+
 // Setup Icon Start & End secara dinamis
 const startIcon = L.divIcon({
     html: `<div style="background-color: #10b981; color: white; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white;"><i class="fa-solid fa-play" style="margin-left: 2px;"></i></div>`,
@@ -546,6 +573,122 @@ async function openHistoryModal(deviceId, truckNumber) {
                 return 0;
             });
 
+            // --- SPEED CALCULATION LOGIC FOR CHART ---
+            const chartLabels = [];
+            const chartSpeeds = [];
+            
+            for (let i = 0; i < data.length; i++) {
+                const currentPoint = [parseFloat(data[i].latitude), parseFloat(data[i].longitude)];
+                let timeStr = '-';
+                if (data[i].createdDate) {
+                    const d = new Date(data[i].createdDate);
+                    // sv-SE gives Standard YYYY-MM-DD HH:mm:ss format
+                    const fmtDate = d.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' });
+                    timeStr = fmtDate.substring(0, 16); // YYYY-MM-DD HH:mm
+                }
+                chartLabels.push(timeStr);
+                
+                if (i === 0) {
+                    chartSpeeds.push(0); // Titik pertama nge-stay (0 km/h)
+                } else {
+                    const prevPoint = [parseFloat(data[i-1].latitude), parseFloat(data[i-1].longitude)];
+                    // Karena kita butuh method Leaflet distance
+                    const p1 = L.latLng(prevPoint[0], prevPoint[1]);
+                    const p2 = L.latLng(currentPoint[0], currentPoint[1]);
+                    const distanceMeters = p1.distanceTo(p2);
+                    
+                    let diffSeconds = 1;
+                    if (data[i].createdDate && data[i-1].createdDate) {
+                        const t1 = new Date(data[i-1].createdDate).getTime();
+                        const t2 = new Date(data[i].createdDate).getTime();
+                        diffSeconds = (t2 - t1) / 1000;
+                    }
+                    if (diffSeconds <= 0) diffSeconds = 0.1; // Cekap ke nol tidak boleh
+                    
+                    let speedKmH = (distanceMeters / diffSeconds) * 3.6;
+                    // Cap kecepatan maksimal jika error GPS dari n8n jumping ekstrem (max 150 km/h)
+                    if (speedKmH > 150) speedKmH = 150; 
+                    
+                    chartSpeeds.push(speedKmH.toFixed(2));
+                }
+            }
+
+            // RENDER BAR CHART KECEPATAN
+            const ctx = document.getElementById('speedChart');
+            if (ctx) {
+                if (speedChartInstance) {
+                    speedChartInstance.destroy();
+                }
+                speedChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Kecepatan Truk (km/jam)',
+                            data: chartSpeeds,
+                            pointBackgroundColor: chartSpeeds.map(s => {
+                                const speed = parseFloat(s);
+                                if (speed > 50) return '#ef4444'; // Merah
+                                if (speed >= 30) return '#f59e0b'; // Kuning
+                                return '#10b981'; // Hijau
+                            }),
+                            pointBorderColor: '#ffffff',
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
+                            segment: {
+                                borderColor: ctx => {
+                                    if (ctx.p1DataIndex === undefined) return '#10b981';
+                                    const speed = parseFloat(chartSpeeds[ctx.p1DataIndex]);
+                                    if (speed > 50) return '#ef4444';
+                                    if (speed >= 30) return '#f59e0b';
+                                    return '#10b981';
+                                }
+                            }
+                        }]
+                    },
+                    options: {
+                        layout: {
+                            padding: { bottom: 20 }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Kecepatan: ${context.parsed.y} km/jam`;
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: true,
+                                labels: { font: { family: 'Inter', size: 13 } }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Kecepatan (km/jam)', font: { family: 'Inter', size: 12 } }
+                            },
+                            x: {
+                                ticks: { 
+                                    callback: function(value) {
+                                        const label = this.getLabelForValue(value);
+                                        return label ? label.substring(11, 16) : ''; // Hanya HH:mm
+                                    },
+                                    maxRotation: 45, 
+                                    minRotation: 45, 
+                                    font: { family: 'Inter', size: 10 } 
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
             // Ekstrak koordinat asli
             let rawLatlngs = data.map(item => [parseFloat(item.latitude), parseFloat(item.longitude)]);
             
@@ -687,6 +830,20 @@ closeHistoryModalBtn.addEventListener('click', () => {
     historyModal.classList.remove('active');
     // Kembalikan text loading dan sembunyikan jarak
     distanceInfoBox.style.display = 'none';
+
+    // Reset Tabs UI
+    if (tabMapBtn && tabChartBtn) {
+        tabMapBtn.classList.add('active');
+        tabChartBtn.classList.remove('active');
+        mapTabContent.style.display = 'flex';
+        chartTabContent.style.display = 'none';
+    }
+
+    // Reset Mode Routing ke Garis Lurus (Manual)
+    const manualRadio = document.querySelector('input[name="routingMode"][value="manual"]');
+    if (manualRadio) {
+        manualRadio.checked = true;
+    }
     
     // Reset Filter UI kembali ke default (1 Hari)
     if (historyTimePreset) historyTimePreset.value = '1day';

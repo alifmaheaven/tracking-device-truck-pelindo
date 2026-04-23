@@ -28,8 +28,8 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link rel="icon" href="https://www.teluklamong.co.id/images/favicon.png">
-  <script type="module" crossorigin src="/assets/index-BeI49lGo.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-e6Dw3Bcl.css">
+  <script type="module" crossorigin src="/assets/index-i-FxuML0.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BkcSWZNY.css">
 </head>
 <body>
     <div class="app-container">
@@ -116,18 +116,33 @@
                     <i class="fa-solid fa-ruler-combined" style="color: #2563eb; margin-right: 5px;"></i> Total Jarak Tempuh: <span id="totalDistance" style="font-weight: 700; color: #0f172a;">-</span> km
                 </div>
             </div>
-            <div class="modal-body">
+            <div class="tabs-header" style="display: flex; background: #fff; border-bottom: 1px solid #e2e8f0;">
+                <button id="tabMapBtn" class="tab-btn active"><i class="fa-solid fa-map-location-dot"></i> Peta Rute</button>
+                <button id="tabChartBtn" class="tab-btn"><i class="fa-solid fa-chart-column"></i> Grafik Kecepatan</button>
+            </div>
+            <div class="modal-body" style="flex: 1; display: flex; flex-direction: column; position: relative;">
                 <div id="loadingHistory" class="loading-state" style="display:none;">Sedang memuat data rute perjalanan...</div>
-                <div id="historyMap"></div>
-                <!-- Routing Toggle Container -->
-                <div id="routingToggleContainer" class="routing-toggle-container">
-                    <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Mode Routing:</div>
-                    <label class="routing-radio">
-                        <input type="radio" name="routingMode" value="manual" checked> <i class="fa-solid fa-ruler"></i> Garis Lurus (Manual)
-                    </label>
-                    <label class="routing-radio">
-                        <input type="radio" name="routingMode" value="osrm"> <i class="fa-solid fa-road"></i> Jalan Raya (OSRM)
-                    </label>
+                
+                <!-- Tab Content 1: Map -->
+                <div id="mapTabContent" class="tab-content active" style="flex: 1; position: relative; width: 100%;">
+                    <div id="historyMap" style="width: 100%; height: 100%; z-index: 1;"></div>
+                    <!-- Routing Toggle Container -->
+                    <div id="routingToggleContainer" class="routing-toggle-container">
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Mode Routing:</div>
+                        <label class="routing-radio">
+                            <input type="radio" name="routingMode" value="manual" checked> <i class="fa-solid fa-ruler"></i> Garis Lurus (Manual)
+                        </label>
+                        <label class="routing-radio">
+                            <input type="radio" name="routingMode" value="osrm"> <i class="fa-solid fa-road"></i> Jalan Raya (OSRM)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tab Content 2: Chart -->
+                <div id="chartTabContent" class="tab-content" style="display: none; flex: 1; padding: 20px; background-color: #fff; overflow-y: auto;">
+                    <div style="position: relative; height: 100%; min-height: 400px; width: 100%;">
+                        <canvas id="speedChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -135,5 +150,7 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
