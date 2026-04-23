@@ -257,6 +257,14 @@ function focusDevice(deviceId) {
     // Arahkan map ke koordinat (FlyTo) dengan zoom 16
     map.flyTo(device.coordinates, 16, { duration: 1.5 });
     
+    // Auto collapse sidebar di HP setelah truk dipilih
+    if (window.innerWidth <= 768) {
+        const sideEl = document.getElementById('sidebar');
+        const togEl = document.getElementById('toggleSidebarBtn');
+        if (sideEl) sideEl.classList.add('collapsed');
+        if (togEl) togEl.classList.add('collapsed');
+    }
+
     // Tampilkan popup dari marker setelah map mendarat
     setTimeout(() => {
         if(markersList[deviceId]) {
@@ -372,6 +380,12 @@ toggleBtn.addEventListener('click', () => {
         map.invalidateSize();
     }, 400);
 });
+
+// Auto-collapse saat website pertama kalinya termuat di layar kecil (HP)
+if (window.innerWidth <= 768 && sidebar && toggleBtn) {
+    sidebar.classList.add('collapsed');
+    toggleBtn.classList.add('collapsed');
+}
 
 // ==========================================
 // LOGIKA MODAL RIWAYAT PERJALANAN (HISTORY)
