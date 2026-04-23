@@ -28,8 +28,8 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link rel="icon" href="https://www.teluklamong.co.id/images/favicon.png">
-  <script type="module" crossorigin src="/assets/index-DshZ5H7g.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CE5gmV_c.css">
+  <script type="module" crossorigin src="/assets/index-SAkWXVD7.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-B6P6pliX.css">
 </head>
 <body>
     <div class="app-container">
@@ -75,6 +75,18 @@
                     </label>
                 </div>
             </div>
+
+            <!-- Floating Navigation Route Status Card -->
+            <div class="navigation-card" id="navigationCard">
+                <div class="nav-info">
+                    <h3 id="navTargetName">🚗 Menunggu target...</h3>
+                    <p><i class="fa-solid fa-road"></i> <span id="navDistanceValue">-- km</span> &bull; <i class="fa-solid fa-clock"></i> <span id="navEtaValue">-- mnt</span></p>
+                </div>
+                <button class="exit-nav-btn" id="exitNavBtn">
+                    <i class="fa-solid fa-xmark"></i> Keluar
+                </button>
+            </div>
+
             
             <!-- Floating Refresh Counter & Selector -->
             <div class="refresh-container">

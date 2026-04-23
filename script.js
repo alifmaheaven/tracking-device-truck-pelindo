@@ -74,6 +74,10 @@ async function fetchDeviceData() {
                    tagMatch;
         });
         renderDeviceList(filtered);
+        
+        if (isNavigating) {
+            updateNavRoute();
+        }
 
     } catch (error) {
         console.error('Gagal mengambil data dari API:', error);
@@ -92,6 +96,9 @@ function renderMarkers() {
     });
 
     devicesData.forEach(device => {
+        // Cek jika sedang mode navigasi, sembunyikan truk selain target
+        if (isNavigating && navTargetDevice && device.id !== navTargetDevice.id) return;
+
         // Cek jika koordinat invalid
         if (isNaN(device.coordinates[0]) || isNaN(device.coordinates[1])) return;
 
@@ -151,9 +158,9 @@ function renderMarkers() {
                 <button class="history-btn" id="hist-btn-${device.id}">
                     <i class="fa-solid fa-route"></i> Riwayat Perjalanan
                 </button>
-                <a href="https://www.google.com/maps/search/?api=1&query=${device.coordinates[0]},${device.coordinates[1]}" target="_blank" class="gmaps-link">
-                    <i class="fa-solid fa-location-arrow"></i> Buka di Google Maps
-                </a>
+                <button class="direction-btn" id="dir-btn-${device.id}">
+                    <i class="fa-solid fa-location-crosshairs"></i> Arahkan ke Truk
+                </button>
             </div>
         `;
         
@@ -165,6 +172,13 @@ function renderMarkers() {
             if (btn) {
                 btn.addEventListener('click', () => {
                     openHistoryModal(device.id, device.truckNumber);
+                });
+            }
+            
+            const dirBtn = document.getElementById(`dir-btn-${device.id}`);
+            if (dirBtn) {
+                dirBtn.addEventListener('click', () => {
+                    startDirectionMode(device);
                 });
             }
         });
@@ -1088,6 +1102,10 @@ const startGeoTracking = () => {
             map.flyTo([latitude, longitude], 15, { animate: true, duration: 1.5 });
             isFirstPan = false;
         }
+        
+        if (isNavigating) {
+            updateNavRoute();
+        }
 
     }, (error) => {
         console.error("Geolokasi Error: ", error);
@@ -1125,4 +1143,109 @@ if (modeRadios.length > 0) {
             }
         });
     });
+}
+
+// ==========================================
+// TARGET DIRECTION MODE
+// ==========================================
+let isNavigating = false;
+let navTargetDevice = null;
+let navPolylineLayer = null;
+let previousAppMode = 'monitoring';
+
+const navigationCard = document.getElementById('navigationCard');
+const navTargetName = document.getElementById('navTargetName');
+const navDistanceValue = document.getElementById('navDistanceValue');
+const navEtaValue = document.getElementById('navEtaValue');
+const exitNavBtn = document.getElementById('exitNavBtn');
+
+if (exitNavBtn) {
+    exitNavBtn.addEventListener('click', exitDirectionMode);
+}
+
+function startDirectionMode(device) {
+    if (!device) return;
+    
+    // Save current mode before forcefully changing it
+    const activeRadio = document.querySelector('input[name="appMode"]:checked');
+    if (activeRadio) {
+        previousAppMode = activeRadio.value;
+    }
+    
+    isNavigating = true;
+    navTargetDevice = device;
+    
+    // Paksa masuk Mode Perjalanan secara programatis
+    const modeJourneyRadio = document.querySelector('input[name="appMode"][value="journey"]');
+    if(modeJourneyRadio && !modeJourneyRadio.checked) {
+        modeJourneyRadio.checked = true;
+        modeJourneyRadio.dispatchEvent(new Event('change')); 
+    }
+    
+    navTargetName.innerHTML = `🚗 Menuju Target: ${device.truckNumber}`;
+    navigationCard.classList.add('active');
+    
+    renderMarkers(); 
+    updateNavRoute();
+}
+
+function exitDirectionMode() {
+    isNavigating = false;
+    navTargetDevice = null;
+    navigationCard.classList.remove('active');
+    
+    if (navPolylineLayer) {
+        map.removeLayer(navPolylineLayer);
+        navPolylineLayer = null;
+    }
+    
+    // Kembalikan semua marker
+    renderMarkers();
+    
+    // Kembalikan ke mode sebelumnya
+    if (previousAppMode === 'monitoring') {
+        const modeMonitoringRadio = document.querySelector('input[name="appMode"][value="monitoring"]');
+        if (modeMonitoringRadio && !modeMonitoringRadio.checked) {
+            modeMonitoringRadio.checked = true;
+            modeMonitoringRadio.dispatchEvent(new Event('change'));
+        }
+    }
+}
+
+async function updateNavRoute() {
+    if (!isNavigating || !navTargetDevice || !userMarker) return;
+    
+    const targetLatLng = markersList[navTargetDevice.id] ? markersList[navTargetDevice.id].getLatLng() : L.latLng(navTargetDevice.coordinates[0], navTargetDevice.coordinates[1]);
+    const userLatLng = userMarker.getLatLng();
+    
+    try {
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLatLng.lng},${userLatLng.lat};${targetLatLng.lng},${targetLatLng.lat}?overview=full&geometries=polyline`;
+        const res = await fetch(osrmUrl);
+        const json = await res.json();
+        
+        if (json.routes && json.routes.length > 0) {
+            const route = json.routes[0];
+            const distanceKm = (route.distance / 1000).toFixed(1);
+            const durationMin = Math.ceil(route.duration / 60);
+            
+            navDistanceValue.innerText = distanceKm + ' km';
+            navEtaValue.innerText = durationMin + ' mnt';
+            
+            const coordsArray = decodePolyline(route.geometry);
+            
+            if (navPolylineLayer) {
+                map.removeLayer(navPolylineLayer);
+            }
+            navPolylineLayer = L.polyline(coordsArray, { 
+                color: '#10b981', // Emerald dash route target
+                weight: 5, 
+                dashArray: '10, 10', 
+                lineCap: 'round'
+            }).addTo(map);
+            
+            map.fitBounds(navPolylineLayer.getBounds(), { padding: [50, 50] });
+        }
+    } catch (e) {
+        console.error("Gagal menarik rute navigasi API: ", e);
+    }
 }
