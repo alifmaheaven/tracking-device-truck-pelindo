@@ -1213,7 +1213,13 @@ function exitDirectionMode() {
 }
 
 async function updateNavRoute() {
-    if (!isNavigating || !navTargetDevice || !userMarker) return;
+    if (!isNavigating || !navTargetDevice) return;
+    
+    if (!userMarker) {
+        navDistanceValue.innerText = 'Menunggu GPS...';
+        navEtaValue.innerText = '--';
+        return;
+    }
     
     const targetLatLng = markersList[navTargetDevice.id] ? markersList[navTargetDevice.id].getLatLng() : L.latLng(navTargetDevice.coordinates[0], navTargetDevice.coordinates[1]);
     const userLatLng = userMarker.getLatLng();
