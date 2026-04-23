@@ -12,16 +12,16 @@ Buku panduan ini ditulis khusus untuk **AI Assistant** / AI Coder yang akan mene
 - **Lokasi Geografis Default:** Koordinat `-7.195, 112.68` (Surabaya/Teluk Lamong Port).
 
 ## 2. File Structure & Scope
-- **`index.html`**: Kerangka antarmuka (*Single Page*). Mempunyai area ganda: `.app-container` (berisi `<aside id="sidebar">` dan `<main class="map-container">`) serta area bayangan `<div id="historyModal">`.
-- **`style.css`**: Modul visual yang kaya (*vibrant & modern*). Memuat deklarasi root `--colors`, logika efek transisi pelipatan sidebar (`.sidebar.collapsed`), `.toggle-btn`, dan CSS Modal Overlay statis (`z-index: 9999`).
-- **`script.js`**: Pusat saraf yang terbagi ke dalam: Logika Fetch API, Logika Peta Utama (*Markers* berjalan), Logika Sinkronisasi Antarmuka (*DOM event listener*, *Live Search*), dan Logika Peta Modal Sekunder (*Polyline Tracking*).
+- **`index.html`**: Kerangka antarmuka (*Single Page*). Mempunyai area ganda: `.app-container` (berisi `<aside id="sidebar">` dan `<main class="map-container">`) serta area bayangan `<div id="historyModal">`. Ada logo Teluk Lamong bergaya *floating* estetik.
+- **`style.css`**: Modul visual yang kaya (*vibrant & modern*). Memuat deklarasi root `--colors`, logika efek transisi pelipatan sidebar (`.sidebar.collapsed`), `.toggle-btn`, UI custom tag badges, status baterai, dan CSS Modal Overlay statis (`z-index: 9999`).
+- **`script.js`**: Pusat saraf yang terbagi ke dalam: Logika Fetch API, Logika Peta Utama (*Markers* berjalan dengan *multi-tag badges* & indikator baterai), Logika Sinkronisasi Antarmuka (*DOM event listener*, *Live Search*), dan Logika Peta Modal Sekunder (*History polyline*, *interactive waypoints*, dan *OSRM routing*).
 
 ## 3. Webhooks API Integrations (N8N Microservices)
 Kode ini mengkonsumsi data dari dua *endpoint* Webhooks N8N via metode HTTP `GET`.
 
 ### A. Endpoint 1: *Current Devices Cordinate*
 * **URL:** `https://n8n.freeat.me/webhook/device-cordinate`
-* **Sifat Eksekusi:** Otomatis melalui *Cron/Interval* (`setInterval` 60.000 md - 1 menit) untuk mengemas efek _Live Tracking_.
+* **Sifat Eksekusi:** Otomatis melalui timer *Interval* dinamis (pilihan 5s, 10s, 15s) untuk mengemas efek _Live Tracking_.
 * **Expected JSON Contract:**
   ```json
   [
@@ -30,7 +30,9 @@ Kode ini mengkonsumsi data dari dua *endpoint* Webhooks N8N via metode HTTP `GET
       "serialNumber": "string",  // Digunakan sebagai ID Plat Truk
       "latitude": "stringable float",
       "longitude": "stringable float",
-      "lastConnectionDate": { "time": timestamp_number } // Digunakan sebagai penentu Status (Idle vs Active) dan Timestamp visual
+      "lastConnectionDate": { "time": timestamp_number }, // Penentu Status dan Timestamp visual
+      "deviceTags": ["tag1", "tag2"], // Array tag untuk device
+      "battery": number // Level baterai (persentase)
     }
   ]
   ```
@@ -52,35 +54,35 @@ Kode ini mengkonsumsi data dari dua *endpoint* Webhooks N8N via metode HTTP `GET
   ```
 
 ## 4. Newly Added Features (Keep Context)
-   - **SEO Optimization**: `index.html` telah diperkaya dengan standar Meta tags, Open Graph (OG), dan Twitter Cards untuk membantu performa di *Search Engine* dan tampilan saat link dibagikan.
-   - **Floating Marker Badges**: Ikon pada peta (`L.divIcon`) sekarang dibentuk secara dinamis dengan adanya struktur class `.marker-floating-badge` yang diletakkan menumpuk, bertujuan untuk menampilkan isi properti tag pertama dari `device.tags`. Logika dinamis ini dibentuk secara *on-the-fly* di dalam putaran fitur `renderMarkers()`.
-   - **Total Device Counter**: *Sidebar* memuat blok *floating footer* (`.total-device-footer`) yang menampilkan jumlah perangkat truk secara dinamis dan akan otomatis beradaptasi dengan pencarian di *Search Box* yang terikat pada fungsi `renderDeviceList(devices)`.
-   - **Floating Countdown Refresh**: Fitur animasi SVG memutar terletak pada class `.floating-refresh` untuk menghitung mundur kapan tarikan API berjalan. Ini terikat pada fungsi `updateRefreshCounterUI()` dan dieksekusi secara mulus menggunakan CSS transisi `stroke-dasharray`. Terdapat menu pop-up opsi timer tersembunyi (`.refresh-options`) untuk mengubah interval ke 5s, 10s, atau 15s.
+   - **SEO & Logo Optimization**: `index.html` diperkaya standar Meta tags/OG, serta logo Teluk Lamong *floating* (latar putih transparan & *shadow*) di pojok kanan atas map agar UI terasa lebih premium.
+   - **Rich Floating Marker Badges**: Ikon pada peta tidak hanya memuat truk, namun ditumpuk oleh elemen HTML kaya (`.marker-floating-badge`) yang menampilkan *multiple device tags*, persentase indikator baterai dengan warna dinamis (hijau/kuning/merah), dan info detail ID pada popup. Tampilan badge di Sidebar per-device juga sudah diperbesar & responsif.
+   - **Interval Countdown & Total Counter**: Sidebar memuat `Total Device: X` yang auto-recalculated berdasarkan filter search. Terdapat animasi *countdown SVG lingkaran* berlari mundur untuk memvisualisasikan hitungan waktu memanggil API. User bisa mengubah interval timer (5s, 10s, 15s) via toggle menu *floating*.
+   - **Interactive Route Waypoints**: Saat fitur *History* menampilkan lintasan polyline, sistem akan melukis *circle markers (waypoints)* biru di seluruh titik lekukan rute perjalanan. Jika *waypoints* ini di-*hover*, tooltip dengan jam/waktu persis kedatangan truk bersangkutan akan dimunculkan.
+   - **OSRM vs Manual Routing Toggle**: Modal Riwayat dilengkapi untuk beralih antar dua mode. Secara bawaan (Smart Route) menggunakan *OSRM Route Snapping* agar mengikuti liukan jalan raya. Jika OSRM gagal, ada API _error_, atau user sengaja memilih "Mode Garis Lurus", lintasan di-_fallback_ ke manual lurus putus-putus.
 
 ## 5. Crucial Logic Rules & Constraints (DO NOT BREAK)
 
 Setiap asisten AI yang memodifikasi sistem ini **HARUS MEMATUHI** aturan mutlak berikut:
 
 1. **Leaflet Invalidate Size Issue:**
-   - Memasukkan objek Leaflet ke dalam struktur Flex/Grid (seperti proses perluasan Container pasca Sidebar dilipat) atau melampirkannya pada div tak kasatmata (`display: none` pada Modal) secara alamiah akan mengacaukan pemuatan *tiles map* Leaflet (gambar abu-abu sepotong).
-   - **Solusi Yang Harus Dipertahankan:** Selidiki `setTimeout` kecil (~300-400ms) di dalam `script.js` tempat fungsi `map.invalidateSize()` dieksekusi. Ini difungsikan untuk mendeteksi pemuatan dimensi pasca transisi CSS.
+   - Memasukkan objek Leaflet ke dalam struktur Flex/Grid (seperti peluasan Container pasca Sidebar dilipat) atau melampirkannya pada div tertutup (`display: none` pada Modal) secara alamiah akan mengacau otak pemuatan *tiles map* Leaflet (gambar peta jadi abu-abu sebagian).
+   - **Solusi Yang Harus Dipertahankan:** Selidiki `setTimeout` kecil (~300-400ms) di dalam `script.js` tempat fungsi `map.invalidateSize()` dan `historyMapInstance.invalidateSize()` dieksekusi. Ini difungsikan untuk memicu _re-rendering_ dimensi pasca efek transisi CSS kelar.
 2. **Double Map Instance:**
-   - Terdapat **Dua** instance objek Leaflet global: `map` (Peta Utama) dan `historyMapInstance` (Peta dalam Modal). Jangan tertukar atau menggabungkan variabel lapisannya (`historyLayerGroup`).
+   - Terdapat **Dua** instance global Leaflet: `map` (Peta Utama) dan `historyMapInstance` (Peta dalam Modal). Jangan membingungkan atau me-referensi UI pada variabel / lapisan layer (*layerGroup*) yang saling bersilangan.
 3. **Data Sorting for Polylines:**
-   - Garis Leaflet (`L.polyline`) membutuhkan array lat/long yang berurutan secara waktu agar lukisan lintasan tidak kusut mondar-mandir. Format API *History* telah berevolusi menggunakan `createdDate`.
-   - Logika urutan saat ini (*Current Sorting Strategy*): **Utamakan properti `a.createdDate`** -> Fallback ke struktur Native Mongo `a._id.localeCompare`.
+   - Leaflet `L.polyline` niscaya akan kusut (garis lompat-lompat mundur) jika array data koordinat yang dijejali tidak tersortir kronologis.
+   - Logika sortir sekarang: **Prioritaskan `a.createdDate`** -> Fallback ke Native Mongo sort `a._id.localeCompare`.
 4. **No Direct DOM Mutations on Real-time Events:**
-   - Karena array perangkat (`devicesData`) di *refresh* setiap kali interval hitung mundur nol, **seluruh Markers akan di-`clearLayers()`**, dihapus dan dibuat ulang dari nol. Jika Anda ingin menambah status UI pada satu *marker* (misalnya animasi klip CSS), terapkan di *loop* rendering (`renderMarkers()`), bukan *hard-coding* merubah elemennya.
-5. **OSRM Route Snapping:**
-   - Garis rute dari data history dialirkan (`fetch`) ke Leaflet menggunakan *Open Source Routing Machine* (OSRM). Jika API OSRM menolak karena koordinat tidak berada di tepi jalan raya (*off-road*) atau error lainnya, terdapat *try...catch* yang memundurkannya (*fallback*) ke metode garis lurus manual bawaan array asli (`L.polyline` lurus putus-putus).
-   - Penguraian *Polyline format* dari OSRM memanfaatkan decoder Google Polyline pada fungsi `decodePolyline(str, precision)`. Jangan hapus fungsi dasar ini.
-6. **Timezone (WIB) UI Layering:**
-   - Karena API N8N tetap mendasarkan perhitungan secara murni lewat `ISO Timestamp / UTC`, fungsi `toLocaleDateString` di Javascript telah direkayasa keras (*hardcoded*) untuk memaksakan pemformatan waktu Asia Barat (`timeZone: 'Asia/Jakarta'`) hanya pada *layer interface*.
-   - Filter parameter yang meluncur via API URL haruslah dikirim menggunakan format `.toISOString()`.
+   - Mengingat *refresh API* array perangkat berjalan tiap interval habis (misal 5 detik), **semua Markers di-_reset_** `clearLayers()`. Jangan sembarangan menyuntik state *hardcode* ID per *marker* menggunakan `document.getElementById()`, selangkah lebih elok deklarasikan *rendering interface* itu di dalam loop `renderMarkers()`.
+5. **OSRM Route Snapping & Simplify Coordinates:**
+   - Jalur riwayat truk dikirim ke _Open Source Routing Machine_ (`router.project-osrm.org`) melalui fetch URL memanjang. Guna mencegah blokade API _limit points_, koordinat sengaja di_downsampling_ via fungsi `simplifyCoordinates(latlngs, 90)`.
+   - String aneh output OSRM ditangani aman oleh decoder Algorithm Google Polyline: `decodePolyline(str, precision)`. Jangan usik rumusnya.
+6. **Timezone (WIB) Layering Effect:**
+   - Seluruh logika simpan DB (N8N) berpaku pada standar murni ISO 8601 UTC Time. Tanggal Waktu Indonesia Barat `Asia/Jakarta` mutlak dijadikan sebatas format topeng presentasi ke *User Interface* (`.toLocaleString()` dsb). Jangan keliru memutar logika dan mengoper WIB mentah-mentah saat merequest *History API Date Range*.
 
 ## 6. Known Pending Features / Todos
-Area iterasi masa depan (Jika Klien Meminta):
-* Fitur Kluster Lanjutan (Marker Clustering) jika populasi alat > 300.
-* Animasi *Moving Marker Backend* layaknya Ojek Online ketimbang efek melompat (*teleportation*).
-* Integrasi *Geofencing Alert* berbasis *Polygon Layer* di Leaflet untuk area terlarang di pelabuhan.
-* *Export to CSV/PDF* untuk laporan riwayat perjalanan harian.
+Area iterasi selanjutnya (Bila diperlukan/diminta):
+* Mekanisme **Marker Clustering** murni Leaflet bila kelak populasi API alat membludak tembus target > 500 titik per detik.
+* **Geofencing & Polygon Warning**: Mewarnakan peta area terlarang doking pelabuhan untuk menyiarkan sinyal _Alert_ UI merah bila koordinat truk melenceng menabrak benteng Polygon.
+* Ekspor Laporan Histori ke File `CSV / Excel / PDF` berdasarkan urutan koordinat N8N.
+* Animasi Transisi Halus (*Moving Marker*) antartitik alih-alih me-_refresh_ dengan efek letupan (*teleporting markers*).
