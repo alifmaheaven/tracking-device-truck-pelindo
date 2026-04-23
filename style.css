@@ -968,6 +968,18 @@ body {
         height: 28px;
     }
 
+    .navigation-card {
+        bottom: 102px; /* Sejajar dengan toggle & timer (100px) + sedikit kompensasi border */
+        width: max-content;
+        max-width: 70vw;
+        padding: 8px 16px;
+        gap: 12px;
+    }
+    
+    .nav-info h3 {
+        font-size: 13px;
+    }
+
     /* Modal Optimization */
     .modal-content {
         width: 95%;
