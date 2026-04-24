@@ -682,6 +682,71 @@ async function openHistoryModal(deviceId, truckNumber) {
                 }
             }
 
+            // --- AGGREGATION LOGIC FOR CHART ---
+            let durationHours = 1;
+            if (data.length > 2 && data[0].createdDate && data[data.length - 1].createdDate) {
+                const startT = new Date(data[0].createdDate).getTime();
+                const endT = new Date(data[data.length - 1].createdDate).getTime();
+                durationHours = (endT - startT) / (1000 * 60 * 60);
+            }
+            
+            let bucketMinutes = 1;
+            let bucketLabel = "1 menit";
+            
+            if (durationHours <= 1.5) { bucketMinutes = 1; bucketLabel = "1 menit"; }
+            else if (durationHours <= 3.5) { bucketMinutes = 5; bucketLabel = "5 menit"; }
+            else if (durationHours <= 6.5) { bucketMinutes = 10; bucketLabel = "10 menit"; }
+            else if (durationHours <= 12.5) { bucketMinutes = 15; bucketLabel = "15 menit"; }
+            else if (durationHours <= 24.5) { bucketMinutes = 30; bucketLabel = "30 menit"; }
+            else if (durationHours <= 72.5) { bucketMinutes = 60; bucketLabel = "1 jam"; }
+            else if (durationHours <= 168.5) { bucketMinutes = 480; bucketLabel = "8 jam"; }
+            else { bucketMinutes = 1440; bucketLabel = "1 hari"; }
+            
+            const bucketMillis = bucketMinutes * 60 * 1000;
+            
+            const aggregatedChartLabels = [];
+            const aggregatedChartSpeeds = [];
+            
+            if (data.length > 0 && data[0].createdDate) {
+                let currentBucketStart = new Date(data[0].createdDate).getTime();
+                currentBucketStart = Math.floor(currentBucketStart / bucketMillis) * bucketMillis; // Bulatkan kebawah sesuai skala
+                
+                let currentBucketSpeeds = [];
+                let currentBucketLabels = [];
+                
+                for (let i = 0; i < data.length; i++) {
+                    if (!data[i].createdDate || isNaN(chartSpeeds[i])) continue;
+                    const pointT = new Date(data[i].createdDate).getTime();
+                    
+                    // Jika melewati batas akhir ember (bucket), maka tutup ember dan simpan rata-ratanya
+                    if (pointT >= currentBucketStart + bucketMillis) {
+                        if (currentBucketSpeeds.length > 0) {
+                            const maxSpeed = Math.max(...currentBucketSpeeds);
+                            aggregatedChartSpeeds.push(maxSpeed.toFixed(2));
+                            aggregatedChartLabels.push(currentBucketLabels[Math.floor(currentBucketLabels.length/2)]);
+                        }
+                        
+                        // Buka ember baru
+                        currentBucketStart = Math.floor(pointT / bucketMillis) * bucketMillis;
+                        currentBucketSpeeds = [];
+                        currentBucketLabels = [];
+                    }
+                    
+                    currentBucketSpeeds.push(parseFloat(chartSpeeds[i]));
+                    currentBucketLabels.push(chartLabels[i]);
+                }
+                
+                // Masukkan sisa poin yang ada di ember terakhir
+                if (currentBucketSpeeds.length > 0) {
+                    const maxSpeed = Math.max(...currentBucketSpeeds);
+                    aggregatedChartSpeeds.push(maxSpeed.toFixed(2));
+                    aggregatedChartLabels.push(currentBucketLabels[Math.floor(currentBucketLabels.length/2)]);
+                }
+            } else {
+                aggregatedChartLabels.push(...chartLabels);
+                aggregatedChartSpeeds.push(...chartSpeeds);
+            }
+
             // Handler Custom HTML Tooltip
             const getOrCreateTooltip = (chart) => {
                 let tooltipEl = document.getElementById('customTooltip');
@@ -726,7 +791,8 @@ async function openHistoryModal(deviceId, truckNumber) {
                     tooltipEl.innerHTML = `
                         <button class="tooltip-close-btn" id="tooltipCloseBtn"><i class="fa-solid fa-xmark"></i></button>
                         <div style="margin-bottom: 5px; font-weight: bold; font-size: 13px;">Waktu: ${originalLabel}</div>
-                        <div style="margin-bottom: 8px; font-size: 12px;">Kecepatan: ${speedVal} km/jam</div>
+                        <div style="margin-bottom: 2px; font-size: 13px;">Kecepatan: ${speedVal} km/jam</div>
+                        <div style="margin-bottom: 8px; font-size: 10px; color: #cbd5e1; font-style: italic;">(Kecepatan ini adalah nilai tertinggi dalam ${bucketLabel})</div>
                         <button id="tooltipRouteBtn" class="tooltip-route-btn">🗺️ Lihat Rute</button>
                     `;
 
@@ -789,11 +855,11 @@ async function openHistoryModal(deviceId, truckNumber) {
                 speedChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: chartLabels,
+                        labels: aggregatedChartLabels,
                         datasets: [{
-                            label: 'Kecepatan Truk (km/jam)',
-                            data: chartSpeeds,
-                            pointBackgroundColor: chartSpeeds.map(s => {
+                            label: `Kecepatan Truk (Tertinggi per ${bucketLabel})`,
+                            data: aggregatedChartSpeeds,
+                            pointBackgroundColor: aggregatedChartSpeeds.map(s => {
                                 const speed = parseFloat(s);
                                 if (speed > 50) return '#ef4444'; // Merah
                                 if (speed >= 30) return '#f59e0b'; // Kuning
@@ -808,7 +874,7 @@ async function openHistoryModal(deviceId, truckNumber) {
                             segment: {
                                 borderColor: ctx => {
                                     if (ctx.p1DataIndex === undefined) return '#10b981';
-                                    const speed = parseFloat(chartSpeeds[ctx.p1DataIndex]);
+                                    const speed = parseFloat(aggregatedChartSpeeds[ctx.p1DataIndex]);
                                     if (speed > 50) return '#ef4444';
                                     if (speed >= 30) return '#f59e0b';
                                     return '#10b981';
