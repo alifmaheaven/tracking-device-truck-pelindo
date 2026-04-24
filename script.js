@@ -931,11 +931,33 @@ async function openHistoryModal(deviceId, truckNumber) {
             
             // Titik penghubung (Waypoints) beserta jam/waktu
             data.forEach((item, index) => {
-                // Lewati titik ujung agar tidak bentrok dengan marker stard/end yang besar
-                if (index === 0 || index === data.length - 1) return;
-
                 const lat = parseFloat(item.latitude);
                 const lng = parseFloat(item.longitude);
+                let speedVal = chartSpeeds[index] ? chartSpeeds[index] : "0.00";
+
+                // Tambahkan Label Kecepatan di Tengah-tengah Garis (antara titik sebelumnya dan saat ini)
+                if (index > 0) {
+                    const prevLat = parseFloat(data[index-1].latitude);
+                    const prevLng = parseFloat(data[index-1].longitude);
+                    
+                    const midLat = (prevLat + lat) / 2;
+                    const midLng = (prevLng + lng) / 2;
+                    
+                    const speedIcon = L.divIcon({
+                        className: '', // Kosongkan string untuk menghapus styling bawaan .leaflet-div-icon (kotak abu-abu kosong)
+                        html: `<div style="background-color: #6b7280; color: white; border-radius: 4px; font-size: 10px; font-weight: bold; width: 60px; text-align: center; padding: 2px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); opacity: 0.9;">${speedVal} <span style="font-size: 8px;">km/jam</span></div>`,
+                        iconSize: [60, 20],
+                        iconAnchor: [30, 10] // Titik tengah dari iconSize [60, 20]
+                    });
+                    
+                    L.marker([midLat, midLng], {
+                        icon: speedIcon,
+                        interactive: false // Agar tidak mengganggu klik rute
+                    }).addTo(historyLayerGroup);
+                }
+
+                // Lewati titik ujung agar tidak bentrok dengan marker stard/end yang besar
+                if (index === 0 || index === data.length - 1) return;
 
                 let timeStr = "Waktu Tidak Diketahui";
                 if (item.createdDate) {
@@ -950,7 +972,7 @@ async function openHistoryModal(deviceId, truckNumber) {
                     fillOpacity: 1,
                     weight: 2
                 })
-                .bindTooltip(`<b>${timeStr}</b><br>Truck: ${truckNumber}`, { direction: 'top', opacity: 0.9 })
+                .bindTooltip(`<b>${timeStr}</b><br>Truck: ${truckNumber}<br><span style="display:inline-block; margin-top:5px; padding:3px 6px; background-color: #6b7280; color: white; border-radius: 4px; font-size: 11px; font-weight: bold;">${speedVal} km/jam</span>`, { direction: 'top', opacity: 0.9 })
                 .addTo(historyLayerGroup);
             });
 
