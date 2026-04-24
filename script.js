@@ -723,7 +723,8 @@ async function openHistoryModal(deviceId, truckNumber) {
                         if (currentBucketSpeeds.length > 0) {
                             const maxSpeed = Math.max(...currentBucketSpeeds);
                             aggregatedChartSpeeds.push(maxSpeed.toFixed(2));
-                            aggregatedChartLabels.push(currentBucketLabels[Math.floor(currentBucketLabels.length/2)]);
+                            const maxIndex = currentBucketSpeeds.indexOf(maxSpeed);
+                            aggregatedChartLabels.push(currentBucketLabels[maxIndex]);
                         }
                         
                         // Buka ember baru
@@ -740,7 +741,8 @@ async function openHistoryModal(deviceId, truckNumber) {
                 if (currentBucketSpeeds.length > 0) {
                     const maxSpeed = Math.max(...currentBucketSpeeds);
                     aggregatedChartSpeeds.push(maxSpeed.toFixed(2));
-                    aggregatedChartLabels.push(currentBucketLabels[Math.floor(currentBucketLabels.length/2)]);
+                    const maxIndex = currentBucketSpeeds.indexOf(maxSpeed);
+                    aggregatedChartLabels.push(currentBucketLabels[maxIndex]);
                 }
             } else {
                 aggregatedChartLabels.push(...chartLabels);
@@ -807,11 +809,20 @@ async function openHistoryModal(deviceId, truckNumber) {
 
                     const routeBtn = tooltipEl.querySelector('#tooltipRouteBtn');
                     routeBtn.addEventListener('click', () => {
-                        const startIsoLocal = originalLabel.replace(' ', 'T');
-                        const d = new Date(startIsoLocal);
-                        d.setHours(d.getHours() + 1);
+                        const pointIsoLocal = originalLabel.replace(' ', 'T');
+                        const dStart = new Date(pointIsoLocal);
+                        // Tembak secara presisi: Hanya ambil 5 menit sebelum titik tertinggi (menghiraukan ukuran ember bulan/minggu)
+                        dStart.setMinutes(dStart.getMinutes() - 5);
+                        
+                        const dEnd = new Date(pointIsoLocal);
+                        // Sampai 5 menit setelahnya untuk melihat manuver berhentinya
+                        dEnd.setMinutes(dEnd.getMinutes() + 5);
+                        
                         const pad = (n) => n.toString().padStart(2, '0');
-                        const endIsoLocal = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                        const formatIso = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                        
+                        const startIsoLocal = formatIso(dStart);
+                        const endIsoLocal = formatIso(dEnd);
                         
                         const historyTimePreset = document.getElementById('historyTimePreset');
                         const customDateRange = document.getElementById('customDateRange');
