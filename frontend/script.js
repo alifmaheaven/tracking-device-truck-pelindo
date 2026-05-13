@@ -1373,7 +1373,7 @@ const pttEndBtn = document.getElementById('pttEndBtn');
 const pttStatusText = document.getElementById('pttStatusText');
 
 function initPttWebSocket() {
-    pttWs = new WebSocket('ws://localhost:8080');
+    pttWs = new WebSocket('ws://43.157.242.182:9090');
     pttWs.binaryType = 'blob';
 
     pttWs.onopen = () => {
