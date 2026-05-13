@@ -16,6 +16,7 @@ import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const WEBSOCKET_URL = 'ws://43.157.242.182:9090';
 const API_URL = 'https://n8n.freeat.me/webhook/device-cordinate';
@@ -34,7 +35,19 @@ const App = () => {
 
   useEffect(() => {
     requestPermissions();
+    loadStoredDevice();
   }, []);
+
+  const loadStoredDevice = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('activeDevice');
+      if (stored) {
+        setActiveDevice(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Failed to load stored device', e);
+    }
+  };
 
   // Hanya connect WebSockets dan Service ketika sudah login (punya activeDevice)
   useEffect(() => {
@@ -68,10 +81,12 @@ const App = () => {
       
       const found = data.find((d: any) => d.pptCode === pptCodeInput);
       if (found) {
-        setActiveDevice({
+        const deviceData = {
           id: found.deviceId,
           name: found.serialNumber || found.deviceId
-        });
+        };
+        setActiveDevice(deviceData);
+        await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
       } else {
         Alert.alert('Gagal Login', 'PPT Code tidak valid atau sudah kadaluarsa (berubah setiap 5 menit).');
       }
@@ -91,11 +106,12 @@ const App = () => {
         { 
           text: 'Keluar', 
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             setActiveDevice(null);
             setPptCodeInput('');
             setIsConnected(false);
             setCallStatus('Idle');
+            await AsyncStorage.removeItem('activeDevice');
           }
         }
       ]
