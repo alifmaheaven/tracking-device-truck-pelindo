@@ -59,7 +59,8 @@ async function fetchDeviceData() {
                 speed: '- km/h', // API saat ini belum memberikan value speed
                 lastUpdate: connDate.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB',
                 tags: item.deviceTags || [],
-                battery: item.battery || 0
+                battery: item.battery || 0,
+                pptCode: item.pptCode
             };
         });
 
@@ -248,9 +249,15 @@ function renderDeviceList(devices) {
                     <span style="font-size: 12px;">${batteryText}</span>
                 </div>
             </div>
-            <button class="call-btn" onclick="event.stopPropagation(); startPttCall('${device.id}', '${device.truckNumber}')">
-                <i class="fa-solid fa-headset"></i> Panggil Operator
-            </button>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; font-weight: bold; font-size: 14px; color: #0f172a; display: flex; align-items: center; justify-content: center; letter-spacing: 1px;" title="PPT Code untuk login Tablet">
+                    <i class="fa-solid fa-key" style="margin-right: 6px; color: #64748b; font-size: 12px;"></i>
+                    ${device.pptCode || '------'}
+                </div>
+                <button class="call-btn" style="flex: 1; margin-top: 0;" onclick="event.stopPropagation(); startPttCall('${device.id}', '${device.truckNumber}')">
+                    <i class="fa-solid fa-headset"></i> Panggil Operator
+                </button>
+            </div>
         `;
         deviceListContainer.appendChild(card);
     });
