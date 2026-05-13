@@ -1,0 +1,188 @@
+🚛 Push‑to‑Talk Truck Communication System
+
+Rencana Pengembangan (Claude Code Plan)
+
+1. Gambaran Proyek
+
+Tujuan:
+Membangun sistem komunikasi suara push‑to‑talk satu‑ke‑satu (dan nanti bisa grup) antara pusat pemantauan (dashboard web) dan tablet Samsung Tab Active 5 di truk (berjalan di Knox Kiosk). Tablet harus selalu siaga menerima panggilan meskipun layar mati, tanpa intervensi pengemudi.
+
+Fitur Utama:
+
+Operator pusat memilih truk dari daftar, lalu memanggil.
+Tablet truk langsung berdering / auto‑answer, speaker menyala.
+Kedua pihak bicara bergantian dengan menekan tombol PTT.
+Audio dikirim real‑time via WebSocket dengan potongan kecil (chunked).
+Aplikasi tablet berjalan sebagai foreground service agar tidak mati.
+Semua terintegrasi dengan sistem pemantauan truk yang sudah ada.
+2. Arsitektur Sistem
+
+text
+[Pusat – Dashboard Web] ──WebSocket──▶ [Server Relay (Node.js)] ◀──WebSocket── [Tablet – React Native App]
+        │                                        │
+        └── pilih target, kirim audio            └── routing sesi, broadcast binary
+Server relay bertindak sebagai switchboard: menerima registrasi, membentuk sesi panggilan, dan meneruskan potongan audio.
+Dashboard web cukup menambah modul PTT di halaman yang sudah ada.
+Aplikasi React Native memiliki Foreground Service yang menjaga koneksi tetap hidup.
+3. Tumpukan Teknologi
+
+Komponen	Teknologi
+Server relay	Node.js + library ws
+Dashboard web	HTML/CSS/JS (vanilla atau framework Anda)
+Aplikasi tablet	React Native (bare workflow)
+Foreground service	notifee (React Native) + modul native Android
+Audio capture	Modul native AudioRecord (atau library RN)
+Audio playback	react-native-sound / expo-av / native
+Audio mode	Modul native untuk atur speaker & mode komunikasi
+Kiosk management	Samsung Knox Manage / Knox Kiosk
+4. Fase Pengembangan
+
+Fase 1: Server Relay WebSocket (Backend)
+
+Durasi estimasi: 1–2 hari
+
+Inisialisasi proyek Node.js
+
+npm init, install ws.
+Buat server WebSocket
+
+Terima koneksi, simpan mapping clientId → ws.
+Tangani pesan JSON: register, call, acceptCall, endCall.
+Broadcast audio binary hanya ke pasangan sesi.
+Hapus sesi saat koneksi putus.
+Pengujian lokal
+
+Gunakan klien web sederhana untuk simulasi dua peran.
+Fase 2: Integrasi Dashboard Web Pusat
+
+Durasi: 2–3 hari
+
+Tambahkan koneksi WebSocket ke dashboard eksisting
+
+Registrasi dengan ID center-main (atau multi‑operator nanti).
+Buat UI pemanggil
+
+Daftar truk yang terhubung (bisa diambil dari server).
+Tombol “Panggil” di samping setiap truk.
+Tombol PTT besar untuk bicara (muncul saat sesi aktif).
+Penanganan audio
+
+Gunakan getUserMedia + MediaRecorder seperti contoh sebelumnya.
+Playback audio masuk langsung dengan new Audio(blobUrl).
+Uji coba dengan server relay dan satu klien web dummy.
+Fase 3: Aplikasi React Native untuk Tablet
+
+Durasi: 5–7 hari (paling krusial)
+
+3.1 Inisialisasi Project
+
+bash
+npx react-native init TruckPTT
+cd TruckPTT
+npm install @notifee/react-native react-native-sound react-native-audio-record
+# (Atau library audio pilihan lain sesuai kompatibilitas)
+3.2 Bangun Layanan Latar Belakang (Foreground Service)
+
+Gunakan @notifee/react-native untuk membuat notifikasi foreground service.
+Panggil saat aplikasi mulai, jaga agar tetap berjalan.
+Di dalam service, inisialisasi WebSocket dan pertahankan koneksi.
+3.3 Manajemen WebSocket
+
+Buat custom hook atau kelas untuk WebSocket dengan reconnect otomatis.
+Saat terhubung: kirim {"type":"register","id":"truck-xxx"}.
+Tangani pesan JSON: incomingCall, callAccepted, callEnded.
+Auto-accept: kirim {"type":"acceptCall"} langsung agar jalur audio terbuka.
+3.4 Modul Audio
+
+Recording (PTT)
+
+Gunakan modul native yang bisa merekam dalam chunk (mis. AudioRecord dengan buffer 100ms).
+Konversi ke PCM atau Opus (untuk efisiensi). Jika belum sanggup, kirim PCM mentah, server bisa transkode jika perlu.
+Kirim binary via WebSocket.
+Playback
+
+Terima binary, tulis ke file temporary, mainkan dengan react-native-sound (mode Speaker).
+Atau gunakan AudioTrack native untuk kontrol lebih baik (hindari earpiece).
+3.5 UI Sederhana
+
+Tampilkan status koneksi, ID truk, dan tombol PTT besar.
+Tampilkan notifikasi saat panggilan masuk (meski aplikasi minimized, notifikasi akan muncul berkat service).
+Untuk Kiosk, aplikasi selalu di depan, jadi UI bisa langsung berubah otomatis.
+3.6 Pengaturan Audio Manager
+
+Buat modul native kecil untuk menset AudioManager ke MODE_IN_COMMUNICATION dan setSpeakerphoneOn(true). Ini penting agar suara keluar dari speaker utama tablet.
+Fase 4: Konfigurasi Knox Kiosk
+
+Durasi: 1–2 hari
+
+Build APK release dari aplikasi React Native (signed).
+Daftarkan di Knox Manage / Knox Kiosk
+
+Unggah APK.
+Atur sebagai aplikasi tunggal (single app kiosk).
+Setel kebijakan:
+
+Microphone = Allow
+Speaker = Allow
+Battery optimization = Disabled (aplikasi dikecualikan)
+Auto-start app on boot = Enabled
+Permission auto-grant = true
+Keep screen on = Optional (biarkan layar mati, service tetap jalan)
+Uji coba: pasang APK, nyalakan tablet, pastikan aplikasi langsung berjalan, notifikasi foreground muncul, dan tetap bisa menerima panggilan walau layar mati.
+Fase 5: Pengujian & Penyetelan Akhir
+
+Durasi: 2–3 hari
+
+Uji panggilan antar dua peran
+
+Pusat panggil truk → auto-answer → suara terdengar di tablet → pusat dengar balasan.
+Uji dalam berbagai kondisi
+
+Tablet layar mati.
+Jaringan seluler dengan sinyal lemah (latensi, auto-reconnect).
+Panggilan bersamaan (pastikan sibuk ditangani).
+Uji performa baterai
+
+Pastikan konsumsi daya masih wajar (tablet selalu dicharge di dock, jadi tidak kritis).
+Perbaiki bug UI, audio drop, dsb.
+Fase 6: Deployment
+
+Durasi: 1 hari
+
+Server relay di‑host di VPS atau on‑premise yang dapat dijangkau dashboard dan tablet (gunakan HTTPS/WSS jika melalui internet publik).
+Dashboard cukup update halaman dengan modul PTT yang sudah dites.
+Tablet distribusikan APK via Knox Manage, atau install manual di semua tablet.
+5. Panduan Penggunaan Claude Code
+
+Simpan rencana ini sebagai file PTT-Plan.md, lalu di Claude Code Anda bisa memberikan prompt:
+
+text
+Saya ingin membangun aplikasi push-to-talk sesuai rencana yang ada di PTT-Plan.md.
+Mulailah dengan Fase 1: Server Relay WebSocket.
+Buatkan kode lengkap untuk server Node.js menggunakan library ws.
+Sertakan cara menjalankannya.
+Atau untuk fase lain:
+
+text
+Lanjutkan ke Fase 2: modul PTT untuk dashboard web.
+Buatkan file HTML/JS yang bisa disisipkan ke dashboard yang sudah ada.
+Secara bertahap, minta Claude menghasilkan kode untuk setiap bagian sambil menjelaskan integrasinya.
+
+6. Risiko & Mitigasi
+
+Risiko	Mitigasi
+Kualitas audio rendah / delay	Gunakan chunk kecil, codec Opus jika memungkinkan; uji di jaringan sebenarnya.
+Foreground service dimatikan sistem	Pastikan Knox menonaktifkan battery optimization, set notifikasi prioritas tinggi.
+Microphone tidak dapat diakses di background	Mulai merekam hanya saat PTT ditekan (foreground), tetapi karena service tetap hidup, tidak masalah.
+Ketergantungan pada koneksi internet	Fitur auto-reconnect; indikator offline di dashboard.
+Keamanan (penyusup menyamar sebagai truk)	Tambahkan token JWT saat registrasi, validasi di server.
+7. Estimasi Waktu Total
+
+Fase	Waktu
+1 – Server relay	2 hari
+2 – Dashboard web	3 hari
+3 – Aplikasi React Native	7 hari
+4 – Konfigurasi Knox	2 hari
+5 – Testing	3 hari
+6 – Deployment	1 hari
+Total	~18 hari (1 developer)

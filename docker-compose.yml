@@ -1,6 +1,6 @@
 services:
   nginx-web:
-    build: .
+    build: ./frontend
     container_name: pelindo-tracker-ui
     ports:
       - "8123:80"
