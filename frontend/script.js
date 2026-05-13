@@ -1372,6 +1372,7 @@ let pttWs = null;
 let pttActiveTarget = null;
 let mediaRecorder = null;
 let audioStream = null;
+let pttNextStartTime = 0;
 
 const pttPanel = document.getElementById('pttActivePanel');
 const pttTargetName = document.getElementById('pttTargetName');
@@ -1411,10 +1412,18 @@ function initPttWebSocket() {
                 }
                 const audioBuffer = window.audioCtx.createBuffer(1, float32Array.length, 16000);
                 audioBuffer.getChannelData(0).set(float32Array);
+
+                const currentTime = window.audioCtx.currentTime;
+                if (pttNextStartTime < currentTime) {
+                    pttNextStartTime = currentTime;
+                }
+
                 const source = window.audioCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 source.connect(window.audioCtx.destination);
-                source.start();
+                source.start(pttNextStartTime);
+                
+                pttNextStartTime += audioBuffer.duration;
             };
             reader.readAsArrayBuffer(event.data);
         } else {
