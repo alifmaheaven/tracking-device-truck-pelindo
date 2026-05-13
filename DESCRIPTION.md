@@ -86,7 +86,19 @@ Setiap asisten AI yang memodifikasi sistem ini **HARUS MEMATUHI** aturan mutlak 
 6. **Timezone (WIB) Layering Effect:**
    - Seluruh logika simpan DB (N8N) berpaku pada standar murni ISO 8601 UTC Time. Tanggal Waktu Indonesia Barat `Asia/Jakarta` mutlak dijadikan sebatas format topeng presentasi ke *User Interface* (`.toLocaleString()` dsb). Jangan keliru memutar logika dan mengoper WIB mentah-mentah saat merequest *History API Date Range*.
 
-## 6. Known Pending Features / Todos
+## 6. Push-To-Talk (PTT) System Architecture
+Sistem komunikasi suara *real-time* dua arah (Half-Duplex) antara Web Dashboard dan Mobile Tablet pengemudi truk dirancang dengan topologi *WebSocket Relay*.
+- **Backend Relay (VPS Server)**: Berada di VPS eksternal menggunakan Node.js (`server.js`) pada *port* 8080 (di-ekspos via Docker ke 9090). Berperan murni sebagai *Switchboard Router*. Jika pesan berupa `binary` (PCM Audio) atau JSON ber-tipe `voiceMessage`, server akan mem- *forward* langsung ke target klien tujuan tanpa memproses audionya.
+- **Frontend Dashboard (Web)**:
+  - *Mobile to Web*: Menerima *streaming* rekaman audio mentah (*Raw 16-bit 16000Hz PCM*) dari aplikasi tablet, lalu di-dekripsi secara *real-time* menggunakan **Web Audio API (`AudioContext`)** karena browser tidak bisa memutar Blob PCM mentah via tag `<audio>`.
+  - *Web to Mobile*: Menggunakan `MediaRecorder` bawaan peramban (format `WebM/Opus`). Bukannya *streaming* per *chunk*, Web mengirim *Full Audio Blob* (dikemas dalam Base64 JSON `voiceMessage`) seketika tombol "Panggil" dilepas untuk meniru komunikasi *Walkie-Talkie* klasik.
+- **Mobile Tablet (Expo / React Native)**:
+  - Terpisah ke dalam direktori `mobile/TruckPTT_Expo`. Dibangun menggunakan EAS Build untuk membuka kapabilitas modul *Native* Android (`@notifee/react-native`, `react-native-audio-record`, `expo-av`, `expo-file-system`) yang tidak disokong oleh Expo Go.
+  - *Foreground Service*: WAJIB diregistrasi di akar `app/_layout.tsx` menggunakan `notifee.registerForegroundService` dan ditandai tipe `MICROPHONE` & `MEDIA_PLAYBACK` pada `app.json` (wajib untuk Android 14+). Notifikasi menetap dipasang agar skema manajemen memori sistem Android (*Doze/Battery Saver*) tidak membunuh *WebSocket* maupun Perekam Suara secara sepihak saat layar tablet diredupkan.
+  - *Network Security*: WAJIB disuntikkan `expo-build-properties: { android: { usesCleartextTraffic: true } }` di `app.json` guna meretas perlindungan paksa OS Android 9+ terhadap lalu-lintas jaringan tanpa enkripsi (`ws://`).
+  - *Auth Binding*: Proses login dinamis memvalidasi status supir dengan mengikat (*binding*) sesi login ke *PPT Code* (selalu diperbarui API tiap 5 menit) untuk menerjemahkan `deviceId` unik mesin yang selanjutnya diteruskan ke VPS untuk menambatkan jalur komunikasi.
+
+## 7. Known Pending Features / Todos
 Area iterasi selanjutnya (Bila diperlukan/diminta):
 * Mekanisme **Marker Clustering** murni Leaflet bila kelak populasi API alat membludak tembus target > 500 titik per detik.
 * **Geofencing & Polygon Warning**: Mewarnakan peta area terlarang doking pelabuhan untuk menyiarkan sinyal _Alert_ UI merah bila koordinat truk melenceng menabrak benteng Polygon.
