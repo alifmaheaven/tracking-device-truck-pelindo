@@ -1386,6 +1386,12 @@ function initPttWebSocket() {
     pttWs.onopen = () => {
         console.log("PTT WebSocket connected");
         pttWs.send(JSON.stringify({ type: 'register', id: 'center-main' }));
+        const dot = document.getElementById('wsDot');
+        const text = document.getElementById('wsText');
+        if (dot && text) {
+            dot.style.backgroundColor = '#10b981'; // Green
+            text.innerText = 'Server PTT Terhubung';
+        }
     };
 
     pttWs.onmessage = async (event) => {
@@ -1422,6 +1428,12 @@ function initPttWebSocket() {
 
     pttWs.onclose = () => {
         console.log("PTT WebSocket disconnected, reconnecting...");
+        const dot = document.getElementById('wsDot');
+        const text = document.getElementById('wsText');
+        if (dot && text) {
+            dot.style.backgroundColor = '#ef4444'; // Red
+            text.innerText = 'Server PTT Terputus';
+        }
         setTimeout(initPttWebSocket, 3000);
     };
 }

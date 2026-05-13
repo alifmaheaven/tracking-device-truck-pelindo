@@ -28,7 +28,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link rel="icon" href="https://www.teluklamong.co.id/images/favicon.png">
-  <script type="module" crossorigin src="/assets/index-DDmHy_bU.js"></script>
+  <script type="module" crossorigin src="/assets/index-DEJanN8e.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-D1-YVeyK.css">
 </head>
 <body>
@@ -38,6 +38,10 @@
             <div class="sidebar-header">
                 <h2><i class="fa-solid fa-truck-fast"></i> Device Tracker</h2>
                 <p>Tracking Posisi Truck Teluk Lamong</p>
+                <div id="wsIndicator" style="margin-top: 8px; font-size: 11px; display: flex; align-items: center; gap: 6px; color: #cbd5e1;">
+                    <div id="wsDot" style="width: 8px; height: 8px; border-radius: 50%; background-color: #ef4444;"></div>
+                    <span id="wsText">Server PTT Terputus</span>
+                </div>
             </div>
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>

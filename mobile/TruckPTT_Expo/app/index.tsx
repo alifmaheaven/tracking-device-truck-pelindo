@@ -67,8 +67,8 @@ const App = () => {
       const found = data.find((d: any) => d.pptCode === pptCodeInput);
       if (found) {
         setActiveDevice({
-          id: found.id,
-          name: found.truckNumber || found.id
+          id: found.deviceId,
+          name: found.serialNumber || found.deviceId
         });
       } else {
         Alert.alert('Gagal Login', 'PPT Code tidak valid atau sudah kadaluarsa (berubah setiap 5 menit).');
