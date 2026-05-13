@@ -11,9 +11,11 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import notifee, { AndroidImportance } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidForegroundServiceType } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
+import * as FileSystem from 'expo-file-system';
+import { Audio } from 'expo-av';
 
 const WEBSOCKET_URL = 'ws://43.157.242.182:9090';
 const API_URL = 'https://n8n.freeat.me/webhook/device-cordinate';
@@ -137,6 +139,10 @@ const App = () => {
         asForegroundService: true,
         ongoing: true,
         smallIcon: 'ic_launcher',
+        foregroundServiceTypes: [
+          AndroidForegroundServiceType.MICROPHONE,
+          AndroidForegroundServiceType.MEDIA_PLAYBACK,
+        ],
       },
     });
   };
@@ -201,7 +207,7 @@ const App = () => {
     };
   };
 
-  const handleSignaling = (data: any, ws: WebSocket) => {
+  const handleSignaling = async (data: any, ws: WebSocket) => {
     switch (data.type) {
       case 'incomingCall':
         ws.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
@@ -218,6 +224,20 @@ const App = () => {
         break;
       case 'error':
         Alert.alert('Error', data.message);
+        break;
+      case 'voiceMessage':
+        if (data.audioBase64) {
+          try {
+            const tempUri = FileSystem.documentDirectory + 'ptt_in.webm';
+            await FileSystem.writeAsStringAsync(tempUri, data.audioBase64, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            const { sound } = await Audio.Sound.createAsync({ uri: tempUri });
+            await sound.playAsync();
+          } catch (e) {
+            console.log('Failed to play voice message', e);
+          }
+        }
         break;
     }
   };

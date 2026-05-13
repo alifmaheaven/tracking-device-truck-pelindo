@@ -1396,10 +1396,27 @@ function initPttWebSocket() {
 
     pttWs.onmessage = async (event) => {
         if (event.data instanceof Blob) {
-            // Received audio chunk, play it
-            const audioUrl = URL.createObjectURL(event.data);
-            const audio = new Audio(audioUrl);
-            audio.play();
+            // Decode raw 16-bit 16000Hz PCM sent by React Native Audio Record
+            if (!window.audioCtx) {
+                window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function() {
+                const arrayBuffer = reader.result;
+                const int16Array = new Int16Array(arrayBuffer);
+                const float32Array = new Float32Array(int16Array.length);
+                for (let i = 0; i < int16Array.length; i++) {
+                    float32Array[i] = int16Array[i] / 32768.0;
+                }
+                const audioBuffer = window.audioCtx.createBuffer(1, float32Array.length, 16000);
+                audioBuffer.getChannelData(0).set(float32Array);
+                const source = window.audioCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(window.audioCtx.destination);
+                source.start();
+            };
+            reader.readAsArrayBuffer(event.data);
         } else {
             const data = JSON.parse(event.data);
             switch (data.type) {
@@ -1477,6 +1494,8 @@ if (pttEndBtn) {
 }
 
 // Media Recorder Logic for Talk Button
+let audioChunks = [];
+
 async function startRecording() {
     if (pttTalkBtn.style.pointerEvents === 'none') return; // Cannot talk if not connected
 
@@ -1493,12 +1512,28 @@ async function startRecording() {
     const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
     
     mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
+    audioChunks = [];
+    
     mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0 && pttWs && pttWs.readyState === WebSocket.OPEN) {
-            pttWs.send(e.data); // Send blob directly (binary mode)
-        }
+        if (e.data.size > 0) audioChunks.push(e.data);
     };
-    mediaRecorder.start(200); // Send chunk every 200ms
+    
+    mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: mimeType });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+            const base64data = reader.result.split(',')[1];
+            if (pttWs && pttWs.readyState === WebSocket.OPEN) {
+                pttWs.send(JSON.stringify({ 
+                    type: 'voiceMessage', 
+                    audioBase64: base64data 
+                }));
+            }
+        };
+    };
+    
+    mediaRecorder.start(); // Start continuously
     
     pttTalkBtn.classList.add('active');
     pttTalkBtn.querySelector('span').innerText = 'MEREKAM...';

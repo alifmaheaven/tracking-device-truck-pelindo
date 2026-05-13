@@ -59,6 +59,17 @@ wss.on('connection', (ws) => {
             }
             break;
 
+          case 'voiceMessage':
+            const partnerIdMsg = sessions.get(currentClientId);
+            if (partnerIdMsg) {
+              const partnerWsMsg = clients.get(partnerIdMsg);
+              if (partnerWsMsg && partnerWsMsg.readyState === WebSocket.OPEN) {
+                // Forward the voice message JSON as-is
+                partnerWsMsg.send(message.toString());
+              }
+            }
+            break;
+
           case 'acceptCall':
             // { type: 'acceptCall', callerId: 'center-main' }
             const callerId = data.callerId;
