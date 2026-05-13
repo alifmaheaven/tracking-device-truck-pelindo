@@ -28,8 +28,8 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link rel="icon" href="https://www.teluklamong.co.id/images/favicon.png">
-  <script type="module" crossorigin src="/assets/index-COouROYO.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Bf03rwHV.css">
+  <script type="module" crossorigin src="/assets/index--xLcu_9F.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-D1-YVeyK.css">
 </head>
 <body>
     <div class="app-container">
@@ -110,6 +110,24 @@
             </button>
             <div id="map"></div>
         </main>
+    </div>
+
+    <!-- PTT Active Panel -->
+    <div id="pttActivePanel" class="ptt-panel hidden">
+        <div class="ptt-header">
+            <h3><i class="fa-solid fa-headset"></i> Panggilan PTT Aktif</h3>
+            <div id="pttTargetName">Truk B 1234 CD</div>
+        </div>
+        <div class="ptt-body">
+            <button id="pttTalkBtn" class="ptt-talk-btn">
+                <i class="fa-solid fa-microphone"></i>
+                <span>TAHAN UNTUK BICARA</span>
+            </button>
+            <div id="pttStatusText" class="ptt-status">Status: Terhubung</div>
+        </div>
+        <div class="ptt-footer">
+            <button id="pttEndBtn" class="ptt-end-btn"><i class="fa-solid fa-phone-slash"></i> Akhiri Panggilan</button>
+        </div>
     </div>
 
     <!-- History Modal -->

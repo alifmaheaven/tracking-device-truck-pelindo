@@ -248,6 +248,9 @@ function renderDeviceList(devices) {
                     <span style="font-size: 12px;">${batteryText}</span>
                 </div>
             </div>
+            <button class="call-btn" onclick="event.stopPropagation(); startPttCall('${device.id}', '${device.truckNumber}')">
+                <i class="fa-solid fa-headset"></i> Panggil Operator
+            </button>
         `;
         deviceListContainer.appendChild(card);
     });
@@ -1354,3 +1357,152 @@ async function updateNavRoute() {
         console.error("Gagal menarik rute navigasi API: ", e);
     }
 }
+
+// ==========================================
+// PUSH-TO-TALK (PTT) WEBSOCKET LOGIC
+// ==========================================
+let pttWs = null;
+let pttActiveTarget = null;
+let mediaRecorder = null;
+let audioStream = null;
+
+const pttPanel = document.getElementById('pttActivePanel');
+const pttTargetName = document.getElementById('pttTargetName');
+const pttTalkBtn = document.getElementById('pttTalkBtn');
+const pttEndBtn = document.getElementById('pttEndBtn');
+const pttStatusText = document.getElementById('pttStatusText');
+
+function initPttWebSocket() {
+    pttWs = new WebSocket('ws://localhost:8080');
+    pttWs.binaryType = 'blob';
+
+    pttWs.onopen = () => {
+        console.log("PTT WebSocket connected");
+        pttWs.send(JSON.stringify({ type: 'register', id: 'center-main' }));
+    };
+
+    pttWs.onmessage = async (event) => {
+        if (event.data instanceof Blob) {
+            // Received audio chunk, play it
+            const audioUrl = URL.createObjectURL(event.data);
+            const audio = new Audio(audioUrl);
+            audio.play();
+        } else {
+            const data = JSON.parse(event.data);
+            switch (data.type) {
+                case 'incomingCall':
+                    // We are center, we usually initiate, but if truck calls us:
+                    console.log('Incoming call from: ', data.callerId);
+                    // For now, auto-accept
+                    pttWs.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
+                    break;
+                case 'callAccepted':
+                    pttStatusText.innerText = 'Status: Terhubung';
+                    pttTalkBtn.style.opacity = '1';
+                    pttTalkBtn.style.pointerEvents = 'auto';
+                    break;
+                case 'callEnded':
+                    endPttCallUI();
+                    alert('Panggilan diakhiri oleh target atau terputus.');
+                    break;
+                case 'error':
+                    alert('PTT Error: ' + data.message);
+                    endPttCallUI();
+                    break;
+            }
+        }
+    };
+
+    pttWs.onclose = () => {
+        console.log("PTT WebSocket disconnected, reconnecting...");
+        setTimeout(initPttWebSocket, 3000);
+    };
+}
+
+window.startPttCall = (targetId, targetName) => {
+    if (!pttWs || pttWs.readyState !== WebSocket.OPEN) {
+        alert("Koneksi PTT belum siap. Mencoba menghubungkan ulang...");
+        initPttWebSocket();
+        return;
+    }
+    
+    // UI state
+    pttActiveTarget = targetId;
+    pttTargetName.innerText = targetName;
+    pttPanel.classList.remove('hidden');
+    pttStatusText.innerText = 'Status: Memanggil...';
+    pttTalkBtn.style.opacity = '0.5';
+    pttTalkBtn.style.pointerEvents = 'none';
+
+    // Send Call Request
+    pttWs.send(JSON.stringify({ type: 'call', targetId: targetId }));
+};
+
+function endPttCallUI() {
+    pttPanel.classList.add('hidden');
+    pttActiveTarget = null;
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    }
+    pttTalkBtn.classList.remove('active');
+    pttTalkBtn.querySelector('span').innerText = 'TAHAN UNTUK BICARA';
+}
+
+if (pttEndBtn) {
+    pttEndBtn.addEventListener('click', () => {
+        if (pttWs && pttWs.readyState === WebSocket.OPEN) {
+            pttWs.send(JSON.stringify({ type: 'endCall' }));
+        }
+        endPttCallUI();
+    });
+}
+
+// Media Recorder Logic for Talk Button
+async function startRecording() {
+    if (pttTalkBtn.style.pointerEvents === 'none') return; // Cannot talk if not connected
+
+    if (!audioStream) {
+        try {
+            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) {
+            alert('Tidak dapat mengakses microphone: ' + e.message);
+            return;
+        }
+    }
+    
+    // Some browsers need different mimeTypes
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+    
+    mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0 && pttWs && pttWs.readyState === WebSocket.OPEN) {
+            pttWs.send(e.data); // Send blob directly (binary mode)
+        }
+    };
+    mediaRecorder.start(200); // Send chunk every 200ms
+    
+    pttTalkBtn.classList.add('active');
+    pttTalkBtn.querySelector('span').innerText = 'MEREKAM...';
+}
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    }
+    if (pttTalkBtn.classList.contains('active')) {
+        pttTalkBtn.classList.remove('active');
+        pttTalkBtn.querySelector('span').innerText = 'TAHAN UNTUK BICARA';
+    }
+}
+
+if (pttTalkBtn) {
+    pttTalkBtn.addEventListener('mousedown', startRecording);
+    pttTalkBtn.addEventListener('mouseup', stopRecording);
+    pttTalkBtn.addEventListener('mouseleave', stopRecording); // Stop if cursor leaves
+    // For touch devices
+    pttTalkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, {passive: false});
+    pttTalkBtn.addEventListener('touchend', stopRecording);
+}
+
+// Initialize on load
+initPttWebSocket();
