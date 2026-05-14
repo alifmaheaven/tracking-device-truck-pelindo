@@ -11,8 +11,9 @@ import {
   Alert,
   ActivityIndicator,
   AppState,
+  Linking,
 } from 'react-native';
-import notifee, { AndroidImportance, AndroidForegroundServiceType } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidForegroundServiceType, AndroidCategory } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -159,6 +160,7 @@ const App = () => {
   const requestPermissions = async () => {
     if (Platform.OS === 'android') {
       try {
+        // Request microphone permission
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
           {
@@ -171,6 +173,20 @@ const App = () => {
         );
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
           console.warn('Microphone permission denied');
+        }
+
+        // Request notification permission (Android 13+)
+        await notifee.requestPermission();
+
+        // Request battery optimization exemption for persistent background service
+        try {
+          await Linking.sendIntent(
+            'android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+            [{ key: 'package', value: 'com.pelindo.truckptt' }]
+          );
+        } catch (batteryErr) {
+          // Non-fatal: user may have already granted or dismissed
+          console.log('Battery optimization request skipped:', batteryErr);
         }
       } catch (err) {
         console.warn(err);
@@ -268,22 +284,70 @@ const App = () => {
     };
   };
 
+  const showIncomingCallNotification = async (callerId: string) => {
+    try {
+      const channelId = await notifee.createChannel({
+        id: 'incoming-calls',
+        name: 'Panggilan Masuk',
+        importance: AndroidImportance.HIGH,
+        sound: 'default',
+        vibration: true,
+      });
+
+      await notifee.displayNotification({
+        id: 'incoming-call',
+        title: '📞 Panggilan Masuk dari Pusat',
+        body: 'Ketuk untuk membuka PTT',
+        android: {
+          channelId,
+          category: AndroidCategory.CALL,
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          vibrationPattern: [300, 500, 300, 500],
+          fullScreenAction: {
+            id: 'default',
+          },
+          pressAction: {
+            id: 'default',
+          },
+          autoCancel: false,
+          ongoing: true,
+        },
+      });
+    } catch (e) {
+      console.log('Failed to show incoming call notification:', e);
+    }
+  };
+
+  const dismissCallNotification = async () => {
+    try {
+      await notifee.cancelNotification('incoming-call');
+    } catch (e) {
+      // ignore
+    }
+  };
+
   const handleSignaling = async (data: any, ws: WebSocket) => {
     switch (data.type) {
       case 'incomingCall':
+        // Show full-screen notification to wake the phone
+        await showIncomingCallNotification(data.callerId);
         ws.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
         callSessionRef.current = { active: true, callerId: data.callerId };
         setCallStatus('Terhubung dengan Pusat');
         break;
       case 'callAccepted':
+        await dismissCallNotification();
         callSessionRef.current = { active: true, callerId: data.targetId };
         setCallStatus('Terhubung');
         break;
       case 'callEnded':
+        await dismissCallNotification();
         callSessionRef.current = { active: false, callerId: null };
         setCallStatus('Idle');
         break;
       case 'error':
+        await dismissCallNotification();
         Alert.alert('Error', data.message);
         break;
       case 'voiceMessage':
