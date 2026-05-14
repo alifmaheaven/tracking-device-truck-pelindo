@@ -13,6 +13,10 @@ console.log("WebSocket Relay Server started on port 8080");
 wss.on('connection', (ws) => {
   console.log("New connection established");
   let currentClientId = null;
+  ws.isAlive = true;
+
+  // Respond to pong
+  ws.on('pong', () => { ws.isAlive = true; });
 
   ws.on('message', (message, isBinary) => {
     if (isBinary) {
@@ -147,4 +151,20 @@ wss.on('connection', (ws) => {
       }
     }
   });
+});
+
+// Ping all clients every 25 seconds to keep connections alive
+const keepaliveInterval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      console.log('Terminating dead connection');
+      return ws.terminate();
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 25000);
+
+wss.on('close', () => {
+  clearInterval(keepaliveInterval);
 });

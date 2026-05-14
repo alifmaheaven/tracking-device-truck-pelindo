@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  AppState,
 } from 'react-native';
 import notifee, { AndroidImportance, AndroidForegroundServiceType } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
@@ -30,6 +31,9 @@ const App = () => {
   const [callStatus, setCallStatus] = useState('Idle');
   const [isRecording, setIsRecording] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const activeDeviceRef = useRef<{ id: string; name: string } | null>(null);
+  const foregroundServiceStarted = useRef(false);
+  const reconnectTimer = useRef<any>(null);
   
   const callSessionRef = useRef({ active: false, callerId: null as string | null });
 
@@ -49,24 +53,58 @@ const App = () => {
     }
   };
 
+  // Keep activeDeviceRef in sync with state
+  useEffect(() => {
+    activeDeviceRef.current = activeDevice;
+  }, [activeDevice]);
+
   // Hanya connect WebSockets dan Service ketika sudah login (punya activeDevice)
   useEffect(() => {
     if (activeDevice) {
-      startForegroundService();
+      // Enable background audio playback
+      Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      }).catch(e => console.log('Audio mode error:', e));
+
+      // Start foreground service ONLY if not already started (must be in foreground)
+      if (!foregroundServiceStarted.current) {
+        startForegroundService();
+      }
       initAudioRecord();
       connectWebSocket();
     } else {
       // Cleanup ketika logout
-      if (wsRef.current) wsRef.current.close();
+      foregroundServiceStarted.current = false;
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
       notifee.stopForegroundService();
     }
 
     return () => {
-      if (wsRef.current) wsRef.current.close();
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
       AudioRecord.stop();
       notifee.stopForegroundService();
     };
   }, [activeDevice]);
+
+  // Handle app foreground/background transitions
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && activeDeviceRef.current) {
+        // App came to foreground - reconnect WS if needed
+        if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+          console.log('App returned to foreground, reconnecting WS...');
+          connectWebSocket();
+        }
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   const handleLogin = async () => {
     if (!pptCodeInput) {
@@ -141,26 +179,28 @@ const App = () => {
   };
 
   const startForegroundService = async () => {
-    const channelId = await notifee.createChannel({
-      id: 'ptt-service',
-      name: 'Push To Talk Service',
-      importance: AndroidImportance.HIGH,
-    });
+    try {
+      const channelId = await notifee.createChannel({
+        id: 'ptt-service',
+        name: 'Push To Talk Service',
+        importance: AndroidImportance.HIGH,
+      });
 
-    notifee.displayNotification({
-      title: 'Truck PTT Aktif',
-      body: `Login sebagai: ${activeDevice?.name}`,
-      android: {
-        channelId,
-        asForegroundService: true,
-        ongoing: true,
-        smallIcon: 'ic_launcher',
-        foregroundServiceTypes: [
-          128, // AndroidForegroundServiceType.MICROPHONE
-          2,   // AndroidForegroundServiceType.MEDIA_PLAYBACK
-        ],
-      },
-    });
+      await notifee.displayNotification({
+        title: 'Truck PTT Aktif',
+        body: `Login sebagai: ${activeDevice?.name}`,
+        android: {
+          channelId,
+          asForegroundService: true,
+          ongoing: true,
+          smallIcon: 'ic_launcher',
+        },
+      });
+      foregroundServiceStarted.current = true;
+      console.log('Foreground service started successfully');
+    } catch (e) {
+      console.log('Foreground service failed (non-fatal):', e);
+    }
   };
 
   const initAudioRecord = () => {
@@ -182,6 +222,12 @@ const App = () => {
   };
 
   const connectWebSocket = () => {
+    // Prevent duplicate connections
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.CONNECTING || wsRef.current.readyState === WebSocket.OPEN)) {
+      console.log('WS already connected or connecting, skip');
+      return;
+    }
+
     console.log('Connecting to ' + WEBSOCKET_URL);
     const ws = new WebSocket(WEBSOCKET_URL);
     wsRef.current = ws;
@@ -210,11 +256,10 @@ const App = () => {
     ws.onclose = () => {
       console.log('WS Disconnected');
       setIsConnected(false);
-      setCallStatus('Idle');
-      callSessionRef.current.active = false;
-      // Auto reconnect if still logged in
-      if (activeDevice) {
-        setTimeout(connectWebSocket, 3000);
+      // Auto reconnect if still logged in, but only if app is active
+      if (activeDeviceRef.current) {
+        if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+        reconnectTimer.current = setTimeout(connectWebSocket, 5000);
       }
     };
 
@@ -244,13 +289,24 @@ const App = () => {
       case 'voiceMessage':
         if (data.audioBase64) {
           try {
-            console.log('FileSystem availability:', !!FileSystem, 'EncodingType:', FileSystem?.EncodingType);
-            const tempUri = FileSystem.documentDirectory + 'ptt_in.webm';
+            const tempUri = FileSystem.documentDirectory + 'ptt_in.wav';
             await FileSystem.writeAsStringAsync(tempUri, data.audioBase64, {
               encoding: FileSystem.EncodingType?.Base64 || 'base64',
             });
+            // Ensure background mode is active before playing
+            await Audio.setAudioModeAsync({
+              allowsRecordingIOS: false,
+              staysActiveInBackground: true,
+              playsInSilentModeIOS: true,
+              shouldDuckAndroid: true,
+              playThroughEarpieceAndroid: false,
+            });
             const { sound } = await Audio.Sound.createAsync({ uri: tempUri });
             await sound.playAsync();
+            // Auto-unload after playback finishes
+            sound.setOnPlaybackStatusUpdate((status: any) => {
+              if (status.didJustFinish) sound.unloadAsync();
+            });
           } catch (e) {
             console.log('Failed to play voice message:', e);
           }
