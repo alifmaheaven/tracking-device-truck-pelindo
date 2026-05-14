@@ -1373,12 +1373,26 @@ let pttActiveTarget = null;
 let mediaRecorder = null;
 let audioStream = null;
 let pttNextStartTime = 0;
+window.audioCtx = null;
+
+// Modern browsers require a user gesture to start AudioContext
+window.addEventListener('click', () => {
+    if (!window.audioCtx) {
+        window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (window.audioCtx.state === 'suspended') {
+        window.audioCtx.resume();
+    }
+}, { once: true });
 
 const pttPanel = document.getElementById('pttActivePanel');
 const pttTargetName = document.getElementById('pttTargetName');
 const pttTalkBtn = document.getElementById('pttTalkBtn');
 const pttEndBtn = document.getElementById('pttEndBtn');
 const pttStatusText = document.getElementById('pttStatusText');
+const scrollGuide = document.getElementById('scrollGuide');
+const scrollGuideText = document.getElementById('scrollGuideText');
+let talkingTimeouts = {};
 
 function initPttWebSocket() {
     pttWs = new WebSocket('ws://43.157.242.182:9090');
@@ -1429,11 +1443,21 @@ function initPttWebSocket() {
         } else {
             const data = JSON.parse(event.data);
             switch (data.type) {
+                case 'audioStream':
+                    // Handle wrapped audio from center-main perspective
+                    handleIncomingAudioStream(data.from, data.data);
+                    break;
                 case 'incomingCall':
-                    // We are center, we usually initiate, but if truck calls us:
+                    // We are center, we usually standby. Auto-accept truck calls.
                     console.log('Incoming call from: ', data.callerId);
-                    // For now, auto-accept
                     pttWs.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
+                    
+                    // Open PTT Panel if it was closed
+                    pttActiveTarget = data.callerId;
+                    const device = devicesData.find(d => d.id === data.callerId);
+                    pttTargetName.innerText = device ? device.serialNumber || device.deviceId : data.callerId;
+                    pttPanel.classList.remove('hidden');
+                    pttStatusText.innerText = 'Status: Terhubung (Masuk)';
                     break;
                 case 'callAccepted':
                     pttStatusText.innerText = 'Status: Terhubung';
@@ -1569,3 +1593,70 @@ if (pttTalkBtn) {
 
 // Initialize on load
 initPttWebSocket();
+// Function to handle incoming audio stream and UI notifications
+function handleIncomingAudioStream(fromId, base64Data) {
+    // 1. Play Audio
+    const binaryString = window.atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Use the existing AudioContext logic
+    if (!window.audioCtx) window.audioCtx = new AudioContext();
+    const arrayBuffer = bytes.buffer;
+    const int16Array = new Int16Array(arrayBuffer);
+    const float32Array = new Float32Array(int16Array.length);
+    for (let i = 0; i < int16Array.length; i++) {
+        float32Array[i] = int16Array[i] / 32768.0;
+    }
+    const audioBuffer = window.audioCtx.createBuffer(1, float32Array.length, 16000);
+    audioBuffer.getChannelData(0).set(float32Array);
+
+    const currentTime = window.audioCtx.currentTime;
+    if (pttNextStartTime < currentTime) {
+        pttNextStartTime = currentTime;
+    }
+
+    const source = window.audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(window.audioCtx.destination);
+    source.start(pttNextStartTime);
+    pttNextStartTime += audioBuffer.duration;
+
+    // 2. UI Notification (Blinking)
+    const card = document.getElementById(`card-${fromId}`);
+    if (card) {
+        card.classList.add('is-talking');
+        
+        // Find truck number for scroll guide
+        const device = devicesData.find(d => d.id === fromId);
+        const truckNum = device ? device.serialNumber || device.deviceId : fromId;
+
+        // Reset timeout for "Talking" state
+        if (talkingTimeouts[fromId]) clearTimeout(talkingTimeouts[fromId]);
+        talkingTimeouts[fromId] = setTimeout(() => {
+            card.classList.remove('is-talking');
+            if (scrollGuide) scrollGuide.classList.remove('visible');
+            delete talkingTimeouts[fromId];
+        }, 2000); // Stop blinking after 2s of silence
+
+        // 3. Scroll Check
+        const container = document.getElementById('deviceList');
+        const rect = card.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        const isVisible = (rect.top >= containerRect.top && rect.bottom <= containerRect.bottom);
+        
+        if (!isVisible && scrollGuide) {
+            scrollGuideText.innerText = `${truckNum} sedang bicara...`;
+            scrollGuide.classList.add('visible');
+            scrollGuide.onclick = () => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                scrollGuide.classList.remove('visible');
+            };
+        } else if (scrollGuide) {
+            scrollGuide.classList.remove('visible');
+        }
+    }
+}

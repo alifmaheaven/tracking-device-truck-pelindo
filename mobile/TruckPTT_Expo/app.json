@@ -51,7 +51,8 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "ndkVersion": "26.1.10909125"
           }
         }
       ]

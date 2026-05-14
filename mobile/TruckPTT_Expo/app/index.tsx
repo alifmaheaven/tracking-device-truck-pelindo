@@ -14,7 +14,7 @@ import {
 import notifee, { AndroidImportance, AndroidForegroundServiceType } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -156,8 +156,8 @@ const App = () => {
         ongoing: true,
         smallIcon: 'ic_launcher',
         foregroundServiceTypes: [
-          AndroidForegroundServiceType.MICROPHONE,
-          AndroidForegroundServiceType.MEDIA_PLAYBACK,
+          128, // AndroidForegroundServiceType.MICROPHONE
+          2,   // AndroidForegroundServiceType.MEDIA_PLAYBACK
         ],
       },
     });
@@ -244,14 +244,15 @@ const App = () => {
       case 'voiceMessage':
         if (data.audioBase64) {
           try {
+            console.log('FileSystem availability:', !!FileSystem, 'EncodingType:', FileSystem?.EncodingType);
             const tempUri = FileSystem.documentDirectory + 'ptt_in.webm';
             await FileSystem.writeAsStringAsync(tempUri, data.audioBase64, {
-              encoding: FileSystem.EncodingType.Base64,
+              encoding: FileSystem.EncodingType?.Base64 || 'base64',
             });
             const { sound } = await Audio.Sound.createAsync({ uri: tempUri });
             await sound.playAsync();
           } catch (e) {
-            console.log('Failed to play voice message', e);
+            console.log('Failed to play voice message:', e);
           }
         }
         break;
@@ -259,7 +260,13 @@ const App = () => {
   };
 
   const handlePressIn = () => {
-    if (!callSessionRef.current.active) return;
+    if (!callSessionRef.current.active) {
+      if (wsRef.current && isConnected) {
+        wsRef.current.send(JSON.stringify({ type: 'call', targetId: 'center-main' }));
+        setCallStatus('Menghubungi Pusat...');
+      }
+      return;
+    }
     setIsRecording(true);
     AudioRecord.start();
   };
@@ -340,7 +347,6 @@ const App = () => {
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           activeOpacity={0.8}
-          disabled={!callSessionRef.current.active}
         >
           <Text style={styles.pttText}>
             {isRecording ? 'MEREKAM...' : 'TAHAN UNTUK BICARA'}

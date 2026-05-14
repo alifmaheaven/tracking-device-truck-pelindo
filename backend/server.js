@@ -16,13 +16,26 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message, isBinary) => {
     if (isBinary) {
-      // Audio chunk received, forward to partner
+      // 1. Always forward a copy to center-main for global monitoring
+      const centerWs = clients.get('center-main');
+      if (centerWs && centerWs.readyState === WebSocket.OPEN && currentClientId !== 'center-main') {
+        centerWs.send(JSON.stringify({
+          type: 'audioStream',
+          from: currentClientId,
+          data: message.toString('base64')
+        }));
+      }
+
+      // 2. Forward to session partner if active
       if (currentClientId) {
         const partnerId = sessions.get(currentClientId);
         if (partnerId) {
           const partnerWs = clients.get(partnerId);
           if (partnerWs && partnerWs.readyState === WebSocket.OPEN) {
-            partnerWs.send(message, { binary: true });
+            // For mobile, send raw binary
+            if (partnerId !== 'center-main') {
+              partnerWs.send(message, { binary: true });
+            }
           }
         }
       }
