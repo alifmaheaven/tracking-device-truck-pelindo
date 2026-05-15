@@ -16,13 +16,13 @@ import {
 import notifee, { AndroidImportance, AndroidForegroundServiceType, AndroidCategory, EventType } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
-import * as FileSystem from 'expo-file-system/legacy';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped } from '../modules/ptt-overlay';
 
-const WEBSOCKET_URL = 'ws://43.157.242.182:9090';
-const API_URL = 'https://n8n.freeat.me/webhook/device-cordinate';
+const WEBSOCKET_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://43.157.242.182:9090';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://n8n.freeat.me/webhook/device-cordinate';
+const REGISTRATION_SECRET = process.env.EXPO_PUBLIC_REGISTRATION_SECRET || '';
 
 const App = () => {
   const [activeDevice, setActiveDevice] = useState<{ id: string; name: string } | null>(null);
@@ -243,7 +243,7 @@ const App = () => {
         setActiveDevice(deviceData);
         await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
       } else {
-        Alert.alert('Gagal Login', 'PPT Code tidak valid atau sudah kadaluarsa (berubah setiap 5 menit).');
+        Alert.alert('Gagal Login', 'PPT Code tidak valid atau sudah kadaluarsa.');
       }
     } catch (err) {
       Alert.alert('Error Koneksi', 'Gagal memuat data dari server N8N.');
@@ -421,7 +421,11 @@ const App = () => {
       // Use ref to avoid stale closure on reconnect
       const device = activeDeviceRef.current;
       if (device) {
-        ws.send(JSON.stringify({ type: 'register', id: device.id }));
+        ws.send(JSON.stringify({ 
+          type: 'register', 
+          id: device.id,
+          secret: REGISTRATION_SECRET 
+        }));
         console.log('Registered as:', device.id);
       } else {
         console.log('WS Connected but no active device to register');
@@ -502,30 +506,54 @@ const App = () => {
     }
   };
 
+  const audioQueue = useRef<Blob[]>([]);
+  const isAudioPlaying = useRef(false);
+
   const handleBinaryAudio = async (blob: Blob) => {
-    try {
-      const arrayBuffer = await blob.arrayBuffer();
-      const int16Array = new Int16Array(arrayBuffer);
-      // Build WAV header + PCM data for expo-av playback
-      const wavBuffer = buildWav(int16Array, 16000);
-      const tempUri = FileSystem.documentDirectory + 'ptt_stream.wav';
-      await FileSystem.writeAsStringAsync(tempUri, Buffer.from(wavBuffer).toString('base64'), {
-        encoding: FileSystem.EncodingType?.Base64 || 'base64',
-      });
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
-      const { sound } = await Audio.Sound.createAsync({ uri: tempUri });
-      await sound.playAsync();
-      sound.setOnPlaybackStatusUpdate((status: any) => {
-        if (status.didJustFinish) sound.unloadAsync();
-      });
-    } catch (e) {
-      console.log('Failed to play binary audio:', e);
+    audioQueue.current.push(blob);
+    processAudioQueue();
+  };
+
+  const processAudioQueue = async () => {
+    if (isAudioPlaying.current || audioQueue.current.length === 0) return;
+    
+    isAudioPlaying.current = true;
+    const blob = audioQueue.current.shift();
+    
+    if (blob) {
+      try {
+        const arrayBuffer = await blob.arrayBuffer();
+        const int16Array = new Int16Array(arrayBuffer);
+        const wavBuffer = buildWav(int16Array, 16000);
+        // Use data URI instead of temp file — avoids filesystem I/O latency
+        const base64 = Buffer.from(wavBuffer).toString('base64');
+        const dataUri = `data:audio/wav;base64,${base64}`;
+
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+
+        const { sound } = await Audio.Sound.createAsync({ uri: dataUri });
+        await sound.playAsync();
+
+        sound.setOnPlaybackStatusUpdate(async (status: any) => {
+          if (status.didJustFinish) {
+            await sound.unloadAsync();
+            isAudioPlaying.current = false;
+            processAudioQueue();
+          }
+        });
+      } catch (e) {
+        console.log('Failed to play binary audio:', e);
+        isAudioPlaying.current = false;
+        processAudioQueue();
+      }
+    } else {
+      isAudioPlaying.current = false;
     }
   };
 
@@ -599,11 +627,7 @@ const App = () => {
       case 'voiceMessage':
         if (data.audioBase64) {
           try {
-            const tempUri = FileSystem.documentDirectory + 'ptt_in.wav';
-            await FileSystem.writeAsStringAsync(tempUri, data.audioBase64, {
-              encoding: FileSystem.EncodingType?.Base64 || 'base64',
-            });
-            // Ensure background mode is active before playing
+            const dataUri = `data:audio/wav;base64,${data.audioBase64}`;
             await Audio.setAudioModeAsync({
               allowsRecordingIOS: false,
               staysActiveInBackground: true,
@@ -611,9 +635,8 @@ const App = () => {
               shouldDuckAndroid: true,
               playThroughEarpieceAndroid: false,
             });
-            const { sound } = await Audio.Sound.createAsync({ uri: tempUri });
+            const { sound } = await Audio.Sound.createAsync({ uri: dataUri });
             await sound.playAsync();
-            // Auto-unload after playback finishes
             sound.setOnPlaybackStatusUpdate((status: any) => {
               if (status.didJustFinish) sound.unloadAsync();
             });
@@ -666,7 +689,7 @@ const App = () => {
       <SafeAreaView style={styles.loginContainer}>
         <View style={styles.loginBox}>
           <Text style={styles.loginTitle}>Login Truk PTT</Text>
-          <Text style={styles.loginSubtitle}>Masukkan PPT Code Anda (Berubah setiap 5 menit)</Text>
+          <Text style={styles.loginSubtitle}>Masukkan PPT Code Anda yang Aktif</Text>
           
           <TextInput
             style={styles.input}

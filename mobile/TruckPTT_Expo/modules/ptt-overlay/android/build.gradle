@@ -4,11 +4,11 @@ apply plugin: 'expo-module-gradle-plugin'
 
 android {
   namespace "expo.modules.pttoverlay"
-  compileSdk 35
+  compileSdk rootProject.ext.compileSdkVersion
 
   defaultConfig {
-    minSdk 24
-    targetSdk 35
+    minSdkVersion rootProject.ext.minSdkVersion
+    targetSdkVersion rootProject.ext.targetSdkVersion
   }
 
   compileOptions {

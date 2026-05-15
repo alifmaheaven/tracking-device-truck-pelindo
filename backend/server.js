@@ -1,6 +1,10 @@
+require('dotenv').config();
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: 8080 });
+const PORT = process.env.PORT || 8080;
+const REGISTRATION_SECRET = process.env.REGISTRATION_SECRET;
+
+const wss = new WebSocket.Server({ port: PORT });
 
 // Map of clientId -> WebSocket connection
 const clients = new Map();
@@ -8,7 +12,7 @@ const clients = new Map();
 // Map of clientId -> partnerClientId (who they are currently in a call with)
 const sessions = new Map();
 
-console.log("WebSocket Relay Server started on port 8080");
+console.log(`WebSocket Relay Server started on port ${PORT}`);
 
 wss.on('connection', (ws) => {
   console.log("New connection established");
@@ -52,6 +56,21 @@ wss.on('connection', (ws) => {
         
         switch (data.type) {
           case 'register':
+            // Basic security check if secret is configured
+            if (REGISTRATION_SECRET && data.secret !== REGISTRATION_SECRET) {
+              console.log(`Registration failed for ${data.id}: Invalid secret`);
+              ws.send(JSON.stringify({ type: 'error', message: 'Authentication failed: Invalid secret' }));
+              ws.close();
+              return;
+            }
+
+            // Clean up old connection with same ID if exists
+            const oldWs = clients.get(data.id);
+            if (oldWs && oldWs !== ws) {
+              console.log(`Closing stale connection for client: ${data.id}`);
+              oldWs.close();
+            }
+
             currentClientId = data.id;
             clients.set(currentClientId, ws);
             console.log(`Client registered: ${currentClientId} (total clients: ${clients.size})`);

@@ -1,322 +1,48 @@
-// Konfigurasi API N8N
-const API_URL = 'https://n8n.freeat.me/webhook/device-cordinate';
+import { getBatteryDisplay, playPcmAudio } from './src/utils.js';
+import { setupMap, fetchDeviceData, renderMarkers, renderDeviceList, handleSearchInput } from './src/map.js';
+import { state } from './src/state.js';
 
-// State global untuk menyimpan data terbaru
-let devicesData = [];
-const markersList = {};
+// Konfigurasi API N8N dari Environment Variables
+const API_URL = import.meta.env.VITE_API_URL || 'https://n8n.freeat.me/webhook/device-cordinate';
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://43.157.242.182:9090';
+const REGISTRATION_SECRET = import.meta.env.VITE_REGISTRATION_SECRET || '';
 
-// Initialize Map Leaflet (Pusat titik dipindah ke area koordinat riil Teluk Lamong dari API)
+// Map init
 const map = L.map('map').setView([-7.195, 112.68], 15);
+state.map = map;
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
-// Custom icon untuk marker truck
-const truckActiveIcon = L.divIcon({
-    html: `<div style="background-color: #2563eb; color: white; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; border-radius: 50%; box-shadow: 0 4px 12px rgba(37,99,235,0.4); border: 2px solid white;">
-            <i class="fa-solid fa-truck"></i>
-           </div>`,
-    className: 'custom-div-icon',
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -18]
-});
-
-const truckIdleIcon = L.divIcon({
-    html: `<div style="background-color: #f59e0b; color: white; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; border-radius: 50%; box-shadow: 0 4px 12px rgba(245,158,11,0.4); border: 2px solid white;">
-            <i class="fa-solid fa-truck"></i>
-           </div>`,
-    className: 'custom-div-icon',
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -18]
-});
-
-
-// Fungsi untuk memanggil data dari API N8N
-async function fetchDeviceData() {
-    try {
-        deviceListContainer.innerHTML = '<p style="text-align:center; margin-top: 20px;">Mengambil data API...</p>';
-        
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        
-        // Memetakan (Mapping) hasil API ke format yang dibutuhkan UI kita
-        devicesData = data.map(item => {
-            // Karena API tidak menyimpan keterangan status aktif, kita buat logika sederhana:
-            // Jika update terakhir di bawah 60 menit, kita anggap 'active'. Lebih dari itu 'idle'.
-            const connDate = item.lastConnectionDate ? new Date(item.lastConnectionDate.time) : new Date();
-            const now = new Date();
-            const diffMinutes = Math.floor((now - connDate) / (1000 * 60));
-            const status = diffMinutes < 120 ? 'active' : 'idle'; // Toleransi 2 jam
-            
-            return {
-                id: item.deviceId,
-                truckNumber: item.serialNumber, // Menggunakan Serial Number sebagai representasi Truk
-                coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)],
-                status: status,
-                speed: '- km/h', // API saat ini belum memberikan value speed
-                lastUpdate: connDate.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }) + ' WIB',
-                tags: item.deviceTags || [],
-                battery: item.battery || 0,
-                pptCode: item.pptCode
-            };
-        });
-
-        // Setelah data berhasil termapping, render ke Maps dan Sidebar
-        renderMarkers();
-        // Reset Search Input dan render list
-        const keyword = searchInput.value.toLowerCase();
-        const filtered = devicesData.filter(d => {
-            const tagMatch = d.tags && d.tags.some(tag => (tag.tagValue || tag).toString().toLowerCase().includes(keyword));
-            return d.truckNumber.toLowerCase().includes(keyword) || 
-                   d.id.toLowerCase().includes(keyword) ||
-                   tagMatch;
-        });
-        renderDeviceList(filtered);
-        
-        if (isNavigating) {
-            updateNavRoute();
-        }
-
-    } catch (error) {
-        console.error('Gagal mengambil data dari API:', error);
-        deviceListContainer.innerHTML = '<p style="text-align:center; color: var(--idle-orange); margin-top: 20px;"><i class="fa-solid fa-triangle-exclamation"></i> Gagal mengambil data. Pastikan Webhook N8N menyala.</p>';
-        
-        // Tampilkan setidaknya dummy data jika gagal agar layout tidak kosong melompong.
-        // renderDeviceList([... dummy array if needed])
-    }
-}
-
-// Render Markers ke Map
-function renderMarkers() {
-    // Hapus marker lama sebelum menaruh yang baru (untuk mencegah duplikasi jika di-refresh)
-    Object.values(markersList).forEach(marker => {
-        map.removeLayer(marker);
-    });
-
-    devicesData.forEach(device => {
-        // Cek jika sedang mode navigasi, sembunyikan truk selain target
-        if (isNavigating && navTargetDevice && device.id !== navTargetDevice.id) return;
-
-        // Cek jika koordinat invalid
-        if (isNaN(device.coordinates[0]) || isNaN(device.coordinates[1])) return;
-
-        let badgeHtml = '';
-        if (device.tags && device.tags.length > 0) {
-            let firstTag = device.tags[0].tagValue || device.tags[0];
-            badgeHtml = `<div class="marker-floating-badge">${firstTag}</div>`;
-        }
-
-        const bgColor = device.status === 'active' ? '#2563eb' : '#f59e0b';
-        const shadowColor = device.status === 'active' ? 'rgba(37,99,235,0.4)' : 'rgba(245,158,11,0.4)';
-
-        const customIcon = L.divIcon({
-            html: `<div style="position: relative; background-color: ${bgColor}; color: white; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; border-radius: 50%; box-shadow: 0 4px 12px ${shadowColor}; border: 2px solid white;">
-                    <i class="fa-solid fa-truck"></i>
-                    ${badgeHtml}
-                   </div>`,
-            className: 'custom-div-icon',
-            iconSize: [36, 36],
-            iconAnchor: [18, 18],
-            popupAnchor: [0, -18]
-        });
-
-        const marker = L.marker(device.coordinates, { icon: customIcon }).addTo(map);
-        
-        // Setup popup konten (Hapus onclick dari sini)
-        let tagsHtml = '';
-        if (device.tags && device.tags.length > 0) {
-            const badges = device.tags.map(tag => `<span class="tag-badge"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
-            tagsHtml = `<div class="device-tags" style="margin-bottom: 10px;">${badges}</div>`;
-        }
-
-        let batteryVal = parseFloat(device.battery || 0);
-        let batteryColor = '#ef4444'; // Merah
-        let batteryIcon = 'fa-battery-quarter';
-        
-        if (batteryVal >= 70) {
-            batteryColor = '#10b981'; // Hijau
-            batteryIcon = 'fa-battery-full';
-        } else if (batteryVal >= 30) {
-            batteryColor = '#f59e0b'; // Kuning
-            batteryIcon = 'fa-battery-half';
-        } else if (batteryVal <= 10) {
-            batteryIcon = 'fa-battery-empty';
-        }
-        const batteryText = !isNaN(batteryVal) ? batteryVal.toFixed(0) + '%' : 'N/A';
-
-        const popupContent = `
-            <div class="custom-popup-content">
-                <h3><i class="fa-solid fa-truck"></i> ${device.truckNumber}</h3>
-                ${tagsHtml}
-                <p><strong>Device ID:</strong> ${device.id.substring(0,8)}...</p>
-                <p><strong>Baterai:</strong> <span style="color: ${batteryColor}; font-weight: 600;"><i class="fa-solid ${batteryIcon}"></i> ${batteryText}</span></p>
-                <p><strong>Koordinat:</strong> ${device.coordinates[0]}, ${device.coordinates[1]}</p>
-                <p><strong>Status:</strong> <span style="text-transform: capitalize;">${device.status}</span></p>
-                <p><strong>Update:</strong> ${device.lastUpdate}</p>
-                <button class="history-btn" id="hist-btn-${device.id}">
-                    <i class="fa-solid fa-route"></i> Riwayat Perjalanan
-                </button>
-                <button class="direction-btn" id="dir-btn-${device.id}">
-                    <i class="fa-solid fa-location-crosshairs"></i> Arahkan ke Truk
-                </button>
-            </div>
-        `;
-        
-        marker.bindPopup(popupContent);
-        
-        // Pasang event listener saat popup dibuka
-        marker.on('popupopen', () => {
-            const btn = document.getElementById(`hist-btn-${device.id}`);
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    openHistoryModal(device.id, device.truckNumber);
-                });
-            }
-            
-            const dirBtn = document.getElementById(`dir-btn-${device.id}`);
-            if (dirBtn) {
-                dirBtn.addEventListener('click', () => {
-                    startDirectionMode(device);
-                });
-            }
-        });
-
-        markersList[device.id] = marker;
-    });
-}
-
-// DOM Elements
+// DOM refs
 const deviceListContainer = document.getElementById('deviceList');
 const searchInput = document.getElementById('searchInput');
 const totalDeviceCount = document.getElementById('totalDeviceCount');
 
-// Render list device ke sidebar
-function renderDeviceList(devices) {
-    deviceListContainer.innerHTML = '';
-    
-    if (totalDeviceCount) {
-        totalDeviceCount.innerText = devices.length;
-    }
-    
-    if (devices.length === 0) {
-        deviceListContainer.innerHTML = '<p style="text-align:center; color: var(--text-muted); margin-top: 20px;">Tidak ada device/truk ditemukan.</p>';
-        return;
-    }
-
-    devices.forEach(device => {
-        const card = document.createElement('div');
-        card.className = 'device-card';
-        card.id = `card-${device.id}`; // untuk keperluan highlight
-        
-        // Event click untuk fokus ke maps
-        card.addEventListener('click', () => focusDevice(device.id));
-
-        const statusClass = device.status === 'active' ? 'status-active' : 'status-idle';
-        
-        let tagsHtml = '<div style="color: var(--text-muted); font-size: 13px; font-style: italic;">No Tag</div>';
-        if (device.tags && device.tags.length > 0) {
-            // Kita buat gaya badge sedikit lebih besar dari ukuran default sebelumnya (16px), namun tidak raksasa
-            const badges = device.tags.map(tag => `<span class="tag-badge" style="font-size: 15px; padding: 6px 12px; border-radius: 6px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
-            tagsHtml = `<div class="device-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">${badges}</div>`;
-        }
-
-        let batteryVal = parseFloat(device.battery || 0);
-        let batteryColor = '#ef4444'; // Merah
-        let batteryIcon = 'fa-battery-quarter';
-        
-        if (batteryVal >= 70) {
-            batteryColor = '#10b981'; // Hijau
-            batteryIcon = 'fa-battery-full';
-        } else if (batteryVal >= 30) {
-            batteryColor = '#f59e0b'; // Kuning
-            batteryIcon = 'fa-battery-half';
-        } else if (batteryVal <= 10) {
-            batteryIcon = 'fa-battery-empty';
-        }
-
-        const batteryText = !isNaN(batteryVal) ? batteryVal.toFixed(0) + '%' : 'N/A';
-
-        card.innerHTML = `
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                <div style="flex: 1;">
-                    ${tagsHtml}
-                </div>
-                <div class="battery-status" title="Battery: ${batteryText}" style="color: ${batteryColor}; font-weight: 700; font-size: 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                    <i class="fa-solid ${batteryIcon}" style="font-size: 20px;"></i>
-                    <span style="font-size: 12px;">${batteryText}</span>
-                </div>
-            </div>
-            <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; font-weight: bold; font-size: 14px; color: #0f172a; display: flex; align-items: center; justify-content: center; letter-spacing: 1px;" title="PPT Code untuk login Tablet">
-                    <i class="fa-solid fa-key" style="margin-right: 6px; color: #64748b; font-size: 12px;"></i>
-                    ${device.pptCode || '------'}
-                </div>
-                <button class="call-btn" style="flex: 1; margin-top: 0;" onclick="event.stopPropagation(); startPttCall('${device.id}', '${device.truckNumber}')">
-                    <i class="fa-solid fa-headset"></i> Panggil Operator
-                </button>
-            </div>
-        `;
-        deviceListContainer.appendChild(card);
-    });
-}
-
-// Fungsi untuk fokus pada salah satu device
-function focusDevice(deviceId) {
-    const device = devicesData.find(d => d.id === deviceId);
-    if (!device) return;
-
-    // Reset highlight di semua card
-    const allCards = document.querySelectorAll('.device-card');
-    allCards.forEach(c => c.classList.remove('active-card'));
-    
-    // Set highlight di card yg dipilih
-    const selectedCard = document.getElementById(`card-${deviceId}`);
-    if (selectedCard) {
-        selectedCard.classList.add('active-card');
-    }
-
-    // Arahkan map ke koordinat (FlyTo) dengan zoom 16
-    map.flyTo(device.coordinates, 16, { duration: 1.5 });
-    
-    // Auto collapse sidebar di HP setelah truk dipilih
-    if (window.innerWidth <= 768) {
-        const sideEl = document.getElementById('sidebar');
-        const togEl = document.getElementById('toggleSidebarBtn');
-        if (sideEl) sideEl.classList.add('collapsed');
-        if (togEl) togEl.classList.add('collapsed');
-    }
-
-    // Tampilkan popup dari marker setelah map mendarat
-    setTimeout(() => {
-        if(markersList[deviceId]) {
-            markersList[deviceId].openPopup();
-        }
-    }, 1500); // Sinkronisasi dengan durasi flyTo
-}
-
-// Fitur pencarian realtime
-searchInput.addEventListener('input', (e) => {
-    const keyword = e.target.value.toLowerCase();
-    
-    const filteredDevices = devicesData.filter(d => {
-        const tagMatch = d.tags && d.tags.some(tag => (tag.tagValue || tag).toString().toLowerCase().includes(keyword));
-        return (d.truckNumber && d.truckNumber.toLowerCase().includes(keyword)) || 
-               (d.id && d.id.toLowerCase().includes(keyword)) ||
-               tagMatch;
-    });
-    
-    renderDeviceList(filteredDevices);
+// Configure map module with shared state bindings
+function _navActive() { return isNavigating; }
+function _navTarget() { return navTargetDevice; }
+setupMap({
+  apiUrl: API_URL,
+  searchInput,
+  deviceListContainer,
+  totalDeviceCount,
+  isNavActive: _navActive,
+  getNavTarget: _navTarget,
+  openHistoryModal: (id, name) => openHistoryModal(id, name),
+  startDirectionMode: (d) => startDirectionMode(d),
 });
+
+// Search listener
+searchInput.addEventListener('input', handleSearchInput);
 
 // Menjalankan fetch data petama kali
 fetchDeviceData();
 
 // auto update data lokasi secara real-time dengan counter countdown dinamis
-let refreshInterval = 15;
-let countdown = refreshInterval;
+let refreshInterval = state.refreshInterval;
+let countdown = state.countdown;
 const refreshCircle = document.getElementById('refreshCircle');
 const refreshText = document.getElementById('refreshText');
 
@@ -1330,7 +1056,7 @@ async function updateNavRoute() {
         return;
     }
     
-    const targetLatLng = markersList[navTargetDevice.id] ? markersList[navTargetDevice.id].getLatLng() : L.latLng(navTargetDevice.coordinates[0], navTargetDevice.coordinates[1]);
+    const targetLatLng = state.markersList[navTargetDevice.id] ? state.markersList[navTargetDevice.id].getLatLng() : L.latLng(navTargetDevice.coordinates[0], navTargetDevice.coordinates[1]);
     const userLatLng = userMarker.getLatLng();
     
     try {
@@ -1368,321 +1094,17 @@ async function updateNavRoute() {
 // ==========================================
 // PUSH-TO-TALK (PTT) WEBSOCKET LOGIC
 // ==========================================
-let pttWs = null;
-let pttActiveTarget = null;
-let mediaRecorder = null;
-let audioStream = null;
-let pttNextStartTime = 0;
+import { setupPtt, initPttWebSocket, startPttCall, bindPttButtons } from './src/ptt.js';
+
 window.audioCtx = null;
 
-// Modern browsers require a user gesture to start AudioContext
-window.addEventListener('click', () => {
-    if (!window.audioCtx) {
-        window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (window.audioCtx.state === 'suspended') {
-        window.audioCtx.resume();
-    }
-}, { once: true });
+setupPtt({
+    wsUrl: WS_URL,
+    registrationSecret: REGISTRATION_SECRET,
+});
 
-const pttPanel = document.getElementById('pttActivePanel');
-const pttTargetName = document.getElementById('pttTargetName');
-const pttTalkBtn = document.getElementById('pttTalkBtn');
-const pttEndBtn = document.getElementById('pttEndBtn');
-const pttStatusText = document.getElementById('pttStatusText');
-const scrollGuide = document.getElementById('scrollGuide');
-const scrollGuideText = document.getElementById('scrollGuideText');
-let talkingTimeouts = {};
-
-function initPttWebSocket() {
-    // Prevent duplicate connections
-    if (pttWs && (pttWs.readyState === WebSocket.CONNECTING || pttWs.readyState === WebSocket.OPEN)) {
-        console.log("PTT WS already connecting or open, skipping duplicate init");
-        return;
-    }
-
-    // Nullify old socket's handlers to prevent stale reconnect loops
-    if (pttWs) {
-        pttWs.onclose = null;
-        pttWs.onerror = null;
-        pttWs.onmessage = null;
-        pttWs.onopen = null;
-    }
-
-    pttWs = new WebSocket('ws://43.157.242.182:9090');
-    pttWs.binaryType = 'blob';
-
-    pttWs.onopen = () => {
-        console.log("PTT WebSocket connected");
-        pttWs.send(JSON.stringify({ type: 'register', id: 'center-main' }));
-        const dot = document.getElementById('wsDot');
-        const text = document.getElementById('wsText');
-        if (dot && text) {
-            dot.style.backgroundColor = '#10b981'; // Green
-            text.innerText = 'Server PTT Terhubung';
-        }
-    };
-
-    pttWs.onmessage = async (event) => {
-        if (event.data instanceof Blob) {
-            // Decode raw 16-bit 16000Hz PCM sent by React Native Audio Record
-            if (!window.audioCtx) {
-                window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (window.audioCtx.state === 'suspended') {
-                await window.audioCtx.resume();
-            }
-
-            const reader = new FileReader();
-            reader.onload = function() {
-                const arrayBuffer = reader.result;
-                const int16Array = new Int16Array(arrayBuffer);
-                const float32Array = new Float32Array(int16Array.length);
-                for (let i = 0; i < int16Array.length; i++) {
-                    float32Array[i] = int16Array[i] / 32768.0;
-                }
-                const audioBuffer = window.audioCtx.createBuffer(1, float32Array.length, 16000);
-                audioBuffer.getChannelData(0).set(float32Array);
-
-                const currentTime = window.audioCtx.currentTime;
-                if (pttNextStartTime < currentTime) {
-                    pttNextStartTime = currentTime;
-                }
-
-                const source = window.audioCtx.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(window.audioCtx.destination);
-                source.start(pttNextStartTime);
-                
-                pttNextStartTime += audioBuffer.duration;
-            };
-            reader.readAsArrayBuffer(event.data);
-        } else {
-            const data = JSON.parse(event.data);
-            switch (data.type) {
-                case 'audioStream':
-                    // Handle wrapped audio from center-main perspective
-                    await handleIncomingAudioStream(data.from, data.data);
-                    break;
-                case 'incomingCall':
-                    // We are center, we usually standby. Auto-accept truck calls.
-                    console.log('Incoming call from: ', data.callerId);
-                    pttWs.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
-                    
-                    // Open PTT Panel if it was closed
-                    pttActiveTarget = data.callerId;
-                    const device = devicesData.find(d => d.id === data.callerId);
-                    pttTargetName.innerText = device ? device.serialNumber || device.deviceId : data.callerId;
-                    pttPanel.classList.remove('hidden');
-                    pttStatusText.innerText = 'Status: Terhubung (Masuk)';
-                    break;
-                case 'callAccepted':
-                    pttStatusText.innerText = 'Status: Terhubung';
-                    pttTalkBtn.style.opacity = '1';
-                    pttTalkBtn.style.pointerEvents = 'auto';
-                    break;
-                case 'callEnded':
-                    endPttCallUI();
-                    alert('Panggilan diakhiri oleh target atau terputus.');
-                    break;
-                case 'error':
-                    alert('PTT Error: ' + data.message);
-                    endPttCallUI();
-                    break;
-            }
-        }
-    };
-
-    pttWs.onerror = (e) => {
-        console.error("PTT WebSocket error:", e);
-    };
-
-    pttWs.onclose = () => {
-        console.log("PTT WebSocket disconnected, reconnecting...");
-        const dot = document.getElementById('wsDot');
-        const text = document.getElementById('wsText');
-        if (dot && text) {
-            dot.style.backgroundColor = '#ef4444'; // Red
-            text.innerText = 'Server PTT Terputus';
-        }
-        setTimeout(initPttWebSocket, 3000);
-    };
-}
-
-window.startPttCall = (targetId, targetName) => {
-    if (!pttWs || pttWs.readyState !== WebSocket.OPEN) {
-        alert("Koneksi PTT belum siap. Mencoba menghubungkan ulang...");
-        initPttWebSocket();
-        return;
-    }
-    
-    // UI state
-    pttActiveTarget = targetId;
-    pttTargetName.innerText = targetName;
-    pttPanel.classList.remove('hidden');
-    pttStatusText.innerText = 'Status: Memanggil...';
-    pttTalkBtn.style.opacity = '0.5';
-    pttTalkBtn.style.pointerEvents = 'none';
-
-    // Send Call Request
-    pttWs.send(JSON.stringify({ type: 'call', targetId: targetId }));
-};
-
-function endPttCallUI() {
-    pttPanel.classList.add('hidden');
-    pttActiveTarget = null;
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-    }
-    pttTalkBtn.classList.remove('active');
-    pttTalkBtn.querySelector('span').innerText = 'TAHAN UNTUK BICARA';
-}
-
-if (pttEndBtn) {
-    pttEndBtn.addEventListener('click', () => {
-        if (pttWs && pttWs.readyState === WebSocket.OPEN) {
-            pttWs.send(JSON.stringify({ type: 'endCall' }));
-        }
-        endPttCallUI();
-    });
-}
-
-// Media Recorder Logic for Talk Button
-let audioChunks = [];
-
-async function startRecording() {
-    if (pttTalkBtn.style.pointerEvents === 'none') return; // Cannot talk if not connected
-    // Guard against double-start
-    if (mediaRecorder && mediaRecorder.state === 'recording') return;
-
-    if (!audioStream) {
-        try {
-            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (e) {
-            alert('Tidak dapat mengakses microphone: ' + e.message);
-            return;
-        }
-    }
-    
-    // Some browsers need different mimeTypes
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
-    
-    mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
-    audioChunks = [];
-    
-    mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunks.push(e.data);
-    };
-    
-    mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: mimeType });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-            const base64data = reader.result.split(',')[1];
-            if (pttWs && pttWs.readyState === WebSocket.OPEN) {
-                pttWs.send(JSON.stringify({ 
-                    type: 'voiceMessage', 
-                    audioBase64: base64data 
-                }));
-            }
-        };
-    };
-    
-    mediaRecorder.start(); // Start continuously
-    
-    pttTalkBtn.classList.add('active');
-    pttTalkBtn.querySelector('span').innerText = 'MEREKAM...';
-}
-
-function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-    }
-    if (pttTalkBtn.classList.contains('active')) {
-        pttTalkBtn.classList.remove('active');
-        pttTalkBtn.querySelector('span').innerText = 'TAHAN UNTUK BICARA';
-    }
-}
-
-if (pttTalkBtn) {
-    pttTalkBtn.addEventListener('mousedown', startRecording);
-    pttTalkBtn.addEventListener('mouseup', stopRecording);
-    pttTalkBtn.addEventListener('mouseleave', stopRecording); // Stop if cursor leaves
-    // For touch devices
-    pttTalkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, {passive: false});
-    pttTalkBtn.addEventListener('touchend', stopRecording);
-}
-
-// Initialize on load
+bindPttButtons();
 initPttWebSocket();
-// Function to handle incoming audio stream and UI notifications
-async function handleIncomingAudioStream(fromId, base64Data) {
-    // 1. Play Audio
-    const binaryString = window.atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    
-    // Use the existing AudioContext logic
-    if (!window.audioCtx) window.audioCtx = new AudioContext();
-    if (window.audioCtx.state === 'suspended') {
-        await window.audioCtx.resume();
-    }
-    const arrayBuffer = bytes.buffer;
-    const int16Array = new Int16Array(arrayBuffer);
-    const float32Array = new Float32Array(int16Array.length);
-    for (let i = 0; i < int16Array.length; i++) {
-        float32Array[i] = int16Array[i] / 32768.0;
-    }
-    const audioBuffer = window.audioCtx.createBuffer(1, float32Array.length, 16000);
-    audioBuffer.getChannelData(0).set(float32Array);
 
-    const currentTime = window.audioCtx.currentTime;
-    if (pttNextStartTime < currentTime) {
-        pttNextStartTime = currentTime;
-    }
-
-    const source = window.audioCtx.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(window.audioCtx.destination);
-    source.start(pttNextStartTime);
-    pttNextStartTime += audioBuffer.duration;
-
-    // 2. UI Notification (Blinking)
-    const card = document.getElementById(`card-${fromId}`);
-    if (card) {
-        card.classList.add('is-talking');
-        
-        // Find truck number for scroll guide
-        const device = devicesData.find(d => d.id === fromId);
-        const truckNum = device ? device.serialNumber || device.deviceId : fromId;
-
-        // Reset timeout for "Talking" state
-        if (talkingTimeouts[fromId]) clearTimeout(talkingTimeouts[fromId]);
-        talkingTimeouts[fromId] = setTimeout(() => {
-            card.classList.remove('is-talking');
-            if (scrollGuide) scrollGuide.classList.remove('visible');
-            delete talkingTimeouts[fromId];
-        }, 2000); // Stop blinking after 2s of silence
-
-        // 3. Scroll Check
-        const container = document.getElementById('deviceList');
-        const rect = card.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        
-        const isVisible = (rect.top >= containerRect.top && rect.bottom <= containerRect.bottom);
-        
-        if (!isVisible && scrollGuide) {
-            scrollGuideText.innerText = `${truckNum} sedang bicara...`;
-            scrollGuide.classList.add('visible');
-            scrollGuide.onclick = () => {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                scrollGuide.classList.remove('visible');
-            };
-        } else if (scrollGuide) {
-            scrollGuide.classList.remove('visible');
-        }
-    }
-}
+// Expose to global for inline onclick handlers
+window.startPttCall = startPttCall;
