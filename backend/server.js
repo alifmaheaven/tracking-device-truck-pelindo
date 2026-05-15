@@ -21,13 +21,15 @@ wss.on('connection', (ws) => {
   ws.on('message', (message, isBinary) => {
     if (isBinary) {
       // 1. Always forward a copy to center-main for global monitoring
-      const centerWs = clients.get('center-main');
-      if (centerWs && centerWs.readyState === WebSocket.OPEN && currentClientId !== 'center-main') {
-        centerWs.send(JSON.stringify({
-          type: 'audioStream',
-          from: currentClientId,
-          data: message.toString('base64')
-        }));
+      if (currentClientId) {
+        const centerWs = clients.get('center-main');
+        if (centerWs && centerWs.readyState === WebSocket.OPEN && currentClientId !== 'center-main') {
+          centerWs.send(JSON.stringify({
+            type: 'audioStream',
+            from: currentClientId,
+            data: message.toString('base64')
+          }));
+        }
       }
 
       // 2. Forward to session partner if active
@@ -120,6 +122,13 @@ wss.on('connection', (ws) => {
                   type: 'callEnded',
                   peerId: currentClientId
                 }));
+              } else {
+                // Partner already gone — still confirm to caller that session is cleaned
+                ws.send(JSON.stringify({
+                  type: 'callEnded',
+                  peerId: activePartnerId,
+                  reason: 'partner_disconnected'
+                }));
               }
               // End session for both
               sessions.delete(currentClientId);
@@ -128,6 +137,9 @@ wss.on('connection', (ws) => {
             }
             break;
 
+          case 'ping':
+            // Client keepalive — no action needed
+            break;
           default:
             console.log(`Unknown message type: ${data.type}`);
         }
@@ -140,8 +152,11 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     if (currentClientId) {
       console.log(`Client disconnected: ${currentClientId}`);
-      clients.delete(currentClientId);
-      
+      // Only clean up if this ws is still the registered one (prevents race with reconnect)
+      if (clients.get(currentClientId) === ws) {
+        clients.delete(currentClientId);
+      }
+
       const partnerId = sessions.get(currentClientId);
       if (partnerId) {
         const partnerWs = clients.get(partnerId);

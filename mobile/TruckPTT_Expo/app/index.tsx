@@ -35,8 +35,10 @@ const App = () => {
   const activeDeviceRef = useRef<{ id: string; name: string } | null>(null);
   const foregroundServiceStarted = useRef(false);
   const reconnectTimer = useRef<any>(null);
-  
-  const callSessionRef = useRef({ active: false, callerId: null as string | null });
+  const pingIntervalRef = useRef<any>(null);
+  const audioRecordInitDone = useRef(false);
+
+  const callSessionRef = useRef({ active: false, callerId: null as string | null, incomingPending: false });
 
   useEffect(() => {
     requestPermissions();
@@ -80,15 +82,18 @@ const App = () => {
     } else {
       // Cleanup ketika logout
       foregroundServiceStarted.current = false;
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
+      if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
       if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
       notifee.stopForegroundService();
     }
 
     return () => {
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
+      if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
       if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
-      AudioRecord.stop();
+      audioRecordInitDone.current = false;
+      AudioRecord.stop().catch(() => {});
       notifee.stopForegroundService();
     };
   }, [activeDevice]);
@@ -97,10 +102,21 @@ const App = () => {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active' && activeDeviceRef.current) {
-        // App came to foreground - reconnect WS if needed
-        if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+        // App came to foreground — aggressively reconnect
+        const ws = wsRef.current;
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
           console.log('App returned to foreground, reconnecting WS...');
+          // Clear any pending reconnect timer since we're reconnecting now
+          if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
           connectWebSocket();
+        }
+      }
+      if (nextAppState === 'background' && activeDeviceRef.current) {
+        // App going to background — send a ping to keep connection warm
+        const ws = wsRef.current;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+          console.log('App backgrounded, keepalive ping sent');
         }
       }
     });
@@ -220,6 +236,9 @@ const App = () => {
   };
 
   const initAudioRecord = () => {
+    if (audioRecordInitDone.current) return;
+    audioRecordInitDone.current = true;
+
     const options = {
       sampleRate: 16000,
       channels: 1,
@@ -244,6 +263,10 @@ const App = () => {
       return;
     }
 
+    // Clear any stale timers from previous connection
+    if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
+    if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
+
     console.log('Connecting to ' + WEBSOCKET_URL);
     const ws = new WebSocket(WEBSOCKET_URL);
     wsRef.current = ws;
@@ -251,6 +274,13 @@ const App = () => {
     ws.onopen = () => {
       console.log('WS Connected');
       setIsConnected(true);
+      // Start client-side ping to keep connection alive through Android doze
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 20000);
       // Use ref to avoid stale closure on reconnect
       const device = activeDeviceRef.current;
       if (device) {
@@ -263,7 +293,8 @@ const App = () => {
 
     ws.onmessage = e => {
       if (e.data instanceof Blob || typeof e.data === 'object') {
-         // Binary stream masuk
+        // Binary PCM audio from server (16-bit, 16000Hz, mono)
+        handleBinaryAudio(e.data);
       } else {
         try {
           const data = JSON.parse(e.data);
@@ -277,7 +308,9 @@ const App = () => {
     ws.onclose = () => {
       console.log('WS Disconnected');
       setIsConnected(false);
-      // Auto reconnect if still logged in, but only if app is active
+      // Clean up ping interval
+      if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
+      // Auto reconnect if still logged in
       if (activeDeviceRef.current) {
         if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
         reconnectTimer.current = setTimeout(connectWebSocket, 5000);
@@ -332,14 +365,79 @@ const App = () => {
     }
   };
 
+  const handleBinaryAudio = async (blob: Blob) => {
+    try {
+      const arrayBuffer = await blob.arrayBuffer();
+      const int16Array = new Int16Array(arrayBuffer);
+      // Build WAV header + PCM data for expo-av playback
+      const wavBuffer = buildWav(int16Array, 16000);
+      const tempUri = FileSystem.documentDirectory + 'ptt_stream.wav';
+      await FileSystem.writeAsStringAsync(tempUri, Buffer.from(wavBuffer).toString('base64'), {
+        encoding: FileSystem.EncodingType?.Base64 || 'base64',
+      });
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+      const { sound } = await Audio.Sound.createAsync({ uri: tempUri });
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate((status: any) => {
+        if (status.didJustFinish) sound.unloadAsync();
+      });
+    } catch (e) {
+      console.log('Failed to play binary audio:', e);
+    }
+  };
+
+  const buildWav = (samples: Int16Array, sampleRate: number): ArrayBuffer => {
+    const numChannels = 1;
+    const bitsPerSample = 16;
+    const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+    const blockAlign = numChannels * bitsPerSample / 8;
+    const dataSize = samples.length * (bitsPerSample / 8);
+    const headerSize = 44;
+    const buffer = new ArrayBuffer(headerSize + dataSize);
+    const view = new DataView(buffer);
+    // RIFF header
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeString(view, 8, 'WAVE');
+    // fmt chunk
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitsPerSample, true);
+    // data chunk
+    writeString(view, 36, 'data');
+    view.setUint32(40, dataSize, true);
+    // PCM samples
+    for (let i = 0; i < samples.length; i++) {
+      view.setInt16(headerSize + i * 2, samples[i], true);
+    }
+    return buffer;
+  };
+
+  const writeString = (view: DataView, offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(offset + i, str.charCodeAt(i));
+    }
+  };
+
   const handleSignaling = async (data: any, ws: WebSocket) => {
     switch (data.type) {
       case 'incomingCall':
         // Show full-screen notification to wake the phone
         await showIncomingCallNotification(data.callerId);
-        ws.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
-        callSessionRef.current = { active: true, callerId: data.callerId };
-        setCallStatus('Terhubung dengan Pusat');
+        // Don't auto-accept — wait for user to press the PTT button
+        callSessionRef.current = { active: false, callerId: data.callerId, incomingPending: true };
+        setCallStatus('Panggilan Masuk... Tekan untuk Jawab');
         break;
       case 'callAccepted':
         await dismissCallNotification();
@@ -385,7 +483,20 @@ const App = () => {
   };
 
   const handlePressIn = () => {
+    // If incoming call is pending, accept it instead of placing a new call
+    if (callSessionRef.current.incomingPending && callSessionRef.current.callerId) {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'acceptCall', callerId: callSessionRef.current.callerId }));
+        callSessionRef.current = { active: true, callerId: callSessionRef.current.callerId, incomingPending: false };
+        setCallStatus('Terhubung dengan Pusat');
+        dismissCallNotification();
+      }
+      return;
+    }
+
     if (!callSessionRef.current.active) {
+      // Guard against duplicate call requests when already calling
+      if (callStatus === 'Menghubungi Pusat...') return;
       if (wsRef.current && isConnected) {
         wsRef.current.send(JSON.stringify({ type: 'call', targetId: 'center-main' }));
         setCallStatus('Menghubungi Pusat...');

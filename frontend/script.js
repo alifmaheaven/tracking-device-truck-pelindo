@@ -136,10 +136,10 @@ function renderMarkers() {
         let batteryColor = '#ef4444'; // Merah
         let batteryIcon = 'fa-battery-quarter';
         
-        if (batteryVal > 70) {
+        if (batteryVal >= 70) {
             batteryColor = '#10b981'; // Hijau
             batteryIcon = 'fa-battery-full';
-        } else if (batteryVal > 30) {
+        } else if (batteryVal >= 30) {
             batteryColor = '#f59e0b'; // Kuning
             batteryIcon = 'fa-battery-half';
         } else if (batteryVal <= 10) {
@@ -227,10 +227,10 @@ function renderDeviceList(devices) {
         let batteryColor = '#ef4444'; // Merah
         let batteryIcon = 'fa-battery-quarter';
         
-        if (batteryVal > 70) {
+        if (batteryVal >= 70) {
             batteryColor = '#10b981'; // Hijau
             batteryIcon = 'fa-battery-full';
-        } else if (batteryVal > 30) {
+        } else if (batteryVal >= 30) {
             batteryColor = '#f59e0b'; // Kuning
             batteryIcon = 'fa-battery-half';
         } else if (batteryVal <= 10) {
@@ -1395,6 +1395,20 @@ const scrollGuideText = document.getElementById('scrollGuideText');
 let talkingTimeouts = {};
 
 function initPttWebSocket() {
+    // Prevent duplicate connections
+    if (pttWs && (pttWs.readyState === WebSocket.CONNECTING || pttWs.readyState === WebSocket.OPEN)) {
+        console.log("PTT WS already connecting or open, skipping duplicate init");
+        return;
+    }
+
+    // Nullify old socket's handlers to prevent stale reconnect loops
+    if (pttWs) {
+        pttWs.onclose = null;
+        pttWs.onerror = null;
+        pttWs.onmessage = null;
+        pttWs.onopen = null;
+    }
+
     pttWs = new WebSocket('ws://43.157.242.182:9090');
     pttWs.binaryType = 'blob';
 
@@ -1415,7 +1429,10 @@ function initPttWebSocket() {
             if (!window.audioCtx) {
                 window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
-            
+            if (window.audioCtx.state === 'suspended') {
+                await window.audioCtx.resume();
+            }
+
             const reader = new FileReader();
             reader.onload = function() {
                 const arrayBuffer = reader.result;
@@ -1445,7 +1462,7 @@ function initPttWebSocket() {
             switch (data.type) {
                 case 'audioStream':
                     // Handle wrapped audio from center-main perspective
-                    handleIncomingAudioStream(data.from, data.data);
+                    await handleIncomingAudioStream(data.from, data.data);
                     break;
                 case 'incomingCall':
                     // We are center, we usually standby. Auto-accept truck calls.
@@ -1474,6 +1491,10 @@ function initPttWebSocket() {
                     break;
             }
         }
+    };
+
+    pttWs.onerror = (e) => {
+        console.error("PTT WebSocket error:", e);
     };
 
     pttWs.onclose = () => {
@@ -1531,6 +1552,8 @@ let audioChunks = [];
 
 async function startRecording() {
     if (pttTalkBtn.style.pointerEvents === 'none') return; // Cannot talk if not connected
+    // Guard against double-start
+    if (mediaRecorder && mediaRecorder.state === 'recording') return;
 
     if (!audioStream) {
         try {
@@ -1594,7 +1617,7 @@ if (pttTalkBtn) {
 // Initialize on load
 initPttWebSocket();
 // Function to handle incoming audio stream and UI notifications
-function handleIncomingAudioStream(fromId, base64Data) {
+async function handleIncomingAudioStream(fromId, base64Data) {
     // 1. Play Audio
     const binaryString = window.atob(base64Data);
     const bytes = new Uint8Array(binaryString.length);
@@ -1604,6 +1627,9 @@ function handleIncomingAudioStream(fromId, base64Data) {
     
     // Use the existing AudioContext logic
     if (!window.audioCtx) window.audioCtx = new AudioContext();
+    if (window.audioCtx.state === 'suspended') {
+        await window.audioCtx.resume();
+    }
     const arrayBuffer = bytes.buffer;
     const int16Array = new Int16Array(arrayBuffer);
     const float32Array = new Float32Array(int16Array.length);
