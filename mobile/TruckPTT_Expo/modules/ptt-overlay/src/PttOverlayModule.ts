@@ -1,14 +1,15 @@
-import { Module, registerModule } from 'expo-modules-core';
+// Stub type declarations for the native PttOverlay Expo module.
+// The real implementation is in android/src/main/java/expo/modules/pttoverlay/PttOverlayModule.kt
+// This file exists only to satisfy TypeScript type-checking for the module's source directory.
 
-// No-op stub — the real module is implemented natively on Android.
-// This file ensures TypeScript compilation passes.
-class PttOverlayStub extends Module {
-  override async show(): Promise<void> {}
-  override async hide(): Promise<void> {}
-  override async updateStatus(status: string, recording: boolean): Promise<void> {}
-  override async isOverlayPermissionGranted(): Promise<boolean> { return false; }
-  override async requestOverlayPermission(): Promise<void> {}
-  override async isVisible(): Promise<boolean> { return false; }
+declare module '../index' {
+  export function showOverlay(): Promise<void>;
+  export function hideOverlay(): Promise<void>;
+  export function updateOverlayStatus(status: string, recording: boolean): Promise<void>;
+  export function isOverlayPermissionGranted(): Promise<boolean>;
+  export function requestOverlayPermission(): Promise<void>;
+  export function isOverlayVisible(): Promise<boolean>;
+  export function onPttPressIn(callback: () => void): { remove: () => void };
+  export function onPttPressOut(callback: () => void): { remove: () => void };
+  export function onBubbleTapped(callback: () => void): { remove: () => void };
 }
-
-registerModule(PttOverlayStub as any);

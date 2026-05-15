@@ -12,7 +12,7 @@ interface PttOverlayInterface extends NativeModule {
 }
 
 const PttOverlayModule = requireNativeModule<PttOverlayInterface>('PttOverlay');
-const emitter = new EventEmitter(PttOverlayModule);
+const emitter = new EventEmitter<{ pttPressIn: () => void; pttPressOut: () => void; bubbleTapped: () => void }>(PttOverlayModule);
 
 export type PttOverlayEvents = {
   pttPressIn: () => void;

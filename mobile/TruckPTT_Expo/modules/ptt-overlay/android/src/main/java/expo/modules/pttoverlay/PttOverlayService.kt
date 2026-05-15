@@ -132,19 +132,21 @@ object PttOverlayService {
     return container
   }
 
+  // Drag state — must be object-level, not local to the lambda
+  private var dragInitialX = 0
+  private var dragInitialY = 0
+  private var dragInitialTouchX = 0f
+  private var dragInitialTouchY = 0f
+
   private val bubbleTouchListener = View.OnTouchListener { view, event ->
-    var initialX = 0
-    var initialY = 0
-    var initialTouchX = 0f
-    var initialTouchY = 0f
     val clickThreshold = dpToPx(10f, view.context)
 
     when (event.action) {
       MotionEvent.ACTION_DOWN -> {
-        initialX = (view.layoutParams as WindowManager.LayoutParams).x
-        initialY = (view.layoutParams as WindowManager.LayoutParams).y
-        initialTouchX = event.rawX
-        initialTouchY = event.rawY
+        dragInitialX = (view.layoutParams as WindowManager.LayoutParams).x
+        dragInitialY = (view.layoutParams as WindowManager.LayoutParams).y
+        dragInitialTouchX = event.rawX
+        dragInitialTouchY = event.rawY
 
         // Notify JS on press
         moduleRef?.sendEvent("pttPressIn")
@@ -159,11 +161,11 @@ object PttOverlayService {
         return@OnTouchListener true
       }
       MotionEvent.ACTION_MOVE -> {
-        val dx = (event.rawX - initialTouchX).toInt()
-        val dy = (event.rawY - initialTouchY).toInt()
+        val dx = (event.rawX - dragInitialTouchX).toInt()
+        val dy = (event.rawY - dragInitialTouchY).toInt()
         val params = view.layoutParams as WindowManager.LayoutParams
-        params.x = initialX + dx
-        params.y = initialY + dy
+        params.x = dragInitialX + dx
+        params.y = dragInitialY + dy
         windowManager?.updateViewLayout(view, params)
         return@OnTouchListener true
       }
@@ -172,8 +174,8 @@ object PttOverlayService {
         moduleRef?.sendEvent("pttPressOut")
 
         // If it was a tap (no drag), also fire bubbleTapped
-        val dx = Math.abs(event.rawX - initialTouchX)
-        val dy = Math.abs(event.rawY - initialTouchY)
+        val dx = Math.abs(event.rawX - dragInitialTouchX)
+        val dy = Math.abs(event.rawY - dragInitialTouchY)
         if (dx < clickThreshold && dy < clickThreshold) {
           moduleRef?.sendEvent("bubbleTapped")
         }

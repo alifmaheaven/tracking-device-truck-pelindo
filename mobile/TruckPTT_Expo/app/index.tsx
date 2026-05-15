@@ -121,9 +121,9 @@ const App = () => {
 
     return () => {
       unsubscribe();
-      unsubPressIn();
-      unsubPressOut();
-      unsubBubbleTapped();
+      unsubPressIn.remove();
+      unsubPressOut.remove();
+      unsubBubbleTapped.remove();
     };
   }, []);
 
@@ -455,7 +455,7 @@ const App = () => {
     };
 
     ws.onerror = (e) => {
-      console.log('WS Error: ', e.message);
+      console.log('WS Error: ', JSON.stringify(e));
     };
   };
 
@@ -578,7 +578,7 @@ const App = () => {
         break;
       case 'callAccepted':
         await dismissCallNotification();
-        callSessionRef.current = { active: true, callerId: data.targetId };
+        callSessionRef.current = { active: true, callerId: data.targetId, incomingPending: false };
         setCallStatus('Terhubung');
         break;
       case 'callEnded':
@@ -588,6 +588,7 @@ const App = () => {
           await AudioRecord.stop().catch(() => {});
           updateNotificationAction(false);
         }
+        setIsRecording(false);
         callSessionRef.current = { active: false, callerId: null, incomingPending: false };
         setCallStatus('Idle');
         break;
