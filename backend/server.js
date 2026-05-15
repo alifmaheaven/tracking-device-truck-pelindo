@@ -52,13 +52,18 @@ wss.on('connection', (ws) => {
           case 'register':
             currentClientId = data.id;
             clients.set(currentClientId, ws);
-            console.log(`Client registered: ${currentClientId}`);
+            console.log(`Client registered: ${currentClientId} (total clients: ${clients.size})`);
+            console.log(`  Connected clients: [${[...clients.keys()].join(', ')}]`);
             break;
 
           case 'call':
             // { type: 'call', targetId: 'truck-123' }
             const targetId = data.targetId;
             const targetWs = clients.get(targetId);
+            
+            console.log(`Call request: ${currentClientId} -> ${targetId}`);
+            console.log(`  Connected clients: [${[...clients.keys()].join(', ')}]`);
+            console.log(`  Target found: ${!!targetWs}, Target open: ${targetWs ? targetWs.readyState === WebSocket.OPEN : false}`);
             
             if (targetWs && targetWs.readyState === WebSocket.OPEN) {
               // Forward call request
@@ -71,8 +76,9 @@ wss.on('connection', (ws) => {
               // Target not found or offline
               ws.send(JSON.stringify({
                 type: 'error',
-                message: 'Target is offline or not found'
+                message: `Target is offline or not found (targetId: ${targetId})`
               }));
+              console.log(`Call FAILED: target '${targetId}' not in clients map`);
             }
             break;
 

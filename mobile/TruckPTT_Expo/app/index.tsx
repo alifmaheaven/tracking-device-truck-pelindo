@@ -251,8 +251,13 @@ const App = () => {
     ws.onopen = () => {
       console.log('WS Connected');
       setIsConnected(true);
-      if (activeDevice) {
-        ws.send(JSON.stringify({ type: 'register', id: activeDevice.id }));
+      // Use ref to avoid stale closure on reconnect
+      const device = activeDeviceRef.current;
+      if (device) {
+        ws.send(JSON.stringify({ type: 'register', id: device.id }));
+        console.log('Registered as:', device.id);
+      } else {
+        console.log('WS Connected but no active device to register');
       }
     };
 
