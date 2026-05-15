@@ -13,12 +13,13 @@ import {
   AppState,
   Linking,
 } from 'react-native';
-import notifee, { AndroidImportance, AndroidForegroundServiceType, AndroidCategory } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidForegroundServiceType, AndroidCategory, EventType } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped } from '../modules/ptt-overlay';
 
 const WEBSOCKET_URL = 'ws://43.157.242.182:9090';
 const API_URL = 'https://n8n.freeat.me/webhook/device-cordinate';
@@ -34,6 +35,8 @@ const App = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const activeDeviceRef = useRef<{ id: string; name: string } | null>(null);
   const foregroundServiceStarted = useRef(false);
+  const foregroundNotificationId = useRef<string | null>(null);
+  const notificationRecordingRef = useRef(false);
   const reconnectTimer = useRef<any>(null);
   const pingIntervalRef = useRef<any>(null);
   const audioRecordInitDone = useRef(false);
@@ -43,6 +46,85 @@ const App = () => {
   useEffect(() => {
     requestPermissions();
     loadStoredDevice();
+
+    // Handle foreground service notification action presses
+    const unsubscribe = notifee.onForegroundEvent(async ({ type, detail }) => {
+      if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'ptt-toggle') {
+        const ws = wsRef.current;
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          console.log('Cannot PTT from notification: WS not connected');
+          return;
+        }
+        if (!notificationRecordingRef.current) {
+          // Start PTT from notification
+          if (!callSessionRef.current.active) {
+            // Auto-initiate call to center-main
+            ws.send(JSON.stringify({ type: 'call', targetId: 'center-main' }));
+            // Wait briefly for callAccepted
+            await new Promise(r => setTimeout(r, 500));
+          }
+          if (callSessionRef.current.active || true) {
+            // Force-start recording even if call state unclear
+            notificationRecordingRef.current = true;
+            AudioRecord.start();
+            updateNotificationAction(true);
+            console.log('PTT recording started from notification');
+          }
+        } else {
+          // Stop PTT from notification
+          notificationRecordingRef.current = false;
+          await AudioRecord.stop();
+          updateNotificationAction(false);
+          console.log('PTT recording stopped from notification');
+        }
+      }
+      if (type === EventType.PRESS && detail.notification?.id === foregroundNotificationId.current) {
+        // User tapped the notification itself — bring app to foreground
+        // The fullScreenAction intent handles this natively
+      }
+    });
+
+    // Floating overlay event listeners
+    const unsubPressIn = onPttPressIn(() => {
+      // Same logic as handlePressIn but via overlay
+      if (callSessionRef.current.incomingPending && callSessionRef.current.callerId && wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'acceptCall', callerId: callSessionRef.current.callerId }));
+        callSessionRef.current = { active: true, callerId: callSessionRef.current.callerId, incomingPending: false };
+        dismissCallNotification();
+      } else if (!callSessionRef.current.active && callStatus !== 'Menghubungi Pusat...') {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'call', targetId: 'center-main' }));
+          setCallStatus('Menghubungi Pusat...');
+        }
+      }
+      if (callSessionRef.current.active) {
+        notificationRecordingRef.current = true;
+        AudioRecord.start();
+        updateNotificationAction(true);
+        updateOverlayStatus(callStatus, true).catch(() => {});
+      }
+    });
+
+    const unsubPressOut = onPttPressOut(() => {
+      if (notificationRecordingRef.current) {
+        notificationRecordingRef.current = false;
+        AudioRecord.stop().catch(() => {});
+        updateNotificationAction(false);
+        updateOverlayStatus(callStatus, false).catch(() => {});
+      }
+    });
+
+    const unsubBubbleTapped = onBubbleTapped(() => {
+      // Tapped (not dragged) — could bring app to foreground, handled by Android intent
+      console.log('Floating bubble tapped');
+    });
+
+    return () => {
+      unsubscribe();
+      unsubPressIn();
+      unsubPressOut();
+      unsubBubbleTapped();
+    };
   }, []);
 
   const loadStoredDevice = async () => {
@@ -60,6 +142,11 @@ const App = () => {
   useEffect(() => {
     activeDeviceRef.current = activeDevice;
   }, [activeDevice]);
+
+  // Sync call status to floating overlay
+  useEffect(() => {
+    updateOverlayStatus(callStatus, isRecording).catch(() => {});
+  }, [callStatus, isRecording]);
 
   // Hanya connect WebSockets dan Service ketika sudah login (punya activeDevice)
   useEffect(() => {
@@ -79,8 +166,17 @@ const App = () => {
       }
       initAudioRecord();
       connectWebSocket();
+
+      // Initialize floating overlay
+      (async () => {
+        const granted = await isOverlayPermissionGranted();
+        if (!granted) {
+          await requestOverlayPermission();
+        }
+      })();
     } else {
       // Cleanup ketika logout
+      hideOverlay().catch(() => {});
       foregroundServiceStarted.current = false;
       if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
       if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
@@ -102,7 +198,8 @@ const App = () => {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active' && activeDeviceRef.current) {
-        // App came to foreground — aggressively reconnect
+        // App came to foreground — hide overlay, aggressively reconnect
+        hideOverlay().catch(() => {});
         const ws = wsRef.current;
         if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
           console.log('App returned to foreground, reconnecting WS...');
@@ -112,7 +209,10 @@ const App = () => {
         }
       }
       if (nextAppState === 'background' && activeDeviceRef.current) {
-        // App going to background — send a ping to keep connection warm
+        // App going to background — show floating bubble, send ping
+        isOverlayPermissionGranted().then(granted => {
+          if (granted) showOverlay().catch(() => {});
+        });
         const ws = wsRef.current;
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'ping' }));
@@ -218,7 +318,7 @@ const App = () => {
         importance: AndroidImportance.HIGH,
       });
 
-      await notifee.displayNotification({
+      const id = await notifee.displayNotification({
         title: 'Truck PTT Aktif',
         body: `Login sebagai: ${activeDevice?.name}`,
         android: {
@@ -226,12 +326,49 @@ const App = () => {
           asForegroundService: true,
           ongoing: true,
           smallIcon: 'ic_launcher',
+          actions: [
+            {
+              title: 'Push To Talk',
+              pressAction: { id: 'ptt-toggle' },
+            },
+          ],
         },
       });
+      foregroundNotificationId.current = id;
       foregroundServiceStarted.current = true;
       console.log('Foreground service started successfully');
     } catch (e) {
       console.log('Foreground service failed (non-fatal):', e);
+    }
+  };
+
+  const updateNotificationAction = async (recording: boolean) => {
+    if (!foregroundNotificationId.current) return;
+    try {
+      const channelId = await notifee.createChannel({
+        id: 'ptt-service',
+        name: 'Push To Talk Service',
+        importance: AndroidImportance.HIGH,
+      });
+      await notifee.displayNotification({
+        id: foregroundNotificationId.current,
+        title: recording ? 'PTT - Berbicara' : 'Truck PTT Aktif',
+        body: recording ? 'Merekam...' : `Login sebagai: ${activeDeviceRef.current?.name}`,
+        android: {
+          channelId,
+          asForegroundService: true,
+          ongoing: true,
+          smallIcon: 'ic_launcher',
+          actions: [
+            {
+              title: recording ? 'Stop PTT' : 'Push To Talk',
+              pressAction: { id: 'ptt-toggle' },
+            },
+          ],
+        },
+      });
+    } catch (e) {
+      console.log('Failed to update notification:', e);
     }
   };
 
@@ -446,7 +583,12 @@ const App = () => {
         break;
       case 'callEnded':
         await dismissCallNotification();
-        callSessionRef.current = { active: false, callerId: null };
+        if (notificationRecordingRef.current) {
+          notificationRecordingRef.current = false;
+          await AudioRecord.stop().catch(() => {});
+          updateNotificationAction(false);
+        }
+        callSessionRef.current = { active: false, callerId: null, incomingPending: false };
         setCallStatus('Idle');
         break;
       case 'error':
@@ -504,13 +646,17 @@ const App = () => {
       return;
     }
     setIsRecording(true);
+    notificationRecordingRef.current = true;
     AudioRecord.start();
+    updateNotificationAction(true);
   };
 
   const handlePressOut = async () => {
     if (!isRecording) return;
     setIsRecording(false);
+    notificationRecordingRef.current = false;
     await AudioRecord.stop();
+    updateNotificationAction(false);
   };
 
   // --- RENDER LOGIN SCREEN ---
