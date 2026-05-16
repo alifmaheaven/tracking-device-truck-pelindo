@@ -33,6 +33,8 @@ object PttOverlayService {
     if (visible) return
 
     windowManager = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    // Set size to 160dp (half of the previous 320dp)
+    val sizePx = dpToPx(160f, activity).toInt()
 
     val layoutFlag: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -41,9 +43,10 @@ object PttOverlayService {
       WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
     }
 
+    // Explicit square dimensions to ensure perfect circle
     val params = WindowManager.LayoutParams(
-      WindowManager.LayoutParams.WRAP_CONTENT,
-      WindowManager.LayoutParams.WRAP_CONTENT,
+      sizePx,
+      sizePx,
       layoutFlag,
       WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
       WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
@@ -52,19 +55,13 @@ object PttOverlayService {
     )
     params.gravity = Gravity.TOP or Gravity.START
     params.x = 20
-    params.y = 300
+    params.y = 400
 
     // Create bubble container
     bubbleView = FrameLayout(activity).apply {
-      layoutParams = WindowManager.LayoutParams(
-        dpToPx(120f, activity).toInt(),
-        dpToPx(56f, activity).toInt(),
-        layoutFlag,
-        0,
-        PixelFormat.TRANSLUCENT
-      )
+      layoutParams = WindowManager.LayoutParams(sizePx, sizePx, layoutFlag, 0, PixelFormat.TRANSLUCENT)
       setOnTouchListener(bubbleTouchListener)
-      addView(createBubbleContent(activity))
+      addView(createBubbleContent(activity, sizePx))
     }
 
     windowManager?.addView(bubbleView, params)
@@ -87,8 +84,8 @@ object PttOverlayService {
     currentStatus = status
     isRecording = recording
     statusText?.let { tv ->
-      tv.text = status
-      tv.setTextColor(if (recording) Color.parseColor("#EF4444") else Color.parseColor("#FFFFFF"))
+      tv.text = if (recording) "BICARA" else "TEKAN PTT"
+      tv.setTextColor(Color.WHITE)
     }
     // Update bubble color
     bubbleView?.let { bv ->
@@ -99,37 +96,31 @@ object PttOverlayService {
 
   fun isVisible(): Boolean = visible
 
-  private fun createBubbleContent(ctx: Context): View {
+  private fun createBubbleContent(ctx: Context, sizePx: Int): View {
     val container = FrameLayout(ctx).apply {
-      layoutParams = FrameLayout.LayoutParams(
-        FrameLayout.LayoutParams.MATCH_PARENT,
-        FrameLayout.LayoutParams.MATCH_PARENT
-      )
+      layoutParams = FrameLayout.LayoutParams(sizePx, sizePx)
       background = GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadius = dpToPx(28f, ctx)
+        shape = GradientDrawable.OVAL
         setColor(Color.parseColor("#1E40AF"))
-        setStroke(dpToPx(2f, ctx).toInt(), Color.parseColor("#FFFFFF"))
-        alpha = 240 // 0-255; 240 = slightly transparent
+        setStroke(dpToPx(4f, ctx).toInt(), Color.parseColor("#FFFFFF"))
+        alpha = 220 // Slightly less transparent now that it's smaller
       }
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        elevation = dpToPx(8f, ctx)
+        elevation = dpToPx(10f, ctx)
       }
     }
 
     val text = TextView(ctx).apply {
-      text = currentStatus
-      textSize = 11f
+      text = "TEKAN PTT"
+      textSize = 12f 
+      setAllCaps(true)
       setTextColor(Color.WHITE)
       gravity = Gravity.CENTER
-      setPadding(
-        dpToPx(8f, ctx).toInt(), 0,
-        dpToPx(8f, ctx).toInt(), 0
-      )
+      setTypeface(null, android.graphics.Typeface.BOLD)
     }
     statusText = text
 
-    (container as FrameLayout).addView(text, FrameLayout.LayoutParams(
+    container.addView(text, FrameLayout.LayoutParams(
       FrameLayout.LayoutParams.MATCH_PARENT,
       FrameLayout.LayoutParams.MATCH_PARENT
     ))
@@ -137,14 +128,14 @@ object PttOverlayService {
     return container
   }
 
-  // Drag state — must be object-level, not local to the lambda
+  // Drag state
   private var dragInitialX = 0
   private var dragInitialY = 0
   private var dragInitialTouchX = 0f
   private var dragInitialTouchY = 0f
 
   private val bubbleTouchListener = View.OnTouchListener { view, event ->
-    val clickThreshold = dpToPx(10f, view.context)
+    val clickThreshold = dpToPx(15f, view.context)
 
     when (event.action) {
       MotionEvent.ACTION_DOWN -> {
@@ -153,14 +144,12 @@ object PttOverlayService {
         dragInitialTouchX = event.rawX
         dragInitialTouchY = event.rawY
 
-        // Notify JS on press
         moduleRef?.sendEvent("pttPressIn")
 
-        // Visual feedback
         val bg = (view as? FrameLayout)?.getChildAt(0)?.let { child ->
           (child as? FrameLayout)?.background as? GradientDrawable
         }
-        bg?.setColor(Color.parseColor(if (isRecording) "#DC2626" else "#1D4ED8"))
+        bg?.setColor(Color.parseColor("#DC2626")) 
         bg?.alpha = 255
 
         return@OnTouchListener true
@@ -175,22 +164,19 @@ object PttOverlayService {
         return@OnTouchListener true
       }
       MotionEvent.ACTION_UP -> {
-        // Notify JS on release
         moduleRef?.sendEvent("pttPressOut")
 
-        // If it was a tap (no drag), also fire bubbleTapped
         val dx = Math.abs(event.rawX - dragInitialTouchX)
         val dy = Math.abs(event.rawY - dragInitialTouchY)
         if (dx < clickThreshold && dy < clickThreshold) {
           moduleRef?.sendEvent("bubbleTapped")
         }
 
-        // Restore visual
         val bg = (view as? FrameLayout)?.getChildAt(0)?.let { child ->
           (child as? FrameLayout)?.background as? GradientDrawable
         }
         bg?.setColor(Color.parseColor(if (isRecording) "#EF4444" else "#1E40AF"))
-        bg?.alpha = 240
+        bg?.alpha = 220
 
         return@OnTouchListener true
       }
@@ -200,7 +186,7 @@ object PttOverlayService {
           (child as? FrameLayout)?.background as? GradientDrawable
         }
         bg?.setColor(Color.parseColor(if (isRecording) "#EF4444" else "#1E40AF"))
-        bg?.alpha = 240
+        bg?.alpha = 220
         return@OnTouchListener true
       }
       else -> false

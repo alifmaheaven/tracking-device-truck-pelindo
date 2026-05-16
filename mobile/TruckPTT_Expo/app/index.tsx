@@ -619,11 +619,18 @@ const App = () => {
   const handleSignaling = async (data: any, ws: WebSocket) => {
     switch (data.type) {
       case 'incomingCall':
-        // Show full-screen notification to wake the phone
-        await showIncomingCallNotification(data.callerId);
-        // Don't auto-accept — wait for user to press the PTT button
-        callSessionRef.current = { active: false, callerId: data.callerId, incomingPending: true };
-        setCallStatus('Panggilan Masuk... Tekan untuk Jawab');
+        if (data.callerId === 'center-main') {
+          // AUTO-ANSWER for Center Calls
+          console.log('Auto-answering call from Center...');
+          ws.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
+          callSessionRef.current = { active: true, callerId: data.callerId, incomingPending: false };
+          setCallStatus('Terhubung dengan Pusat');
+        } else {
+          // Manual answer for others
+          await showIncomingCallNotification(data.callerId);
+          callSessionRef.current = { active: false, callerId: data.callerId, incomingPending: true };
+          setCallStatus('Panggilan Masuk... Tekan untuk Jawab');
+        }
         break;
       case 'callAccepted':
         await dismissCallNotification();
