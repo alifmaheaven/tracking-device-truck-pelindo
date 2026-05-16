@@ -74,18 +74,17 @@ wss.on('connection', (ws) => {
             currentClientId = data.id;
             clients.set(currentClientId, ws);
             console.log(`Client registered: ${currentClientId} (total clients: ${clients.size})`);
-            console.log(`  Connected clients: [${[...clients.keys()].join(', ')}]`);
+            
+            // Broadcast updated status to center-main
+            broadcastConnectionStatus();
             break;
 
           case 'call':
             // { type: 'call', targetId: 'truck-123' }
             const targetId = data.targetId;
             const targetWs = clients.get(targetId);
-            
+
             console.log(`Call request: ${currentClientId} -> ${targetId}`);
-            console.log(`  Connected clients: [${[...clients.keys()].join(', ')}]`);
-            console.log(`  Target found: ${!!targetWs}, Target open: ${targetWs ? targetWs.readyState === WebSocket.OPEN : false}`);
-            
             if (targetWs && targetWs.readyState === WebSocket.OPEN) {
               // Forward call request
               targetWs.send(JSON.stringify({
@@ -141,41 +140,27 @@ wss.on('connection', (ws) => {
                   type: 'callEnded',
                   peerId: currentClientId
                 }));
-              } else {
-                // Partner already gone — still confirm to caller that session is cleaned
-                ws.send(JSON.stringify({
-                  type: 'callEnded',
-                  peerId: activePartnerId,
-                  reason: 'partner_disconnected'
-                }));
               }
-              // End session for both
               sessions.delete(currentClientId);
               sessions.delete(activePartnerId);
-              console.log(`Call ended between ${currentClientId} and ${activePartnerId}`);
             }
             break;
 
           case 'ping':
-            // Client keepalive — no action needed
+            ws.send(JSON.stringify({ type: 'pong' }));
             break;
-          default:
-            console.log(`Unknown message type: ${data.type}`);
         }
-      } catch (e) {
-        console.error("Failed to parse message:", e);
+      } catch (err) {
+        console.error("Error parsing JSON message:", err);
       }
     }
   });
 
   ws.on('close', () => {
     if (currentClientId) {
+      clients.delete(currentClientId);
       console.log(`Client disconnected: ${currentClientId}`);
-      // Only clean up if this ws is still the registered one (prevents race with reconnect)
-      if (clients.get(currentClientId) === ws) {
-        clients.delete(currentClientId);
-      }
-
+      
       const partnerId = sessions.get(currentClientId);
       if (partnerId) {
         const partnerWs = clients.get(partnerId);
@@ -189,9 +174,24 @@ wss.on('connection', (ws) => {
         sessions.delete(currentClientId);
         sessions.delete(partnerId);
       }
+      
+      // Update center dashboard about disconnection
+      broadcastConnectionStatus();
     }
   });
 });
+
+// Helper to notify dashboard about which trucks are online for PTT
+function broadcastConnectionStatus() {
+  const centerWs = clients.get('center-main');
+  if (centerWs && centerWs.readyState === WebSocket.OPEN) {
+    const onlineIds = Array.from(clients.keys()).filter(id => id !== 'center-main');
+    centerWs.send(JSON.stringify({
+      type: 'connectionStatusUpdate',
+      onlineDeviceIds: onlineIds
+    }));
+  }
+}
 
 // Ping all clients every 25 seconds to keep connections alive
 const keepaliveInterval = setInterval(() => {

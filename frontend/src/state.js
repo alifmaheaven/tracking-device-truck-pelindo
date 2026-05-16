@@ -4,6 +4,7 @@
  */
 export const state = {
   devicesData: [],
+  onlineDeviceIds: [], // IDs connected via WebSocket PTT
   markersList: {},
   map: null,
   pttWs: null,

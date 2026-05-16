@@ -3,6 +3,7 @@
  * Extracted from script.js — manages WebSocket lifecycle, MediaRecorder, and audio playback.
  */
 import { getBatteryDisplay, playPcmAudio } from './utils.js';
+import { renderDeviceList } from './map.js';
 import { state } from './state.js';
 
 let pttPanel, pttTargetName, pttTalkBtn, pttEndBtn, pttStatusText, scrollGuide, scrollGuideText;
@@ -194,6 +195,11 @@ export function initPttWebSocket() {
       switch (data.type) {
         case 'audioStream':
           await handleIncomingAudioStream(data.from, data.data);
+          break;
+        case 'connectionStatusUpdate':
+          console.log('Online PTT clients: ', data.onlineDeviceIds);
+          state.onlineDeviceIds = data.onlineDeviceIds;
+          renderDeviceList(); // Redraw list to show green/red dots
           break;
         case 'incomingCall':
           console.log('Incoming call from: ', data.callerId);

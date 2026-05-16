@@ -18,7 +18,7 @@ export function setupMap(cfg) {
 export async function fetchDeviceData() {
   try {
     const { apiUrl, deviceListContainer, searchInput } = _config;
-    deviceListContainer.innerHTML = '<p style="text-align:center; margin-top: 20px;">Mengambil data API...</p>';
+    // REMOVED: deviceListContainer.innerHTML = '...'; // Don't clear to avoid flicker
 
     const response = await fetch(apiUrl);
     const data = await response.json();
@@ -160,18 +160,21 @@ export function renderDeviceList(devices) {
   const container = _config.deviceListContainer;
   if (!container) return;
 
+  // Use filtered data if no specific list provided (e.g. from WebSocket update)
+  const listToRender = devices || filteredBySearch();
+
   container.innerHTML = '';
 
   if (_config.totalDeviceCount) {
-    _config.totalDeviceCount.innerText = devices.length;
+    _config.totalDeviceCount.innerText = listToRender.length;
   }
 
-  if (devices.length === 0) {
+  if (listToRender.length === 0) {
     container.innerHTML = '<p style="text-align:center; color: var(--text-muted); margin-top: 20px;">Tidak ada device/truk ditemukan.</p>';
     return;
   }
 
-  devices.forEach(device => {
+  listToRender.forEach(device => {
     const card = document.createElement('div');
     card.className = 'device-card';
     card.id = `card-${device.id}`;
@@ -184,10 +187,14 @@ export function renderDeviceList(devices) {
     }
 
     const battery = getBatteryDisplay(device.battery);
+    const isPttOnline = state.onlineDeviceIds.includes(device.id);
 
     card.innerHTML = `
       <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-        <div style="flex: 1;">${tagsHtml}</div>
+        <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+          <div class="ptt-status-dot" title="${isPttOnline ? 'PTT Ready (Connected)' : 'PTT Offline'}" style="width: 10px; height: 10px; border-radius: 50%; background-color: ${isPttOnline ? '#10b981' : '#ef4444'}; flex-shrink: 0; box-shadow: 0 0 4px ${isPttOnline ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)'};"></div>
+          ${tagsHtml}
+        </div>
         <div class="battery-status" title="Battery: ${battery.text}" style="color: ${battery.color}; font-weight: 700; font-size: 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
           <i class="fa-solid ${battery.icon}" style="font-size: 20px;"></i>
           <span style="font-size: 12px;">${battery.text}</span>
