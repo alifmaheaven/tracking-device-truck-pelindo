@@ -1,14 +1,18 @@
 /**
  * Push-To-Talk WebSocket + Audio Recording module.
  * Extracted from script.js — manages WebSocket lifecycle, MediaRecorder, and audio playback.
+ * Supports Multi-call Queue (Stack) and Active Focus.
  */
 import { getBatteryDisplay, playPcmAudio } from './utils.js';
 import { renderDeviceList } from './map.js';
 import { state } from './state.js';
 
-let pttPanel, pttTargetName, pttTalkBtn, pttEndBtn, pttStatusText, scrollGuide, scrollGuideText;
+let pttPanel, pttTargetName, pttTalkBtn, pttEndBtn, pttStatusText, scrollGuide, scrollGuideText, pttCallStack;
 let wsUrl = '';
 let regSecret = '';
+
+// Track multiple active calls { deviceId: { truckNumber, startTime } }
+const activeCalls = new Map();
 
 /**
  * Initialize PTT module with configuration and DOM refs.
@@ -23,23 +27,77 @@ export function setupPtt(config) {
   pttStatusText = document.getElementById('pttStatusText');
   scrollGuide = document.getElementById('scrollGuide');
   scrollGuideText = document.getElementById('scrollGuideText');
+  pttCallStack = document.getElementById('pttCallStack');
+}
+
+function updateCallStackUI() {
+  if (!pttCallStack) return;
+  pttCallStack.innerHTML = '';
+
+  activeCalls.forEach((data, id) => {
+    // Only show in stack if NOT the main active focus
+    if (id === state.pttActiveTarget) return;
+
+    const item = document.createElement('div');
+    item.className = 'ptt-stack-item';
+    item.innerHTML = `
+      <div style="flex: 1;">
+        <div class="truck-name">${data.truckNumber}</div>
+        <div class="stack-status">Panggilan Aktif</div>
+      </div>
+      <div class="stack-actions">
+        <button class="stack-btn end" data-id="${id}" title="Akhiri"><i class="fa-solid fa-phone-slash"></i></button>
+      </div>
+    `;
+
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.stack-btn')) return;
+      focusCall(id, data.truckNumber);
+    });
+
+    item.querySelector('.end').addEventListener('click', (e) => {
+      e.stopPropagation();
+      endSpecificCall(id);
+    });
+
+    pttCallStack.appendChild(item);
+  });
+}
+
+export function focusCall(targetId, targetName) {
+  state.pttActiveTarget = targetId;
+  if (pttTargetName) pttTargetName.innerText = targetName;
+  if (pttPanel) pttPanel.classList.remove('hidden');
+  if (pttStatusText) pttStatusText.innerText = 'Status: Terhubung';
+  
+  if (pttTalkBtn) {
+    pttTalkBtn.style.opacity = '1';
+    pttTalkBtn.style.pointerEvents = 'auto';
+  }
+  
+  updateCallStackUI();
+}
+
+function endSpecificCall(id) {
+  if (state.pttWs && state.pttWs.readyState === WebSocket.OPEN) {
+    state.pttWs.send(JSON.stringify({ type: 'endCall', targetId: id }));
+  }
+  activeCalls.delete(id);
+  if (state.pttActiveTarget === id) {
+    state.pttActiveTarget = null;
+    pttPanel?.classList.add('hidden');
+  }
+  updateCallStackUI();
 }
 
 function endPttCallUI() {
-  pttPanel?.classList.add('hidden');
-  state.pttActiveTarget = null;
-  if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
-    state.mediaRecorder.stop();
-  }
-  if (pttTalkBtn) {
-    pttTalkBtn.classList.remove('active');
-    const span = pttTalkBtn.querySelector('span');
-    if (span) span.innerText = 'TAHAN UNTUK BICARA';
+  if (state.pttActiveTarget) {
+    endSpecificCall(state.pttActiveTarget);
   }
 }
 
 async function startRecording() {
-  if (!pttTalkBtn || pttTalkBtn.style.pointerEvents === 'none') return;
+  if (!pttTalkBtn || pttTalkBtn.style.pointerEvents === 'none' || !state.pttActiveTarget) return;
   if (state.mediaRecorder && state.mediaRecorder.state === 'recording') return;
 
   if (!state.audioStream) {
@@ -65,9 +123,10 @@ async function startRecording() {
     reader.readAsDataURL(audioBlob);
     reader.onloadend = () => {
       const base64data = reader.result.split(',')[1];
-      if (state.pttWs && state.pttWs.readyState === WebSocket.OPEN) {
+      if (state.pttWs && state.pttWs.readyState === WebSocket.OPEN && state.pttActiveTarget) {
         state.pttWs.send(JSON.stringify({
           type: 'voiceMessage',
+          targetId: state.pttActiveTarget, // Specify who we are talking to
           audioBase64: base64data
         }));
       }
@@ -141,22 +200,13 @@ async function handleIncomingAudioStream(fromId, base64Data) {
 
 export function initPttWebSocket() {
   if (state.pttWs && (state.pttWs.readyState === WebSocket.CONNECTING || state.pttWs.readyState === WebSocket.OPEN)) {
-    console.log("PTT WS already connecting or open, skipping duplicate init");
     return;
-  }
-
-  if (state.pttWs) {
-    state.pttWs.onclose = null;
-    state.pttWs.onerror = null;
-    state.pttWs.onmessage = null;
-    state.pttWs.onopen = null;
   }
 
   state.pttWs = new WebSocket(wsUrl);
   state.pttWs.binaryType = 'blob';
 
   state.pttWs.onopen = () => {
-    console.log("PTT WebSocket connected");
     state.pttWs.send(JSON.stringify({
       type: 'register',
       id: 'center-main',
@@ -172,24 +222,7 @@ export function initPttWebSocket() {
 
   state.pttWs.onmessage = async (event) => {
     if (event.data instanceof Blob) {
-      if (!window.audioCtx) {
-        window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (window.audioCtx.state === 'suspended') {
-        await window.audioCtx.resume();
-      }
-
-      const reader = new FileReader();
-      reader.onload = async function () {
-        if (!window.audioCtx) {
-          window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (window.audioCtx.state === 'suspended') {
-          await window.audioCtx.resume();
-        }
-        state.pttNextStartTime = playPcmAudio(window.audioCtx, reader.result, state.pttNextStartTime);
-      };
-      reader.readAsArrayBuffer(event.data);
+       // Logic for raw binary if needed
     } else {
       const data = JSON.parse(event.data);
       switch (data.type) {
@@ -197,44 +230,53 @@ export function initPttWebSocket() {
           await handleIncomingAudioStream(data.from, data.data);
           break;
         case 'connectionStatusUpdate':
-          console.log('Online PTT clients: ', data.onlineDeviceIds);
           state.onlineDeviceIds = data.onlineDeviceIds;
-          renderDeviceList(); // Redraw list to show green/red dots
+          renderDeviceList();
           break;
         case 'incomingCall':
-          console.log('Incoming call from: ', data.callerId);
+          console.log('Incoming multi-call from: ', data.callerId);
           state.pttWs.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
-          state.pttActiveTarget = data.callerId;
+          
           const device = state.devicesData.find(d => d.id === data.callerId);
-          if (pttTargetName) pttTargetName.innerText = device ? device.serialNumber || device.deviceId : data.callerId;
-          if (pttPanel) pttPanel.classList.remove('hidden');
-          if (pttStatusText) pttStatusText.innerText = 'Status: Terhubung (Masuk)';
-          break;
-        case 'callAccepted':
-          if (pttStatusText) pttStatusText.innerText = 'Status: Terhubung';
-          if (pttTalkBtn) {
-            pttTalkBtn.style.opacity = '1';
-            pttTalkBtn.style.pointerEvents = 'auto';
+          const name = device ? device.truckNumber : data.callerId;
+          
+          activeCalls.set(data.callerId, { truckNumber: name, startTime: Date.now() });
+          
+          // If no one is focused, focus this one
+          if (!state.pttActiveTarget) {
+            focusCall(data.callerId, name);
+          } else {
+            updateCallStackUI();
           }
           break;
+        case 'callAccepted':
+          const accDevice = state.devicesData.find(d => d.id === data.targetId);
+          const accName = accDevice ? accDevice.truckNumber : data.targetId;
+          activeCalls.set(data.targetId, { truckNumber: accName, startTime: Date.now() });
+          focusCall(data.targetId, accName);
+          break;
         case 'callEnded':
-          endPttCallUI();
-          alert('Panggilan diakhiri oleh target atau terputus.');
+          const peerId = data.peerId || data.targetId;
+          activeCalls.delete(peerId);
+          if (state.pttActiveTarget === peerId) {
+             state.pttActiveTarget = null;
+             pttPanel?.classList.add('hidden');
+             // Try to focus another call if exists
+             if (activeCalls.size > 0) {
+                const nextId = activeCalls.keys().next().value;
+                focusCall(nextId, activeCalls.get(nextId).truckNumber);
+             }
+          }
+          updateCallStackUI();
           break;
         case 'error':
           alert('PTT Error: ' + data.message);
-          endPttCallUI();
           break;
       }
     }
   };
 
-  state.pttWs.onerror = (e) => {
-    console.error("PTT WebSocket error:", e);
-  };
-
   state.pttWs.onclose = () => {
-    console.log("PTT WebSocket disconnected, reconnecting...");
     const dot = document.getElementById('wsDot');
     const text = document.getElementById('wsText');
     if (dot && text) {
@@ -247,41 +289,23 @@ export function initPttWebSocket() {
 
 export function startPttCall(targetId, targetName) {
   if (!state.pttWs || state.pttWs.readyState !== WebSocket.OPEN) {
-    alert("Koneksi PTT belum siap. Mencoba menghubungkan ulang...");
-    initPttWebSocket();
+    alert("Koneksi PTT belum siap.");
     return;
   }
-
-  state.pttActiveTarget = targetId;
-  if (pttTargetName) pttTargetName.innerText = targetName;
-  if (pttPanel) pttPanel.classList.remove('hidden');
-  if (pttStatusText) pttStatusText.innerText = 'Status: Memanggil...';
-  if (pttTalkBtn) {
-    pttTalkBtn.style.opacity = '0.5';
-    pttTalkBtn.style.pointerEvents = 'none';
-  }
-
   state.pttWs.send(JSON.stringify({ type: 'call', targetId: targetId }));
 }
 
-/** Wire up button event listeners. Call once after DOM ready. */
 export function bindPttButtons() {
-  // AudioContext warmup
   window.addEventListener('click', () => {
-    if (!window.audioCtx) {
-      window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (window.audioCtx.state === 'suspended') {
-      window.audioCtx.resume();
-    }
+    if (!window.audioCtx) window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (window.audioCtx.state === 'suspended') window.audioCtx.resume();
   }, { once: true });
 
   if (pttEndBtn) {
     pttEndBtn.addEventListener('click', () => {
-      if (state.pttWs && state.pttWs.readyState === WebSocket.OPEN) {
-        state.pttWs.send(JSON.stringify({ type: 'endCall' }));
+      if (state.pttActiveTarget) {
+        endSpecificCall(state.pttActiveTarget);
       }
-      endPttCallUI();
     });
   }
 

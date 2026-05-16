@@ -919,6 +919,92 @@ body {
     background: #059669; /* Emerald lebih gelap */
 }
 
+/* PTT Call Stack & Multi-call Styling */
+.ptt-call-stack {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    z-index: 1000;
+    max-width: 300px;
+}
+
+.ptt-stack-item {
+    background: white;
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 4px solid #2563eb;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.ptt-stack-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    background: #f8fafc;
+}
+
+.ptt-stack-item.active {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+}
+
+.ptt-stack-item .truck-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: #1e293b;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ptt-stack-item .stack-status {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.ptt-stack-item .stack-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.stack-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.stack-btn.end {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.stack-btn.end:hover {
+    background: #fecaca;
+}
+
 /* ==========================================
    MOBILE RESPONSIVENESS (Max-width 768px)
    ========================================== */
