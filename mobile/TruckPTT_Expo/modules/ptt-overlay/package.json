@@ -1,0 +1,15 @@
+{
+  "name": "ptt-overlay",
+  "version": "1.0.0",
+  "description": "Floating PTT bubble overlay for Truck PTT app",
+  "main": "index.ts",
+  "types": "index.ts",
+  "expo": {
+    "autolinking": {
+      "platforms": ["android"]
+    }
+  },
+  "dependencies": {
+    "expo-modules-core": "~2.1.0"
+  }
+}

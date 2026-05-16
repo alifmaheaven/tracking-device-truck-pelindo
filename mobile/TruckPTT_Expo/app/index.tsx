@@ -16,13 +16,19 @@ import {
 import notifee, { AndroidImportance, AndroidForegroundServiceType, AndroidCategory, EventType } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
+import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped } from '../modules/ptt-overlay';
 
-const WEBSOCKET_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://43.157.242.182:9090';
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://n8n.freeat.me/webhook/device-cordinate';
-const REGISTRATION_SECRET = process.env.EXPO_PUBLIC_REGISTRATION_SECRET || '';
+// Polyfill Buffer jika tidak tersedia secara global
+if (typeof global.Buffer === 'undefined') {
+  global.Buffer = Buffer;
+}
+
+const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'ws://43.157.242.182:9090';
+const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'https://n8n.freeat.me/webhook/device-cordinate';
+const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || '';
 
 const App = () => {
   const [activeDevice, setActiveDevice] = useState<{ id: string; name: string } | null>(null);
@@ -522,12 +528,25 @@ const App = () => {
     
     if (blob) {
       try {
-        const arrayBuffer = await blob.arrayBuffer();
+        let arrayBuffer: ArrayBuffer;
+        if (typeof blob.arrayBuffer === 'function') {
+          arrayBuffer = await blob.arrayBuffer();
+        } else {
+          arrayBuffer = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as ArrayBuffer);
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(blob);
+          });
+        }
+        
         const int16Array = new Int16Array(arrayBuffer);
         const wavBuffer = buildWav(int16Array, 16000);
-        // Use data URI instead of temp file — avoids filesystem I/O latency
-        const base64 = Buffer.from(wavBuffer).toString('base64');
-        const dataUri = `data:audio/wav;base64,${base64}`;
+        const tempUri = FileSystem.documentDirectory + 'ptt_stream_' + Date.now() + '.wav';
+        
+        await FileSystem.writeAsStringAsync(tempUri, Buffer.from(wavBuffer).toString('base64'), {
+          encoding: FileSystem.EncodingType?.Base64 || 'base64',
+        });
 
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
@@ -537,12 +556,14 @@ const App = () => {
           playThroughEarpieceAndroid: false,
         });
 
-        const { sound } = await Audio.Sound.createAsync({ uri: dataUri });
+        const { sound } = await Audio.Sound.createAsync({ uri: tempUri });
         await sound.playAsync();
 
         sound.setOnPlaybackStatusUpdate(async (status: any) => {
           if (status.didJustFinish) {
             await sound.unloadAsync();
+            // Hapus file sementara setelah selesai diputar
+            await FileSystem.deleteAsync(tempUri).catch(() => {});
             isAudioPlaying.current = false;
             processAudioQueue();
           }

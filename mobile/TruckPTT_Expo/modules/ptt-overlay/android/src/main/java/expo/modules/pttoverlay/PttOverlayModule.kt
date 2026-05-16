@@ -27,6 +27,7 @@ class PttOverlayModule : Module() {
       if (activity != null) {
         PttOverlayService.show(activity)
       }
+      null
     }
 
     AsyncFunction("hide") {
@@ -34,10 +35,12 @@ class PttOverlayModule : Module() {
       if (activity != null) {
         PttOverlayService.hide(activity)
       }
+      null
     }
 
     AsyncFunction("updateStatus") { status: String, recording: Boolean ->
       PttOverlayService.updateStatus(status, recording)
+      null
     }
 
     AsyncFunction("isOverlayPermissionGranted") {
@@ -51,7 +54,7 @@ class PttOverlayModule : Module() {
 
     AsyncFunction("requestOverlayPermission") {
       val activity = appContext.legacyModule<ActivityProvider>()?.currentActivity
-        ?: return@AsyncFunction
+        ?: return@AsyncFunction null
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         if (!Settings.canDrawOverlays(activity)) {
           val intent = Intent(
@@ -62,6 +65,7 @@ class PttOverlayModule : Module() {
           activity.startActivity(intent)
         }
       }
+      null
     }
 
     AsyncFunction("isVisible") {

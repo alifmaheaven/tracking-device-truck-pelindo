@@ -56,9 +56,12 @@ object PttOverlayService {
 
     // Create bubble container
     bubbleView = FrameLayout(activity).apply {
-      layoutParams = FrameLayout.LayoutParams(
-        dpToPx(120, activity),
-        dpToPx(56, activity)
+      layoutParams = WindowManager.LayoutParams(
+        dpToPx(120f, activity).toInt(),
+        dpToPx(56f, activity).toInt(),
+        layoutFlag,
+        0,
+        PixelFormat.TRANSLUCENT
       )
       setOnTouchListener(bubbleTouchListener)
       addView(createBubbleContent(activity))
@@ -109,7 +112,9 @@ object PttOverlayService {
         setStroke(dpToPx(2f, ctx).toInt(), Color.parseColor("#FFFFFF"))
         alpha = 240 // 0-255; 240 = slightly transparent
       }
-      elevation = dpToPx(8f, ctx).toFloat()
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        elevation = dpToPx(8f, ctx)
+      }
     }
 
     val text = TextView(ctx).apply {

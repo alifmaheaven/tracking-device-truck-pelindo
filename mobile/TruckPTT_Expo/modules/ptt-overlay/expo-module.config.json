@@ -1,4 +1,6 @@
 {
-  "platform": "android",
-  "modules": ["PttOverlayModule"]
+  "platforms": ["android"],
+  "android": {
+    "modules": ["expo.modules.pttoverlay.PttOverlayModule"]
+  }
 }
