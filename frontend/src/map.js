@@ -31,7 +31,8 @@ export async function fetchDeviceData() {
 
       return {
         id: item.deviceId,
-        truckNumber: item.serialNumber,
+        truckNumber: item.serialNumber, // Nama truk/Nomor polisi
+        serialNumber: item.serialNumber, // Simpan mentah untuk badge
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)],
         status,
         speed: '- km/h',
@@ -196,8 +197,11 @@ export function renderDeviceList(devices) {
           ${tagsHtml}
         </div>
         <div class="battery-status" title="Battery: ${battery.text}" style="color: ${battery.color}; font-weight: 700; font-size: 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-          <i class="fa-solid ${battery.icon}" style="font-size: 20px;"></i>
-          <span style="font-size: 12px;">${battery.text}</span>
+          <div style="font-size: 10px; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 600; margin-bottom: 2px;">SN: ${device.serialNumber || 'N/A'}</div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <i class="fa-solid ${battery.icon}" style="font-size: 20px;"></i>
+            <span style="font-size: 12px;">${battery.text}</span>
+          </div>
         </div>
       </div>
       <div style="display: flex; gap: 8px; margin-top: 8px;">

@@ -110,7 +110,7 @@ async function handleIncomingAudioStream(fromId, base64Data) {
     card.classList.add('is-talking');
 
     const device = state.devicesData.find(d => d.id === fromId);
-    const truckNum = device ? device.serialNumber || device.deviceId : fromId;
+    const truckNum = device ? device.truckNumber : fromId;
 
     if (state.talkingTimeouts[fromId]) clearTimeout(state.talkingTimeouts[fromId]);
     state.talkingTimeouts[fromId] = setTimeout(() => {
