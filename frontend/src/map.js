@@ -29,11 +29,25 @@ export async function fetchDeviceData() {
       const diffMinutes = Math.floor((now - connDate) / (1000 * 60));
       const status = diffMinutes < 120 ? 'active' : 'idle';
 
+      const deviceId = item.deviceId;
+      let coords = [parseFloat(item.latitude), parseFloat(item.longitude)];
+
+      // ANTI-JUMP LOGIC:
+      // Check if this device has sent a real-time update recently (last 30s)
+      const lastWsUpdate = state.activeRealtimeDevices[deviceId];
+      if (lastWsUpdate && (now.getTime() - lastWsUpdate < 30000)) {
+        const existingDevice = state.devicesData.find(d => d.id === deviceId);
+        if (existingDevice) {
+          // Prioritize current local coordinates (from WebSocket) over API data
+          coords = existingDevice.coordinates;
+        }
+      }
+
       return {
-        id: item.deviceId,
+        id: deviceId,
         truckNumber: item.serialNumber, // Nama truk/Nomor polisi
         serialNumber: item.serialNumber, // Simpan mentah untuk badge
-        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)],
+        coordinates: coords,
         status,
         speed: '- km/h',
         lastUpdate: connDate.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' WIB',
@@ -253,4 +267,21 @@ export function handleSearchInput(e) {
            tagMatch;
   });
   renderDeviceList(filteredDevices);
+}
+
+/**
+ * Update a specific device's coordinates from real-time WebSocket data.
+ * @param {string} deviceId 
+ * @param {[number, number]} coordinates 
+ */
+export function updateDeviceCoordinates(deviceId, coordinates) {
+  const device = state.devicesData.find(d => d.id === deviceId);
+  if (device) {
+    device.coordinates = coordinates;
+    // Update marker directly for smooth movement
+    const marker = state.markersList[deviceId];
+    if (marker) {
+      marker.setLatLng(coordinates);
+    }
+  }
 }

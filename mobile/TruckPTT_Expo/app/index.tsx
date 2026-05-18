@@ -18,6 +18,7 @@ import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
+import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped } from '../modules/ptt-overlay';
 
@@ -31,7 +32,7 @@ const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_U
 const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || '';
 
 const App = () => {
-  const [activeDevice, setActiveDevice] = useState<{ id: string; name: string } | null>(null);
+  const [activeDevice, setActiveDevice] = useState<{ id: string; name: string; tags?: any[] } | null>(null);
   const [pptCodeInput, setPptCodeInput] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -39,13 +40,14 @@ const App = () => {
   const [callStatus, setCallStatus] = useState('Idle');
   const [isRecording, setIsRecording] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const activeDeviceRef = useRef<{ id: string; name: string } | null>(null);
+  const activeDeviceRef = useRef<{ id: string; name: string; tags?: any[] } | null>(null);
   const foregroundServiceStarted = useRef(false);
   const foregroundNotificationId = useRef<string | null>(null);
   const notificationRecordingRef = useRef(false);
   const reconnectTimer = useRef<any>(null);
   const pingIntervalRef = useRef<any>(null);
   const audioRecordInitDone = useRef(false);
+  const locationSubscription = useRef<any>(null);
 
   const callSessionRef = useRef({ active: false, callerId: null as string | null, incomingPending: false });
 
@@ -183,6 +185,7 @@ const App = () => {
     } else {
       // Cleanup ketika logout
       hideOverlay().catch(() => {});
+      stopLocationTracking();
       foregroundServiceStarted.current = false;
       if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
       if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
@@ -194,6 +197,7 @@ const App = () => {
       if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
       if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
       if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
+      stopLocationTracking();
       audioRecordInitDone.current = false;
       AudioRecord.stop().catch(() => {});
       notifee.stopForegroundService();
@@ -244,7 +248,8 @@ const App = () => {
       if (found) {
         const deviceData = {
           id: found.deviceId,
-          name: found.serialNumber || found.deviceId
+          name: found.serialNumber || found.deviceId,
+          tags: found.deviceTags || []
         };
         setActiveDevice(deviceData);
         await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
@@ -282,6 +287,17 @@ const App = () => {
   const requestPermissions = async () => {
     if (Platform.OS === 'android') {
       try {
+        // Request location permissions
+        const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
+        if (foregroundStatus !== 'granted') {
+          console.warn('Foreground location permission denied');
+        }
+        
+        const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+        if (backgroundStatus !== 'granted') {
+          console.warn('Background location permission denied');
+        }
+
         // Request microphone permission
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
@@ -313,6 +329,47 @@ const App = () => {
       } catch (err) {
         console.warn(err);
       }
+    }
+  };
+
+  const startLocationTracking = async () => {
+    try {
+      // Clean up previous subscription if exists
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+        locationSubscription.current = null;
+      }
+
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+
+      locationSubscription.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 5000, // Update every 5 seconds
+          distanceInterval: 10, // Or every 10 meters
+        },
+        (location) => {
+          const ws = wsRef.current;
+          if (ws && ws.readyState === WebSocket.OPEN && activeDeviceRef.current) {
+            ws.send(JSON.stringify({
+              type: 'locationUpdate',
+              deviceId: activeDeviceRef.current.id,
+              coordinates: [location.coords.latitude, location.coords.longitude]
+            }));
+            console.log('Location sent via WS:', [location.coords.latitude, location.coords.longitude]);
+          }
+        }
+      );
+    } catch (e) {
+      console.log('Failed to start location tracking:', e);
+    }
+  };
+
+  const stopLocationTracking = () => {
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+      locationSubscription.current = null;
     }
   };
 
@@ -433,6 +490,9 @@ const App = () => {
           secret: REGISTRATION_SECRET 
         }));
         console.log('Registered as:', device.id);
+        
+        // Start location tracking after registration
+        startLocationTracking();
       } else {
         console.log('WS Connected but no active device to register');
       }
@@ -748,9 +808,16 @@ const App = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.title}>Truck PTT</Text>
-          <Text style={styles.deviceId}>Truk: {activeDevice.name}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+            <Text style={styles.deviceId}>Truk: {activeDevice.name}</Text>
+            {activeDevice.tags?.map((tag, idx) => (
+              <View key={idx} style={styles.tagBadge}>
+                <Text style={styles.tagText}>{tag.tagValue || tag}</Text>
+              </View>
+            ))}
+          </View>
         </View>
         <TouchableOpacity style={styles.logoutBtnSmall} onPress={handleLogout}>
           <Text style={styles.logoutBtnText}>Logout</Text>
@@ -886,6 +953,19 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
     alignSelf: 'flex-start',
+  },
+  tagBadge: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  tagText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   logoutBtnSmall: {
     backgroundColor: '#ef4444',

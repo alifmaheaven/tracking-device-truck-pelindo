@@ -5,6 +5,7 @@
 export const state = {
   devicesData: [],
   onlineDeviceIds: [], // IDs connected via WebSocket PTT
+  activeRealtimeDevices: {}, // deviceId -> last_ws_update_timestamp
   markersList: {},
   map: null,
   pttWs: null,

@@ -4,7 +4,7 @@
  * Supports Multi-call Queue (Stack) and Active Focus.
  */
 import { getBatteryDisplay, playPcmAudio } from './utils.js';
-import { renderDeviceList } from './map.js';
+import { renderDeviceList, updateDeviceCoordinates } from './map.js';
 import { state } from './state.js';
 
 let pttPanel, pttTargetName, pttTalkBtn, pttEndBtn, pttStatusText, scrollGuide, scrollGuideText, pttCallStack;
@@ -232,6 +232,11 @@ export function initPttWebSocket() {
         case 'connectionStatusUpdate':
           state.onlineDeviceIds = data.onlineDeviceIds;
           renderDeviceList();
+          break;
+        case 'locationUpdate':
+          // { type: 'locationUpdate', deviceId: '...', coordinates: [lat, lng] }
+          state.activeRealtimeDevices[data.deviceId] = Date.now();
+          updateDeviceCoordinates(data.deviceId, data.coordinates);
           break;
         case 'incomingCall':
           console.log('Incoming multi-call from: ', data.callerId);

@@ -149,6 +149,14 @@ wss.on('connection', (ws) => {
           case 'ping':
             ws.send(JSON.stringify({ type: 'pong' }));
             break;
+
+          case 'locationUpdate':
+            // { type: 'locationUpdate', deviceId: '...', coordinates: [lat, lng] }
+            const centerWsLoc = clients.get('center-main');
+            if (centerWsLoc && centerWsLoc.readyState === WebSocket.OPEN) {
+              centerWsLoc.send(message.toString());
+            }
+            break;
         }
       } catch (err) {
         console.error("Error parsing JSON message:", err);
