@@ -27,8 +27,8 @@ if (typeof global.Buffer === 'undefined') {
   global.Buffer = Buffer;
 }
 
-const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'ws://43.157.242.182:9090';
-const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'https://n8n.freeat.me/webhook/device-cordinate';
+const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'ws://10.118.62.60:9090';
+const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'http://10.118.62.60:5678/webhook/device-cordinate';
 const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || '';
 
 const App = () => {
