@@ -346,8 +346,8 @@ const App = () => {
       locationSubscription.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.Balanced,
-          timeInterval: 5000, // Update every 5 seconds
-          distanceInterval: 10, // Or every 10 meters
+          timeInterval: 2000, // Update every 2 seconds
+          distanceInterval: 2, // Or every 2 meters
         },
         (location) => {
           const ws = wsRef.current;
