@@ -1,0 +1,4958 @@
+{
+  "version": 1,
+  "timestamp": "2026-05-18T00:52:47.261Z",
+  "nodes": [
+    {
+      "label": "script.js",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1",
+      "id": "frontend_script_js",
+      "community": 2,
+      "norm_label": "script.js"
+    },
+    {
+      "label": "_navActive()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L24",
+      "id": "frontend_script_navactive",
+      "community": 2,
+      "norm_label": "_navactive()"
+    },
+    {
+      "label": "_navTarget()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L25",
+      "id": "frontend_script_navtarget",
+      "community": 2,
+      "norm_label": "_navtarget()"
+    },
+    {
+      "label": "updateRefreshCounterUI()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L86",
+      "id": "frontend_script_updaterefreshcounterui",
+      "community": 7,
+      "norm_label": "updaterefreshcounterui()"
+    },
+    {
+      "label": "updateRefreshCounter()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L103",
+      "id": "frontend_script_updaterefreshcounter",
+      "community": 7,
+      "norm_label": "updaterefreshcounter()"
+    },
+    {
+      "label": "simplifyCoordinates()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L196",
+      "id": "frontend_script_simplifycoordinates",
+      "community": 2,
+      "norm_label": "simplifycoordinates()"
+    },
+    {
+      "label": "decodePolyline()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L211",
+      "id": "frontend_script_decodepolyline",
+      "community": 7,
+      "norm_label": "decodepolyline()"
+    },
+    {
+      "label": "pad()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L245",
+      "id": "frontend_script_pad",
+      "community": 2,
+      "norm_label": "pad()"
+    },
+    {
+      "label": "toLocalIso()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L246",
+      "id": "frontend_script_tolocaliso",
+      "community": 2,
+      "norm_label": "tolocaliso()"
+    },
+    {
+      "label": "buildHistoryUrl()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L292",
+      "id": "frontend_script_buildhistoryurl",
+      "community": 2,
+      "norm_label": "buildhistoryurl()"
+    },
+    {
+      "label": "openHistoryModal()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L338",
+      "id": "frontend_script_openhistorymodal",
+      "community": 2,
+      "norm_label": "openhistorymodal()"
+    },
+    {
+      "label": "createUserIcon()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L886",
+      "id": "frontend_script_createusericon",
+      "community": 2,
+      "norm_label": "createusericon()"
+    },
+    {
+      "label": "stopGeoTracking()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L905",
+      "id": "frontend_script_stopgeotracking",
+      "community": 2,
+      "norm_label": "stopgeotracking()"
+    },
+    {
+      "label": "startGeoTracking()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L916",
+      "id": "frontend_script_startgeotracking",
+      "community": 2,
+      "norm_label": "startgeotracking()"
+    },
+    {
+      "label": "startDirectionMode()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1001",
+      "id": "frontend_script_startdirectionmode",
+      "community": 7,
+      "norm_label": "startdirectionmode()"
+    },
+    {
+      "label": "exitDirectionMode()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1027",
+      "id": "frontend_script_exitdirectionmode",
+      "community": 7,
+      "norm_label": "exitdirectionmode()"
+    },
+    {
+      "label": "updateNavRoute()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1050",
+      "id": "frontend_script_updatenavroute",
+      "community": 7,
+      "norm_label": "updatenavroute()"
+    },
+    {
+      "label": "ptt.js",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L1",
+      "id": "frontend_src_ptt_js",
+      "community": 3,
+      "norm_label": "ptt.js"
+    },
+    {
+      "label": "setupPtt()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L20",
+      "id": "src_ptt_setupptt",
+      "community": 3,
+      "norm_label": "setupptt()"
+    },
+    {
+      "label": "updateCallStackUI()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L33",
+      "id": "src_ptt_updatecallstackui",
+      "community": 3,
+      "norm_label": "updatecallstackui()"
+    },
+    {
+      "label": "focusCall()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L67",
+      "id": "src_ptt_focuscall",
+      "community": 3,
+      "norm_label": "focuscall()"
+    },
+    {
+      "label": "endSpecificCall()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L81",
+      "id": "src_ptt_endspecificcall",
+      "community": 3,
+      "norm_label": "endspecificcall()"
+    },
+    {
+      "label": "endPttCallUI()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L93",
+      "id": "src_ptt_endpttcallui",
+      "community": 3,
+      "norm_label": "endpttcallui()"
+    },
+    {
+      "label": "startRecording()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L99",
+      "id": "src_ptt_startrecording",
+      "community": 3,
+      "norm_label": "startrecording()"
+    },
+    {
+      "label": "stopRecording()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L142",
+      "id": "src_ptt_stoprecording",
+      "community": 3,
+      "norm_label": "stoprecording()"
+    },
+    {
+      "label": "handleIncomingAudioStream()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L153",
+      "id": "src_ptt_handleincomingaudiostream",
+      "community": 3,
+      "norm_label": "handleincomingaudiostream()"
+    },
+    {
+      "label": "initPttWebSocket()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L201",
+      "id": "src_ptt_initpttwebsocket",
+      "community": 3,
+      "norm_label": "initpttwebsocket()"
+    },
+    {
+      "label": "startPttCall()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L290",
+      "id": "src_ptt_startpttcall",
+      "community": 3,
+      "norm_label": "startpttcall()"
+    },
+    {
+      "label": "bindPttButtons()",
+      "file_type": "code",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L298",
+      "id": "src_ptt_bindpttbuttons",
+      "community": 3,
+      "norm_label": "bindpttbuttons()"
+    },
+    {
+      "label": "state.js",
+      "file_type": "code",
+      "source_file": "frontend/src/state.js",
+      "source_location": "L1",
+      "id": "frontend_src_state_js",
+      "community": 3,
+      "norm_label": "state.js"
+    },
+    {
+      "label": "utils.js",
+      "file_type": "code",
+      "source_file": "frontend/src/utils.js",
+      "source_location": "L1",
+      "id": "frontend_src_utils_js",
+      "community": 3,
+      "norm_label": "utils.js"
+    },
+    {
+      "label": "getBatteryDisplay()",
+      "file_type": "code",
+      "source_file": "frontend/src/utils.js",
+      "source_location": "L6",
+      "id": "src_utils_getbatterydisplay",
+      "community": 3,
+      "norm_label": "getbatterydisplay()"
+    },
+    {
+      "label": "playPcmAudio()",
+      "file_type": "code",
+      "source_file": "frontend/src/utils.js",
+      "source_location": "L33",
+      "id": "src_utils_playpcmaudio",
+      "community": 3,
+      "norm_label": "playpcmaudio()"
+    },
+    {
+      "label": "map.js",
+      "file_type": "code",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L1",
+      "id": "frontend_src_map_js",
+      "community": 10,
+      "norm_label": "map.js"
+    },
+    {
+      "label": "setupMap()",
+      "file_type": "code",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L14",
+      "id": "src_map_setupmap",
+      "community": 10,
+      "norm_label": "setupmap()"
+    },
+    {
+      "label": "fetchDeviceData()",
+      "file_type": "code",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L18",
+      "id": "src_map_fetchdevicedata",
+      "community": 10,
+      "norm_label": "fetchdevicedata()"
+    },
+    {
+      "label": "filteredBySearch()",
+      "file_type": "code",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L56",
+      "id": "src_map_filteredbysearch",
+      "community": 10,
+      "norm_label": "filteredbysearch()"
+    },
+    {
+      "label": "renderMarkers()",
+      "file_type": "code",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L66",
+      "id": "src_map_rendermarkers",
+      "community": 10,
+      "norm_label": "rendermarkers()"
+    },
+    {
+      "label": "renderDeviceList()",
+      "file_type": "code",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L160",
+      "id": "src_map_renderdevicelist",
+      "community": 10,
+      "norm_label": "renderdevicelist()"
+    },
+    {
+      "label": "focusDevice()",
+      "file_type": "code",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L221",
+      "id": "src_map_focusdevice",
+      "community": 10,
+      "norm_label": "focusdevice()"
+    },
+    {
+      "label": "handleSearchInput()",
+      "file_type": "code",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L247",
+      "id": "src_map_handlesearchinput",
+      "community": 10,
+      "norm_label": "handlesearchinput()"
+    },
+    {
+      "label": "server.js",
+      "file_type": "code",
+      "source_file": "backend/server.js",
+      "source_location": "L1",
+      "id": "backend_server_js",
+      "community": 13,
+      "norm_label": "server.js"
+    },
+    {
+      "label": "broadcastConnectionStatus()",
+      "file_type": "code",
+      "source_file": "backend/server.js",
+      "source_location": "L185",
+      "id": "backend_server_broadcastconnectionstatus",
+      "community": 13,
+      "norm_label": "broadcastconnectionstatus()"
+    },
+    {
+      "label": "expo-env.d.ts",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/expo-env.d.ts",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_expo_env_d_ts",
+      "community": 21,
+      "norm_label": "expo-env.d.ts"
+    },
+    {
+      "label": "eslint.config.js",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/eslint.config.js",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_eslint_config_js",
+      "community": 22,
+      "norm_label": "eslint.config.js"
+    },
+    {
+      "label": "index.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_app_index_tsx",
+      "community": 1,
+      "norm_label": "index.tsx"
+    },
+    {
+      "label": "loadStoredDevice()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L136",
+      "id": "app_index_loadstoreddevice",
+      "community": 1,
+      "norm_label": "loadstoreddevice()"
+    },
+    {
+      "label": "handleLogin()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L232",
+      "id": "app_index_handlelogin",
+      "community": 1,
+      "norm_label": "handlelogin()"
+    },
+    {
+      "label": "handleLogout()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L261",
+      "id": "app_index_handlelogout",
+      "community": 1,
+      "norm_label": "handlelogout()"
+    },
+    {
+      "label": "requestPermissions()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L282",
+      "id": "app_index_requestpermissions",
+      "community": 1,
+      "norm_label": "requestpermissions()"
+    },
+    {
+      "label": "startForegroundService()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L319",
+      "id": "app_index_startforegroundservice",
+      "community": 1,
+      "norm_label": "startforegroundservice()"
+    },
+    {
+      "label": "updateNotificationAction()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L351",
+      "id": "app_index_updatenotificationaction",
+      "community": 1,
+      "norm_label": "updatenotificationaction()"
+    },
+    {
+      "label": "initAudioRecord()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L381",
+      "id": "app_index_initaudiorecord",
+      "community": 1,
+      "norm_label": "initaudiorecord()"
+    },
+    {
+      "label": "connectWebSocket()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L402",
+      "id": "app_index_connectwebsocket",
+      "community": 1,
+      "norm_label": "connectwebsocket()"
+    },
+    {
+      "label": "showIncomingCallNotification()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L472",
+      "id": "app_index_showincomingcallnotification",
+      "community": 1,
+      "norm_label": "showincomingcallnotification()"
+    },
+    {
+      "label": "dismissCallNotification()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L507",
+      "id": "app_index_dismisscallnotification",
+      "community": 1,
+      "norm_label": "dismisscallnotification()"
+    },
+    {
+      "label": "handleBinaryAudio()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L518",
+      "id": "app_index_handlebinaryaudio",
+      "community": 1,
+      "norm_label": "handlebinaryaudio()"
+    },
+    {
+      "label": "processAudioQueue()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L523",
+      "id": "app_index_processaudioqueue",
+      "community": 1,
+      "norm_label": "processaudioqueue()"
+    },
+    {
+      "label": "buildWav()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L581",
+      "id": "app_index_buildwav",
+      "community": 1,
+      "norm_label": "buildwav()"
+    },
+    {
+      "label": "writeString()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L613",
+      "id": "app_index_writestring",
+      "community": 1,
+      "norm_label": "writestring()"
+    },
+    {
+      "label": "handleSignaling()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L619",
+      "id": "app_index_handlesignaling",
+      "community": 1,
+      "norm_label": "handlesignaling()"
+    },
+    {
+      "label": "handlePressIn()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L679",
+      "id": "app_index_handlepressin",
+      "community": 1,
+      "norm_label": "handlepressin()"
+    },
+    {
+      "label": "handlePressOut()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L706",
+      "id": "app_index_handlepressout",
+      "community": 1,
+      "norm_label": "handlepressout()"
+    },
+    {
+      "label": "_layout.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/_layout.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_app_layout_tsx",
+      "community": 0,
+      "norm_label": "_layout.tsx"
+    },
+    {
+      "label": "RootLayout()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/_layout.tsx",
+      "source_location": "L19",
+      "id": "app_layout_rootlayout",
+      "community": 0,
+      "norm_label": "rootlayout()"
+    },
+    {
+      "label": "modal.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/modal.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_app_modal_tsx",
+      "community": 0,
+      "norm_label": "modal.tsx"
+    },
+    {
+      "label": "ModalScreen()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/modal.tsx",
+      "source_location": "L7",
+      "id": "app_modal_modalscreen",
+      "community": 0,
+      "norm_label": "modalscreen()"
+    },
+    {
+      "label": "index.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_app_tabs_index_tsx",
+      "community": 0,
+      "norm_label": "index.tsx"
+    },
+    {
+      "label": "_layout.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_app_tabs_layout_tsx",
+      "community": 0,
+      "norm_label": "_layout.tsx"
+    },
+    {
+      "label": "TabLayout()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L9",
+      "id": "tabs_layout_tablayout",
+      "community": 0,
+      "norm_label": "tablayout()"
+    },
+    {
+      "label": "explore.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "community": 0,
+      "norm_label": "explore.tsx"
+    },
+    {
+      "label": "withPttConfig.js",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/plugins/withPttConfig.js",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_plugins_withpttconfig_js",
+      "community": 16,
+      "norm_label": "withpttconfig.js"
+    },
+    {
+      "label": "withPttService()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/plugins/withPttConfig.js",
+      "source_location": "L3",
+      "id": "plugins_withpttconfig_withpttservice",
+      "community": 16,
+      "norm_label": "withpttservice()"
+    },
+    {
+      "label": "theme.ts",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/constants/theme.ts",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_constants_theme_ts",
+      "community": 0,
+      "norm_label": "theme.ts"
+    },
+    {
+      "label": "themed-text.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-text.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_themed_text_tsx",
+      "community": 0,
+      "norm_label": "themed-text.tsx"
+    },
+    {
+      "label": "ThemedText()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-text.tsx",
+      "source_location": "L11",
+      "id": "components_themed_text_themedtext",
+      "community": 0,
+      "norm_label": "themedtext()"
+    },
+    {
+      "label": "hello-wave.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/hello-wave.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_hello_wave_tsx",
+      "community": 0,
+      "norm_label": "hello-wave.tsx"
+    },
+    {
+      "label": "HelloWave()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/hello-wave.tsx",
+      "source_location": "L3",
+      "id": "components_hello_wave_hellowave",
+      "community": 0,
+      "norm_label": "hellowave()"
+    },
+    {
+      "label": "parallax-scroll-view.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_parallax_scroll_view_tsx",
+      "community": 0,
+      "norm_label": "parallax-scroll-view.tsx"
+    },
+    {
+      "label": "ParallaxScrollView()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L21",
+      "id": "components_parallax_scroll_view_parallaxscrollview",
+      "community": 0,
+      "norm_label": "parallaxscrollview()"
+    },
+    {
+      "label": "themed-view.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-view.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_themed_view_tsx",
+      "community": 0,
+      "norm_label": "themed-view.tsx"
+    },
+    {
+      "label": "ThemedView()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-view.tsx",
+      "source_location": "L10",
+      "id": "components_themed_view_themedview",
+      "community": 0,
+      "norm_label": "themedview()"
+    },
+    {
+      "label": "external-link.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/external-link.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_external_link_tsx",
+      "community": 0,
+      "norm_label": "external-link.tsx"
+    },
+    {
+      "label": "ExternalLink()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/external-link.tsx",
+      "source_location": "L7",
+      "id": "components_external_link_externallink",
+      "community": 0,
+      "norm_label": "externallink()"
+    },
+    {
+      "label": "async()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/external-link.tsx",
+      "source_location": "L13",
+      "id": "components_external_link_async",
+      "community": 0,
+      "norm_label": "async()"
+    },
+    {
+      "label": "haptic-tab.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/haptic-tab.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_haptic_tab_tsx",
+      "community": 0,
+      "norm_label": "haptic-tab.tsx"
+    },
+    {
+      "label": "HapticTab()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/haptic-tab.tsx",
+      "source_location": "L5",
+      "id": "components_haptic_tab_haptictab",
+      "community": 0,
+      "norm_label": "haptictab()"
+    },
+    {
+      "label": "icon-symbol.ios.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/icon-symbol.ios.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_ui_icon_symbol_ios_tsx",
+      "community": 17,
+      "norm_label": "icon-symbol.ios.tsx"
+    },
+    {
+      "label": "IconSymbol()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/icon-symbol.ios.tsx",
+      "source_location": "L4",
+      "id": "ui_icon_symbol_ios_iconsymbol",
+      "community": 17,
+      "norm_label": "iconsymbol()"
+    },
+    {
+      "label": "icon-symbol.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/icon-symbol.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_ui_icon_symbol_tsx",
+      "community": 0,
+      "norm_label": "icon-symbol.tsx"
+    },
+    {
+      "label": "IconSymbol()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/icon-symbol.tsx",
+      "source_location": "L28",
+      "id": "ui_icon_symbol_iconsymbol",
+      "community": 0,
+      "norm_label": "iconsymbol()"
+    },
+    {
+      "label": "collapsible.tsx",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "community": 0,
+      "norm_label": "collapsible.tsx"
+    },
+    {
+      "label": "use-color-scheme.web.ts",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-color-scheme.web.ts",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_hooks_use_color_scheme_web_ts",
+      "community": 0,
+      "norm_label": "use-color-scheme.web.ts"
+    },
+    {
+      "label": "useColorScheme()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-color-scheme.web.ts",
+      "source_location": "L7",
+      "id": "hooks_use_color_scheme_web_usecolorscheme",
+      "community": 0,
+      "norm_label": "usecolorscheme()"
+    },
+    {
+      "label": "use-color-scheme.ts",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-color-scheme.ts",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_hooks_use_color_scheme_ts",
+      "community": 0,
+      "norm_label": "use-color-scheme.ts"
+    },
+    {
+      "label": "use-theme-color.ts",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-theme-color.ts",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_hooks_use_theme_color_ts",
+      "community": 0,
+      "norm_label": "use-theme-color.ts"
+    },
+    {
+      "label": "useThemeColor()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-theme-color.ts",
+      "source_location": "L9",
+      "id": "hooks_use_theme_color_usethemecolor",
+      "community": 0,
+      "norm_label": "usethemecolor()"
+    },
+    {
+      "label": "build.gradle",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/build.gradle",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_android_build_gradle",
+      "community": 23,
+      "norm_label": "build.gradle"
+    },
+    {
+      "label": "settings.gradle",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/settings.gradle",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_android_settings_gradle",
+      "community": 24,
+      "norm_label": "settings.gradle"
+    },
+    {
+      "label": "build.gradle",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/build.gradle",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_android_app_build_gradle",
+      "community": 25,
+      "norm_label": "build.gradle"
+    },
+    {
+      "label": "MainActivity.kt",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_android_app_src_main_java_com_pelindo_truckptt_mainactivity_kt",
+      "community": 12,
+      "norm_label": "mainactivity.kt"
+    },
+    {
+      "label": "MainActivity",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L14",
+      "id": "truckptt_mainactivity_mainactivity",
+      "community": 12,
+      "norm_label": "mainactivity"
+    },
+    {
+      "label": ".onCreate()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L15",
+      "id": "truckptt_mainactivity_mainactivity_oncreate",
+      "community": 12,
+      "norm_label": ".oncreate()"
+    },
+    {
+      "label": ".getMainComponentName()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L30",
+      "id": "truckptt_mainactivity_mainactivity_getmaincomponentname",
+      "community": 12,
+      "norm_label": ".getmaincomponentname()"
+    },
+    {
+      "label": ".createReactActivityDelegate()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L36",
+      "id": "truckptt_mainactivity_mainactivity_createreactactivitydelegate",
+      "community": 12,
+      "norm_label": ".createreactactivitydelegate()"
+    },
+    {
+      "label": ".invokeDefaultOnBackPressed()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L52",
+      "id": "truckptt_mainactivity_mainactivity_invokedefaultonbackpressed",
+      "community": 12,
+      "norm_label": ".invokedefaultonbackpressed()"
+    },
+    {
+      "label": "MainApplication.kt",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_android_app_src_main_java_com_pelindo_truckptt_mainapplication_kt",
+      "community": 11,
+      "norm_label": "mainapplication.kt"
+    },
+    {
+      "label": "MainApplication",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L19",
+      "id": "truckptt_mainapplication_mainapplication",
+      "community": 11,
+      "norm_label": "mainapplication"
+    },
+    {
+      "label": "getPackages()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L24",
+      "id": "truckptt_mainapplication_getpackages",
+      "community": 11,
+      "norm_label": "getpackages()"
+    },
+    {
+      "label": "getJSMainModuleName()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L30",
+      "id": "truckptt_mainapplication_getjsmainmodulename",
+      "community": 11,
+      "norm_label": "getjsmainmodulename()"
+    },
+    {
+      "label": "getUseDeveloperSupport()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L32",
+      "id": "truckptt_mainapplication_getusedevelopersupport",
+      "community": 11,
+      "norm_label": "getusedevelopersupport()"
+    },
+    {
+      "label": ".onCreate()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L41",
+      "id": "truckptt_mainapplication_mainapplication_oncreate",
+      "community": 11,
+      "norm_label": ".oncreate()"
+    },
+    {
+      "label": ".onConfigurationChanged()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L52",
+      "id": "truckptt_mainapplication_mainapplication_onconfigurationchanged",
+      "community": 11,
+      "norm_label": ".onconfigurationchanged()"
+    },
+    {
+      "label": "reset-project.js",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/scripts/reset-project.js",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_scripts_reset_project_js",
+      "community": 18,
+      "norm_label": "reset-project.js"
+    },
+    {
+      "label": "moveDirectories()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/scripts/reset-project.js",
+      "source_location": "L48",
+      "id": "scripts_reset_project_movedirectories",
+      "community": 18,
+      "norm_label": "movedirectories()"
+    },
+    {
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "community": 1,
+      "norm_label": "index.ts"
+    },
+    {
+      "label": "showOverlay()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L27",
+      "id": "ptt_overlay_index_showoverlay",
+      "community": 1,
+      "norm_label": "showoverlay()"
+    },
+    {
+      "label": "hideOverlay()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L34",
+      "id": "ptt_overlay_index_hideoverlay",
+      "community": 1,
+      "norm_label": "hideoverlay()"
+    },
+    {
+      "label": "updateOverlayStatus()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L41",
+      "id": "ptt_overlay_index_updateoverlaystatus",
+      "community": 1,
+      "norm_label": "updateoverlaystatus()"
+    },
+    {
+      "label": "isOverlayPermissionGranted()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L48",
+      "id": "ptt_overlay_index_isoverlaypermissiongranted",
+      "community": 1,
+      "norm_label": "isoverlaypermissiongranted()"
+    },
+    {
+      "label": "requestOverlayPermission()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L55",
+      "id": "ptt_overlay_index_requestoverlaypermission",
+      "community": 1,
+      "norm_label": "requestoverlaypermission()"
+    },
+    {
+      "label": "isOverlayVisible()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L62",
+      "id": "ptt_overlay_index_isoverlayvisible",
+      "community": 1,
+      "norm_label": "isoverlayvisible()"
+    },
+    {
+      "label": "onPttPressIn()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L70",
+      "id": "ptt_overlay_index_onpttpressin",
+      "community": 1,
+      "norm_label": "onpttpressin()"
+    },
+    {
+      "label": "onPttPressOut()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L74",
+      "id": "ptt_overlay_index_onpttpressout",
+      "community": 1,
+      "norm_label": "onpttpressout()"
+    },
+    {
+      "label": "onBubbleTapped()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L78",
+      "id": "ptt_overlay_index_onbubbletapped",
+      "community": 1,
+      "norm_label": "onbubbletapped()"
+    },
+    {
+      "label": "build.gradle",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/build.gradle",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_modules_ptt_overlay_android_build_gradle",
+      "community": 26,
+      "norm_label": "build.gradle"
+    },
+    {
+      "label": "PttOverlayModule.kt",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayModule.kt",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_modules_ptt_overlay_android_src_main_java_expo_modules_pttoverlay_pttoverlaymodule_kt",
+      "community": 14,
+      "norm_label": "pttoverlaymodule.kt"
+    },
+    {
+      "label": "PttOverlayModule",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayModule.kt",
+      "source_location": "L11",
+      "id": "pttoverlay_pttoverlaymodule_pttoverlaymodule",
+      "community": 14,
+      "norm_label": "pttoverlaymodule"
+    },
+    {
+      "label": ".definition()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayModule.kt",
+      "source_location": "L12",
+      "id": "pttoverlay_pttoverlaymodule_pttoverlaymodule_definition",
+      "community": 14,
+      "norm_label": ".definition()"
+    },
+    {
+      "label": "PttOverlayService.kt",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_modules_ptt_overlay_android_src_main_java_expo_modules_pttoverlay_pttoverlayservice_kt",
+      "community": 8,
+      "norm_label": "pttoverlayservice.kt"
+    },
+    {
+      "label": "PttOverlayService",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L18",
+      "id": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "community": 8,
+      "norm_label": "pttoverlayservice"
+    },
+    {
+      "label": ".setModule()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L28",
+      "id": "pttoverlay_pttoverlayservice_pttoverlayservice_setmodule",
+      "community": 8,
+      "norm_label": ".setmodule()"
+    },
+    {
+      "label": ".show()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L32",
+      "id": "pttoverlay_pttoverlayservice_pttoverlayservice_show",
+      "community": 8,
+      "norm_label": ".show()"
+    },
+    {
+      "label": ".hide()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L71",
+      "id": "pttoverlay_pttoverlayservice_pttoverlayservice_hide",
+      "community": 8,
+      "norm_label": ".hide()"
+    },
+    {
+      "label": ".updateStatus()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L83",
+      "id": "pttoverlay_pttoverlayservice_pttoverlayservice_updatestatus",
+      "community": 8,
+      "norm_label": ".updatestatus()"
+    },
+    {
+      "label": ".isVisible()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L97",
+      "id": "pttoverlay_pttoverlayservice_pttoverlayservice_isvisible",
+      "community": 8,
+      "norm_label": ".isvisible()"
+    },
+    {
+      "label": ".createBubbleContent()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L99",
+      "id": "pttoverlay_pttoverlayservice_pttoverlayservice_createbubblecontent",
+      "community": 8,
+      "norm_label": ".createbubblecontent()"
+    },
+    {
+      "label": ".dpToPx()",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L196",
+      "id": "pttoverlay_pttoverlayservice_pttoverlayservice_dptopx",
+      "community": 8,
+      "norm_label": ".dptopx()"
+    },
+    {
+      "label": "PttOverlayModule.ts",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/src/PttOverlayModule.ts",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_modules_ptt_overlay_src_pttoverlaymodule_ts",
+      "community": 27,
+      "norm_label": "pttoverlaymodule.ts"
+    },
+    {
+      "label": "README.md",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "id": "readme_md",
+      "community": 5,
+      "norm_label": "readme.md"
+    },
+    {
+      "label": "Tracking Device Truck Pelindo",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "id": "maps_device_pelindo_readme_tracking_device_truck_pelindo",
+      "community": 5,
+      "norm_label": "tracking device truck pelindo"
+    },
+    {
+      "label": "🌟 Fitur Utama",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L5",
+      "id": "maps_device_pelindo_readme_fitur_utama",
+      "community": 5,
+      "norm_label": "🌟 fitur utama"
+    },
+    {
+      "label": "🛠️ Tech Stack & Library",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L13",
+      "id": "maps_device_pelindo_readme_tech_stack_library",
+      "community": 5,
+      "norm_label": "🛠️ tech stack & library"
+    },
+    {
+      "label": "🚀 Cara Menjalankan Aplikasi di Lokal",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L20",
+      "id": "maps_device_pelindo_readme_cara_menjalankan_aplikasi_di_lokal",
+      "community": 5,
+      "norm_label": "🚀 cara menjalankan aplikasi di lokal"
+    },
+    {
+      "label": "1. Menjalankan via Docker Compose (Direkomendasikan)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L24",
+      "id": "maps_device_pelindo_readme_1_menjalankan_via_docker_compose_direkomendasikan",
+      "community": 5,
+      "norm_label": "1. menjalankan via docker compose (direkomendasikan)"
+    },
+    {
+      "label": "code:bash (# 1. Buka terminal, pastikan masuk dulu ke root direktori re)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L28",
+      "id": "maps_device_pelindo_readme_codeblock_1",
+      "community": 5,
+      "norm_label": "code:bash (# 1. buka terminal, pastikan masuk dulu ke root direktori re)"
+    },
+    {
+      "label": "2. Dijalankan Manual (Tanpa Docker/Web Server)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L40",
+      "id": "maps_device_pelindo_readme_2_dijalankan_manual_tanpa_docker_web_server",
+      "community": 5,
+      "norm_label": "2. dijalankan manual (tanpa docker/web server)"
+    },
+    {
+      "label": "🌐 Alur Data API N8N",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L43",
+      "id": "maps_device_pelindo_readme_alur_data_api_n8n",
+      "community": 5,
+      "norm_label": "🌐 alur data api n8n"
+    },
+    {
+      "label": "code:javascript (// Konfigurasi endpoint Webhook N8N:)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L47",
+      "id": "maps_device_pelindo_readme_codeblock_2",
+      "community": 5,
+      "norm_label": "code:javascript (// konfigurasi endpoint webhook n8n:)"
+    },
+    {
+      "label": "code:json ([)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L52",
+      "id": "maps_device_pelindo_readme_codeblock_3",
+      "community": 5,
+      "norm_label": "code:json ([)"
+    },
+    {
+      "label": "📜 Lisensi",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L66",
+      "id": "maps_device_pelindo_readme_lisensi",
+      "community": 5,
+      "norm_label": "📜 lisensi"
+    },
+    {
+      "label": "DESCRIPTION.md",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L1",
+      "id": "description_md",
+      "community": 4,
+      "norm_label": "description.md"
+    },
+    {
+      "label": "Project Architecture & Context (For AI Assistants)",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L1",
+      "id": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "community": 4,
+      "norm_label": "project architecture & context (for ai assistants)"
+    },
+    {
+      "label": "1. Project Overview & Environment",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L7",
+      "id": "maps_device_pelindo_description_1_project_overview_environment",
+      "community": 4,
+      "norm_label": "1. project overview & environment"
+    },
+    {
+      "label": "2. File Structure & Scope",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L14",
+      "id": "maps_device_pelindo_description_2_file_structure_scope",
+      "community": 4,
+      "norm_label": "2. file structure & scope"
+    },
+    {
+      "label": "3. Webhooks API Integrations (N8N Microservices)",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L19",
+      "id": "maps_device_pelindo_description_3_webhooks_api_integrations_n8n_microservices",
+      "community": 4,
+      "norm_label": "3. webhooks api integrations (n8n microservices)"
+    },
+    {
+      "label": "A. Endpoint 1: *Current Devices Cordinate*",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L22",
+      "id": "maps_device_pelindo_description_a_endpoint_1_current_devices_cordinate",
+      "community": 4,
+      "norm_label": "a. endpoint 1: *current devices cordinate*"
+    },
+    {
+      "label": "code:json ([)",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L26",
+      "id": "maps_device_pelindo_description_codeblock_1",
+      "community": 4,
+      "norm_label": "code:json ([)"
+    },
+    {
+      "label": "B. Endpoint 2: *Device Tracking History Path*",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L40",
+      "id": "maps_device_pelindo_description_b_endpoint_2_device_tracking_history_path",
+      "community": 4,
+      "norm_label": "b. endpoint 2: *device tracking history path*"
+    },
+    {
+      "label": "code:json ([)",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L44",
+      "id": "maps_device_pelindo_description_codeblock_2",
+      "community": 4,
+      "norm_label": "code:json ([)"
+    },
+    {
+      "label": "4. Newly Added Features (Keep Context)",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L56",
+      "id": "maps_device_pelindo_description_4_newly_added_features_keep_context",
+      "community": 4,
+      "norm_label": "4. newly added features (keep context)"
+    },
+    {
+      "label": "5. Crucial Logic Rules & Constraints (DO NOT BREAK)",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L69",
+      "id": "maps_device_pelindo_description_5_crucial_logic_rules_constraints_do_not_break",
+      "community": 4,
+      "norm_label": "5. crucial logic rules & constraints (do not break)"
+    },
+    {
+      "label": "6. Push-To-Talk (PTT) System Architecture",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L89",
+      "id": "maps_device_pelindo_description_6_push_to_talk_ptt_system_architecture",
+      "community": 4,
+      "norm_label": "6. push-to-talk (ptt) system architecture"
+    },
+    {
+      "label": "7. Known Pending Features / Todos",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L101",
+      "id": "maps_device_pelindo_description_7_known_pending_features_todos",
+      "community": 4,
+      "norm_label": "7. known pending features / todos"
+    },
+    {
+      "label": "README.md",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L1",
+      "id": "mobile_truckptt_expo_readme_md",
+      "community": 9,
+      "norm_label": "readme.md"
+    },
+    {
+      "label": "Welcome to your Expo app 👋",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L1",
+      "id": "truckptt_expo_readme_welcome_to_your_expo_app",
+      "community": 9,
+      "norm_label": "welcome to your expo app 👋"
+    },
+    {
+      "label": "Get started",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L5",
+      "id": "truckptt_expo_readme_get_started",
+      "community": 9,
+      "norm_label": "get started"
+    },
+    {
+      "label": "code:bash (npm install)",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L9",
+      "id": "truckptt_expo_readme_codeblock_1",
+      "community": 9,
+      "norm_label": "code:bash (npm install)"
+    },
+    {
+      "label": "code:bash (npx expo start)",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L15",
+      "id": "truckptt_expo_readme_codeblock_2",
+      "community": 9,
+      "norm_label": "code:bash (npx expo start)"
+    },
+    {
+      "label": "Get a fresh project",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L28",
+      "id": "truckptt_expo_readme_get_a_fresh_project",
+      "community": 9,
+      "norm_label": "get a fresh project"
+    },
+    {
+      "label": "code:bash (npm run reset-project)",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L32",
+      "id": "truckptt_expo_readme_codeblock_3",
+      "community": 9,
+      "norm_label": "code:bash (npm run reset-project)"
+    },
+    {
+      "label": "Learn more",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L38",
+      "id": "truckptt_expo_readme_learn_more",
+      "community": 9,
+      "norm_label": "learn more"
+    },
+    {
+      "label": "Join the community",
+      "file_type": "document",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L45",
+      "id": "truckptt_expo_readme_join_the_community",
+      "community": 9,
+      "norm_label": "join the community"
+    },
+    {
+      "label": "fetchDeviceData()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L38",
+      "community": 7,
+      "norm_label": "fetchdevicedata()",
+      "id": "frontend_script_fetchdevicedata"
+    },
+    {
+      "label": "renderMarkers()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L93",
+      "community": 7,
+      "norm_label": "rendermarkers()",
+      "id": "frontend_script_rendermarkers"
+    },
+    {
+      "label": "renderDeviceList()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L197",
+      "community": 7,
+      "norm_label": "renderdevicelist()",
+      "id": "frontend_script_renderdevicelist"
+    },
+    {
+      "label": "focusDevice()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L267",
+      "community": 2,
+      "norm_label": "focusdevice()",
+      "id": "frontend_script_focusdevice"
+    },
+    {
+      "label": "initPttWebSocket()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1397",
+      "community": 2,
+      "norm_label": "initpttwebsocket()",
+      "id": "frontend_script_initpttwebsocket"
+    },
+    {
+      "label": "endPttCallUI()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1510",
+      "community": 2,
+      "norm_label": "endpttcallui()",
+      "id": "frontend_script_endpttcallui"
+    },
+    {
+      "label": "startRecording()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1532",
+      "community": 2,
+      "norm_label": "startrecording()",
+      "id": "frontend_script_startrecording"
+    },
+    {
+      "label": "stopRecording()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1575",
+      "community": 2,
+      "norm_label": "stoprecording()",
+      "id": "frontend_script_stoprecording"
+    },
+    {
+      "label": "handleIncomingAudioStream()",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": "L1597",
+      "community": 2,
+      "norm_label": "handleincomingaudiostream()",
+      "id": "frontend_script_handleincomingaudiostream"
+    },
+    {
+      "label": "Tracking Device Truck Pelindo",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 19,
+      "norm_label": "tracking device truck pelindo",
+      "id": "project_pelindo_tracker"
+    },
+    {
+      "label": "Teluk Lamong Port",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 19,
+      "norm_label": "teluk lamong port",
+      "id": "loc_teluk_lamong"
+    },
+    {
+      "label": "N8N Webhooks Microservices",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "n8n webhooks microservices",
+      "id": "ext_n8n_webhook"
+    },
+    {
+      "label": "Leaflet.js Maps Engine",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "leaflet.js maps engine",
+      "id": "lib_leaflet"
+    },
+    {
+      "label": "Push-to-Talk Communication System",
+      "file_type": "rationale",
+      "source_file": "Note/Next Step.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "One-to-one voice communication between dashboard and truck tablets, requiring always-on standby even when screen is off.",
+      "community": 6,
+      "norm_label": "push-to-talk communication system",
+      "id": "sys_ptt"
+    },
+    {
+      "label": "WebSocket Relay Server",
+      "file_type": "code",
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Acts as a switchboard router forwarding binary PCM audio or JSON voice messages between clients without processing them.",
+      "community": 6,
+      "norm_label": "websocket relay server",
+      "id": "comp_ws_relay"
+    },
+    {
+      "label": "Frontend Web Dashboard",
+      "file_type": "code",
+      "source_file": "frontend/index.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "PT Prakhya Tama Cakrawala",
+      "contributor": null,
+      "community": 6,
+      "norm_label": "frontend web dashboard",
+      "id": "ui_dashboard"
+    },
+    {
+      "label": "Truck PTT Mobile App (Expo/React Native)",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "truck ptt mobile app (expo/react native)",
+      "id": "app_truck_ptt"
+    },
+    {
+      "label": "Android Foreground Service",
+      "file_type": "rationale",
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Mandatory registration for Android 14+ to prevent system Doze/Battery Saver from killing WebSocket or Audio Recorder.",
+      "community": 6,
+      "norm_label": "android foreground service",
+      "id": "android_fg_service"
+    },
+    {
+      "label": "OSRM Route Snapping Service",
+      "file_type": "document",
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "osrm route snapping service",
+      "id": "ext_osrm_routing"
+    },
+    {
+      "label": "Samsung Tab Active 5",
+      "file_type": "document",
+      "source_file": "Note/Next Step.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "samsung tab active 5",
+      "id": "hw_samsung_tab_active5"
+    },
+    {
+      "label": "Samsung Knox Kiosk Mode",
+      "file_type": "document",
+      "source_file": "Note/Next Step.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "samsung knox kiosk mode",
+      "id": "plt_knox_kiosk"
+    },
+    {
+      "label": "Chart.js Visualization",
+      "file_type": "document",
+      "source_file": "frontend/index.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "chart.js visualization",
+      "id": "lib_chartjs"
+    },
+    {
+      "label": "Nginx Alpine (Docker)",
+      "file_type": "code",
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "nginx alpine (docker)",
+      "id": "srv_nginx_alpine"
+    },
+    {
+      "label": "Expo Framework Logo",
+      "file_type": "image",
+      "source_file": "mobile/TruckPTT_Expo/assets/images/icon.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 15,
+      "norm_label": "expo framework logo",
+      "id": "icon_expo"
+    },
+    {
+      "label": "App Splash Screen Grid",
+      "file_type": "image",
+      "source_file": "mobile/TruckPTT_Expo/assets/images/splash-icon.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 15,
+      "norm_label": "app splash screen grid",
+      "id": "splash_icon_grid"
+    },
+    {
+      "label": "React Framework Logo",
+      "file_type": "image",
+      "source_file": "mobile/TruckPTT_Expo/assets/images/react-logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 15,
+      "norm_label": "react framework logo",
+      "id": "react_logo_react"
+    },
+    {
+      "label": "N8N API Endpoints",
+      "file_type": "document",
+      "source_file": "frontend/script.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 2,
+      "norm_label": "n8n api endpoints",
+      "id": "ext_n8n_api"
+    },
+    {
+      "label": "Push-To-Talk Feature",
+      "file_type": "rationale",
+      "source_file": "backend/server.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "WebSocket-based PCM 16-bit 16000Hz voice communication.",
+      "community": 13,
+      "norm_label": "push-to-talk feature",
+      "id": "feature_ptt"
+    },
+    {
+      "label": "Real-time Monitoring",
+      "file_type": "rationale",
+      "source_file": "frontend/script.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Tracking and status monitoring of truck devices.",
+      "community": 2,
+      "norm_label": "real-time monitoring",
+      "id": "feature_monitoring"
+    },
+    {
+      "label": "Leaflet.js UI Map",
+      "file_type": "code",
+      "source_file": "frontend/script.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 2,
+      "norm_label": "leaflet.js ui map",
+      "id": "lib_leaflet_map"
+    },
+    {
+      "label": "Main PTT Mobile Screen",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 13,
+      "norm_label": "main ptt mobile screen",
+      "id": "mobile_app_index"
+    },
+    {
+      "label": "Mobile Root Layout",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/_layout.tsx",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 20,
+      "norm_label": "mobile root layout",
+      "id": "mobile_app_layout"
+    },
+    {
+      "label": "Mobile Home Screen (Tabs)",
+      "file_type": "code",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 20,
+      "norm_label": "mobile home screen (tabs)",
+      "id": "mobile_app_tabs_index"
+    }
+  ],
+  "edges": [
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_src_utils_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_utils_getbatterydisplay",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_utils_playpcmaudio",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L2",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_src_map_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L2",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_map_setupmap",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L2",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_map_fetchdevicedata",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L2",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_map_rendermarkers",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L2",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_map_renderdevicelist",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L2",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_map_handlesearchinput",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L3",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_src_state_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L24",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_navactive",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L25",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_navtarget",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L360",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_updaterefreshcounterui"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L377",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_updaterefreshcounter"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L470",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_simplifycoordinates"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L485",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_decodepolyline"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L519",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_pad"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L520",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_tolocaliso"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L566",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_buildhistoryurl"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L612",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_openhistorymodal"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1160",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_createusericon"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1179",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_stopgeotracking"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1190",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_startgeotracking"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1275",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_startdirectionmode"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1301",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_exitdirectionmode"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1324",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_updatenavroute"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1097",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_src_ptt_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1097",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_ptt_setupptt",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1097",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_ptt_initpttwebsocket",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1097",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_ptt_startpttcall",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1097",
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "src_ptt_bindpttbuttons",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L38",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_fetchdevicedata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L93",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_rendermarkers"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L197",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_renderdevicelist"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L267",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_focusdevice"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1397",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_initpttwebsocket"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1510",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_endpttcallui"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1532",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_startrecording"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1575",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_stoprecording"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1597",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_js",
+      "target": "frontend_script_handleincomingaudiostream"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "frontend/script.js",
+      "source_location": null,
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "lib_leaflet_map"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "frontend/script.js",
+      "source_location": null,
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "ext_n8n_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "frontend/script.js",
+      "source_location": null,
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "backend_server_js"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "frontend/script.js",
+      "source_location": null,
+      "weight": 1,
+      "source": "frontend_script_js",
+      "target": "feature_monitoring"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L385",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_updaterefreshcounter",
+      "target": "frontend_script_updaterefreshcounterui"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "frontend/script.js",
+      "source_location": "L108",
+      "weight": 1,
+      "source": "frontend_script_updaterefreshcounter",
+      "target": "src_map_fetchdevicedata"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L382",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_updaterefreshcounter",
+      "target": "frontend_script_fetchdevicedata"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L951",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_openhistorymodal",
+      "target": "frontend_script_simplifycoordinates"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L975",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_openhistorymodal",
+      "target": "frontend_script_decodepolyline"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1349",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_updatenavroute",
+      "target": "frontend_script_decodepolyline"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L520",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_tolocaliso",
+      "target": "frontend_script_pad"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L640",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_openhistorymodal",
+      "target": "frontend_script_buildhistoryurl"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1298",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_startdirectionmode",
+      "target": "frontend_script_updatenavroute"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "frontend/script.js",
+      "source_location": "L1023",
+      "weight": 1,
+      "source": "frontend_script_startdirectionmode",
+      "target": "src_map_rendermarkers"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1297",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_startdirectionmode",
+      "target": "frontend_script_rendermarkers"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "frontend/script.js",
+      "source_location": "L1038",
+      "weight": 1,
+      "source": "frontend_script_exitdirectionmode",
+      "target": "src_map_rendermarkers"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L1312",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_exitdirectionmode",
+      "target": "frontend_script_rendermarkers"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L80",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_fetchdevicedata",
+      "target": "frontend_script_updatenavroute"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L6",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "frontend_src_utils_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L6",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_utils_getbatterydisplay",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L6",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_utils_playpcmaudio",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L7",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "frontend_src_map_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L7",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_map_renderdevicelist",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L8",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "frontend_src_state_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L20",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_setupptt",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L33",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_updatecallstackui",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L67",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_focuscall",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L81",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_endspecificcall",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L93",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_endpttcallui",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L99",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_startrecording",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L142",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_stoprecording",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L153",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_handleincomingaudiostream",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L201",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_initpttwebsocket",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L290",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_startpttcall",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L298",
+      "weight": 1,
+      "source": "frontend_src_ptt_js",
+      "target": "src_ptt_bindpttbuttons",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L78",
+      "weight": 1,
+      "source": "src_ptt_focuscall",
+      "target": "src_ptt_updatecallstackui",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L90",
+      "weight": 1,
+      "source": "src_ptt_endspecificcall",
+      "target": "src_ptt_updatecallstackui",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L95",
+      "weight": 1,
+      "source": "src_ptt_endpttcallui",
+      "target": "src_ptt_endspecificcall",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "frontend/src/ptt.js",
+      "source_location": "L165",
+      "weight": 1,
+      "source": "src_ptt_handleincomingaudiostream",
+      "target": "src_utils_playpcmaudio"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L6",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "frontend_src_state_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils.js",
+      "source_location": "L6",
+      "weight": 1,
+      "source": "frontend_src_utils_js",
+      "target": "src_utils_getbatterydisplay",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils.js",
+      "source_location": "L33",
+      "weight": 1,
+      "source": "frontend_src_utils_js",
+      "target": "src_utils_playpcmaudio",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L5",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "frontend_src_utils_js",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L5",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "src_utils_getbatterydisplay",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L14",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "src_map_setupmap",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L18",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "src_map_fetchdevicedata",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L56",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "src_map_filteredbysearch",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L66",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "src_map_rendermarkers",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L160",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "src_map_renderdevicelist",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L221",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "src_map_focusdevice",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L247",
+      "weight": 1,
+      "source": "frontend_src_map_js",
+      "target": "src_map_handlesearchinput",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L46",
+      "weight": 1,
+      "source": "src_map_fetchdevicedata",
+      "target": "src_map_rendermarkers",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L47",
+      "weight": 1,
+      "source": "src_map_fetchdevicedata",
+      "target": "src_map_renderdevicelist",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L47",
+      "weight": 1,
+      "source": "src_map_fetchdevicedata",
+      "target": "src_map_filteredbysearch",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L165",
+      "weight": 1,
+      "source": "src_map_renderdevicelist",
+      "target": "src_map_filteredbysearch",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/map.js",
+      "source_location": "L255",
+      "weight": 1,
+      "source": "src_map_handlesearchinput",
+      "target": "src_map_renderdevicelist",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/server.js",
+      "source_location": "L185",
+      "weight": 1,
+      "source": "backend_server_js",
+      "target": "backend_server_broadcastconnectionstatus",
+      "confidence_score": 1
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "backend/server.js",
+      "source_location": null,
+      "weight": 1,
+      "source": "backend_server_js",
+      "target": "feature_ptt"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "ptt_overlay_index_showoverlay",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "ptt_overlay_index_hideoverlay",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "ptt_overlay_index_updateoverlaystatus",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "ptt_overlay_index_isoverlaypermissiongranted",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "ptt_overlay_index_requestoverlaypermission",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "ptt_overlay_index_onpttpressin",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "ptt_overlay_index_onpttpressout",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "ptt_overlay_index_onbubbletapped",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L46",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_loadstoreddevice"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L110",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_handlelogin"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L139",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_handlelogout"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L160",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_requestpermissions"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L197",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_startforegroundservice"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L351",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_updatenotificationaction",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L222",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_initaudiorecord"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L240",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_connectwebsocket"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L292",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_showincomingcallnotification"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L327",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_dismisscallnotification"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L518",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_handlebinaryaudio",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L523",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_processaudioqueue",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L581",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_buildwav",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L613",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_writestring",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L335",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_handlesignaling"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L387",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_handlepressin"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L399",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_index_tsx",
+      "target": "app_index_handlepressout"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L645",
+      "weight": 1,
+      "source": "app_index_handlesignaling",
+      "target": "app_index_updatenotificationaction",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L703",
+      "weight": 1,
+      "source": "app_index_handlepressin",
+      "target": "app_index_updatenotificationaction",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L711",
+      "weight": 1,
+      "source": "app_index_handlepressout",
+      "target": "app_index_updatenotificationaction",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L339",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "app_index_handlesignaling",
+      "target": "app_index_showincomingcallnotification"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L345",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "app_index_handlesignaling",
+      "target": "app_index_dismisscallnotification"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L686",
+      "weight": 1,
+      "source": "app_index_handlepressin",
+      "target": "app_index_dismisscallnotification",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L520",
+      "weight": 1,
+      "source": "app_index_handlebinaryaudio",
+      "target": "app_index_processaudioqueue",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L544",
+      "weight": 1,
+      "source": "app_index_processaudioqueue",
+      "target": "app_index_buildwav",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": "L591",
+      "weight": 1,
+      "source": "app_index_buildwav",
+      "target": "app_index_writestring",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/_layout.tsx",
+      "source_location": "L6",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_layout_tsx",
+      "target": "mobile_truckptt_expo_hooks_use_color_scheme_ts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/_layout.tsx",
+      "source_location": "L19",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_layout_tsx",
+      "target": "app_layout_rootlayout"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mobile/TruckPTT_Expo/app/_layout.tsx",
+      "source_location": "L20",
+      "weight": 1,
+      "source": "app_layout_rootlayout",
+      "target": "hooks_use_color_scheme_web_usecolorscheme"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/modal.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_modal_tsx",
+      "target": "mobile_truckptt_expo_components_themed_text_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/modal.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_modal_tsx",
+      "target": "components_themed_text_themedtext"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/modal.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_modal_tsx",
+      "target": "mobile_truckptt_expo_components_themed_view_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/modal.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_modal_tsx",
+      "target": "components_themed_view_themedview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/modal.tsx",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_modal_tsx",
+      "target": "app_modal_modalscreen"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_index_tsx",
+      "target": "mobile_truckptt_expo_components_hello_wave_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_index_tsx",
+      "target": "components_hello_wave_hellowave"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_index_tsx",
+      "target": "mobile_truckptt_expo_components_parallax_scroll_view_tsx"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": "L6",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_index_tsx",
+      "target": "mobile_truckptt_expo_components_themed_text_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": "L6",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_index_tsx",
+      "target": "components_themed_text_themedtext"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_index_tsx",
+      "target": "mobile_truckptt_expo_components_themed_view_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/index.tsx",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_index_tsx",
+      "target": "components_themed_view_themedview"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_layout_tsx",
+      "target": "mobile_truckptt_expo_components_haptic_tab_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_layout_tsx",
+      "target": "components_haptic_tab_haptictab"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_layout_tsx",
+      "target": "mobile_truckptt_expo_components_ui_icon_symbol_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_layout_tsx",
+      "target": "ui_icon_symbol_iconsymbol"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L6",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_layout_tsx",
+      "target": "mobile_truckptt_expo_constants_theme_ts"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_layout_tsx",
+      "target": "mobile_truckptt_expo_hooks_use_color_scheme_ts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L9",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_layout_tsx",
+      "target": "tabs_layout_tablayout"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/_layout.tsx",
+      "source_location": "L10",
+      "weight": 1,
+      "source": "tabs_layout_tablayout",
+      "target": "hooks_use_color_scheme_web_usecolorscheme"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "mobile_truckptt_expo_components_ui_collapsible_tsx"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "mobile_truckptt_expo_components_external_link_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "components_external_link_externallink"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L6",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "mobile_truckptt_expo_components_parallax_scroll_view_tsx"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "mobile_truckptt_expo_components_themed_text_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "components_themed_text_themedtext"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L8",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "mobile_truckptt_expo_components_themed_view_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L8",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "components_themed_view_themedview"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L9",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "mobile_truckptt_expo_components_ui_icon_symbol_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L9",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "ui_icon_symbol_iconsymbol"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/app/(tabs)/explore.tsx",
+      "source_location": "L10",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_app_tabs_explore_tsx",
+      "target": "mobile_truckptt_expo_constants_theme_ts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/plugins/withPttConfig.js",
+      "source_location": "L3",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_plugins_withpttconfig_js",
+      "target": "plugins_withpttconfig_withpttservice",
+      "confidence_score": 1
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "target": "mobile_truckptt_expo_constants_theme_ts"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-theme-color.ts",
+      "source_location": "L6",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_hooks_use_theme_color_ts",
+      "target": "mobile_truckptt_expo_constants_theme_ts"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-text.tsx",
+      "source_location": "L3",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_themed_text_tsx",
+      "target": "mobile_truckptt_expo_hooks_use_theme_color_ts"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-text.tsx",
+      "source_location": "L3",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_themed_text_tsx",
+      "target": "hooks_use_theme_color_usethemecolor"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-text.tsx",
+      "source_location": "L11",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_themed_text_tsx",
+      "target": "components_themed_text_themedtext"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "target": "mobile_truckptt_expo_components_themed_text_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "target": "components_themed_text_themedtext"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mobile/TruckPTT_Expo/components/themed-text.tsx",
+      "source_location": "L18",
+      "weight": 1,
+      "source": "components_themed_text_themedtext",
+      "target": "hooks_use_theme_color_usethemecolor"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/hello-wave.tsx",
+      "source_location": "L3",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_hello_wave_tsx",
+      "target": "components_hello_wave_hellowave"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L10",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_parallax_scroll_view_tsx",
+      "target": "mobile_truckptt_expo_components_themed_view_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L10",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_parallax_scroll_view_tsx",
+      "target": "components_themed_view_themedview"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L11",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_parallax_scroll_view_tsx",
+      "target": "mobile_truckptt_expo_hooks_use_color_scheme_ts"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L12",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_parallax_scroll_view_tsx",
+      "target": "mobile_truckptt_expo_hooks_use_theme_color_ts"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L12",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_parallax_scroll_view_tsx",
+      "target": "hooks_use_theme_color_usethemecolor"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L21",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_parallax_scroll_view_tsx",
+      "target": "components_parallax_scroll_view_parallaxscrollview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L26",
+      "weight": 1,
+      "source": "components_parallax_scroll_view_parallaxscrollview",
+      "target": "hooks_use_theme_color_usethemecolor"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mobile/TruckPTT_Expo/components/parallax-scroll-view.tsx",
+      "source_location": "L27",
+      "weight": 1,
+      "source": "components_parallax_scroll_view_parallaxscrollview",
+      "target": "hooks_use_color_scheme_web_usecolorscheme"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-view.tsx",
+      "source_location": "L3",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_themed_view_tsx",
+      "target": "mobile_truckptt_expo_hooks_use_theme_color_ts"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-view.tsx",
+      "source_location": "L3",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_themed_view_tsx",
+      "target": "hooks_use_theme_color_usethemecolor"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/themed-view.tsx",
+      "source_location": "L10",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_themed_view_tsx",
+      "target": "components_themed_view_themedview"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "target": "mobile_truckptt_expo_components_themed_view_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "target": "components_themed_view_themedview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mobile/TruckPTT_Expo/components/themed-view.tsx",
+      "source_location": "L11",
+      "weight": 1,
+      "source": "components_themed_view_themedview",
+      "target": "hooks_use_theme_color_usethemecolor"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/external-link.tsx",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_external_link_tsx",
+      "target": "components_external_link_externallink"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/external-link.tsx",
+      "source_location": "L13",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_external_link_tsx",
+      "target": "components_external_link_async"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/haptic-tab.tsx",
+      "source_location": "L5",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_haptic_tab_tsx",
+      "target": "components_haptic_tab_haptictab"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/icon-symbol.ios.tsx",
+      "source_location": "L4",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_icon_symbol_ios_tsx",
+      "target": "ui_icon_symbol_ios_iconsymbol"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/icon-symbol.tsx",
+      "source_location": "L28",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_icon_symbol_tsx",
+      "target": "ui_icon_symbol_iconsymbol"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L6",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "target": "mobile_truckptt_expo_components_ui_icon_symbol_tsx"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L6",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "target": "ui_icon_symbol_iconsymbol"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/components/ui/collapsible.tsx",
+      "source_location": "L8",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_components_ui_collapsible_tsx",
+      "target": "mobile_truckptt_expo_hooks_use_color_scheme_ts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-color-scheme.web.ts",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_hooks_use_color_scheme_web_ts",
+      "target": "hooks_use_color_scheme_web_usecolorscheme"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-theme-color.ts",
+      "source_location": "L13",
+      "weight": 1,
+      "source": "hooks_use_theme_color_usethemecolor",
+      "target": "hooks_use_color_scheme_web_usecolorscheme"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-theme-color.ts",
+      "source_location": "L7",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_hooks_use_theme_color_ts",
+      "target": "mobile_truckptt_expo_hooks_use_color_scheme_ts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/hooks/use-theme-color.ts",
+      "source_location": "L9",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_hooks_use_theme_color_ts",
+      "target": "hooks_use_theme_color_usethemecolor"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L14",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_android_app_src_main_java_com_pelindo_truckptt_mainactivity_kt",
+      "target": "truckptt_mainactivity_mainactivity"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L15",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "truckptt_mainactivity_mainactivity",
+      "target": "truckptt_mainactivity_mainactivity_oncreate"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L30",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "truckptt_mainactivity_mainactivity",
+      "target": "truckptt_mainactivity_mainactivity_getmaincomponentname"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L36",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "truckptt_mainactivity_mainactivity",
+      "target": "truckptt_mainactivity_mainactivity_createreactactivitydelegate"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainActivity.kt",
+      "source_location": "L52",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "truckptt_mainactivity_mainactivity",
+      "target": "truckptt_mainactivity_mainactivity_invokedefaultonbackpressed"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L19",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_android_app_src_main_java_com_pelindo_truckptt_mainapplication_kt",
+      "target": "truckptt_mainapplication_mainapplication"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L24",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_android_app_src_main_java_com_pelindo_truckptt_mainapplication_kt",
+      "target": "truckptt_mainapplication_getpackages"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L30",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_android_app_src_main_java_com_pelindo_truckptt_mainapplication_kt",
+      "target": "truckptt_mainapplication_getjsmainmodulename"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L32",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_android_app_src_main_java_com_pelindo_truckptt_mainapplication_kt",
+      "target": "truckptt_mainapplication_getusedevelopersupport"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L41",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "truckptt_mainapplication_mainapplication",
+      "target": "truckptt_mainapplication_mainapplication_oncreate"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/android/app/src/main/java/com/pelindo/truckptt/MainApplication.kt",
+      "source_location": "L52",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "truckptt_mainapplication_mainapplication",
+      "target": "truckptt_mainapplication_mainapplication_onconfigurationchanged"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/scripts/reset-project.js",
+      "source_location": "L48",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "mobile_truckptt_expo_scripts_reset_project_js",
+      "target": "scripts_reset_project_movedirectories"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L27",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_showoverlay",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L34",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_hideoverlay",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L41",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_updateoverlaystatus",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L48",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_isoverlaypermissiongranted",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L55",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_requestoverlaypermission",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L62",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_isoverlayvisible",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L70",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_onpttpressin",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L74",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_onpttpressout",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/index.ts",
+      "source_location": "L78",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_index_ts",
+      "target": "ptt_overlay_index_onbubbletapped",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayModule.kt",
+      "source_location": "L11",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_android_src_main_java_expo_modules_pttoverlay_pttoverlaymodule_kt",
+      "target": "pttoverlay_pttoverlaymodule_pttoverlaymodule",
+      "confidence_score": 1
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayModule.kt",
+      "source_location": "L12",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlaymodule_pttoverlaymodule",
+      "target": "pttoverlay_pttoverlaymodule_pttoverlaymodule_definition",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L18",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_modules_ptt_overlay_android_src_main_java_expo_modules_pttoverlay_pttoverlayservice_kt",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "confidence_score": 1
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L28",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_setmodule",
+      "confidence_score": 1
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L32",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_show",
+      "confidence_score": 1
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L71",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_hide",
+      "confidence_score": 1
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L83",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_updatestatus",
+      "confidence_score": 1
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L97",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_isvisible",
+      "confidence_score": 1
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L99",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_createbubblecontent",
+      "confidence_score": 1
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L196",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_dptopx",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L37",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice_show",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_dptopx",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L64",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice_show",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_createbubblecontent",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/modules/ptt-overlay/android/src/main/java/expo/modules/pttoverlay/PttOverlayService.kt",
+      "source_location": "L105",
+      "weight": 1,
+      "source": "pttoverlay_pttoverlayservice_pttoverlayservice_createbubblecontent",
+      "target": "pttoverlay_pttoverlayservice_pttoverlayservice_dptopx",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "weight": 1,
+      "source": "readme_md",
+      "target": "maps_device_pelindo_readme_tracking_device_truck_pelindo",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L5",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_tracking_device_truck_pelindo",
+      "target": "maps_device_pelindo_readme_fitur_utama",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L13",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_tracking_device_truck_pelindo",
+      "target": "maps_device_pelindo_readme_tech_stack_library",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L20",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_tracking_device_truck_pelindo",
+      "target": "maps_device_pelindo_readme_cara_menjalankan_aplikasi_di_lokal",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L43",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_tracking_device_truck_pelindo",
+      "target": "maps_device_pelindo_readme_alur_data_api_n8n",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L66",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_tracking_device_truck_pelindo",
+      "target": "maps_device_pelindo_readme_lisensi",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L24",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_cara_menjalankan_aplikasi_di_lokal",
+      "target": "maps_device_pelindo_readme_1_menjalankan_via_docker_compose_direkomendasikan",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L40",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_cara_menjalankan_aplikasi_di_lokal",
+      "target": "maps_device_pelindo_readme_2_dijalankan_manual_tanpa_docker_web_server",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L28",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_1_menjalankan_via_docker_compose_direkomendasikan",
+      "target": "maps_device_pelindo_readme_codeblock_1",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L47",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_alur_data_api_n8n",
+      "target": "maps_device_pelindo_readme_codeblock_2",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L52",
+      "weight": 1,
+      "source": "maps_device_pelindo_readme_alur_data_api_n8n",
+      "target": "maps_device_pelindo_readme_codeblock_3",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L1",
+      "weight": 1,
+      "source": "description_md",
+      "target": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L7",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "target": "maps_device_pelindo_description_1_project_overview_environment",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L14",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "target": "maps_device_pelindo_description_2_file_structure_scope",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L19",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "target": "maps_device_pelindo_description_3_webhooks_api_integrations_n8n_microservices",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L56",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "target": "maps_device_pelindo_description_4_newly_added_features_keep_context",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L69",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "target": "maps_device_pelindo_description_5_crucial_logic_rules_constraints_do_not_break",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L89",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "target": "maps_device_pelindo_description_6_push_to_talk_ptt_system_architecture",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L101",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_project_architecture_context_for_ai_assistants",
+      "target": "maps_device_pelindo_description_7_known_pending_features_todos",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L22",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_3_webhooks_api_integrations_n8n_microservices",
+      "target": "maps_device_pelindo_description_a_endpoint_1_current_devices_cordinate",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L40",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_3_webhooks_api_integrations_n8n_microservices",
+      "target": "maps_device_pelindo_description_b_endpoint_2_device_tracking_history_path",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L26",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_a_endpoint_1_current_devices_cordinate",
+      "target": "maps_device_pelindo_description_codeblock_1",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DESCRIPTION.md",
+      "source_location": "L44",
+      "weight": 1,
+      "source": "maps_device_pelindo_description_b_endpoint_2_device_tracking_history_path",
+      "target": "maps_device_pelindo_description_codeblock_2",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L1",
+      "weight": 1,
+      "source": "mobile_truckptt_expo_readme_md",
+      "target": "truckptt_expo_readme_welcome_to_your_expo_app",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L5",
+      "weight": 1,
+      "source": "truckptt_expo_readme_welcome_to_your_expo_app",
+      "target": "truckptt_expo_readme_get_started",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L28",
+      "weight": 1,
+      "source": "truckptt_expo_readme_welcome_to_your_expo_app",
+      "target": "truckptt_expo_readme_get_a_fresh_project",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L38",
+      "weight": 1,
+      "source": "truckptt_expo_readme_welcome_to_your_expo_app",
+      "target": "truckptt_expo_readme_learn_more",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L45",
+      "weight": 1,
+      "source": "truckptt_expo_readme_welcome_to_your_expo_app",
+      "target": "truckptt_expo_readme_join_the_community",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L9",
+      "weight": 1,
+      "source": "truckptt_expo_readme_get_started",
+      "target": "truckptt_expo_readme_codeblock_1",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L15",
+      "weight": 1,
+      "source": "truckptt_expo_readme_get_started",
+      "target": "truckptt_expo_readme_codeblock_2",
+      "confidence_score": 1
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mobile/TruckPTT_Expo/README.md",
+      "source_location": "L32",
+      "weight": 1,
+      "source": "truckptt_expo_readme_get_a_fresh_project",
+      "target": "truckptt_expo_readme_codeblock_3",
+      "confidence_score": 1
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L68",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_fetchdevicedata",
+      "target": "frontend_script_rendermarkers"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/script.js",
+      "source_location": "L77",
+      "weight": 1,
+      "confidence_score": 1,
+      "source": "frontend_script_fetchdevicedata",
+      "target": "frontend_script_renderdevicelist"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "project_pelindo_tracker",
+      "target": "loc_teluk_lamong"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "ui_dashboard",
+      "target": "ext_n8n_webhook"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "ui_dashboard",
+      "target": "lib_leaflet"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "ui_dashboard",
+      "target": "sys_ptt"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "app_truck_ptt",
+      "target": "sys_ptt"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "sys_ptt",
+      "target": "comp_ws_relay"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "Note/Next Step.txt",
+      "source_location": null,
+      "weight": 1,
+      "source": "sys_ptt",
+      "target": "hw_samsung_tab_active5"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "Note/Next Step.txt",
+      "source_location": null,
+      "weight": 1,
+      "source": "sys_ptt",
+      "target": "plt_knox_kiosk"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "ui_dashboard",
+      "target": "ext_osrm_routing"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "frontend/index.html",
+      "source_location": null,
+      "weight": 1,
+      "source": "ui_dashboard",
+      "target": "lib_chartjs"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "weight": 1,
+      "source": "srv_nginx_alpine",
+      "target": "ui_dashboard"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "ui_dashboard",
+      "target": "android_fg_service"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "DESCRIPTION.md",
+      "source_location": null,
+      "weight": 1,
+      "source": "app_truck_ptt",
+      "target": "android_fg_service"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "mobile/TruckPTT_Expo/assets/images/icon.png",
+      "source_location": null,
+      "weight": 1,
+      "source": "icon_expo",
+      "target": "react_logo_react"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "mobile/TruckPTT_Expo/assets/images/icon.png",
+      "source_location": null,
+      "weight": 1,
+      "source": "icon_expo",
+      "target": "splash_icon_grid"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "mobile/TruckPTT_Expo/app/index.tsx",
+      "source_location": null,
+      "weight": 1,
+      "source": "mobile_app_index",
+      "target": "feature_ptt"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "mobile/TruckPTT_Expo/app/_layout.tsx",
+      "source_location": null,
+      "weight": 1,
+      "source": "mobile_app_layout",
+      "target": "mobile_app_tabs_index"
+    }
+  ]
+}
