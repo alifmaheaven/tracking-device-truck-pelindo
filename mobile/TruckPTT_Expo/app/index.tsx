@@ -195,10 +195,6 @@ const App = () => {
         playThroughEarpieceAndroid: false,
       }).catch(e => console.log('Audio mode error:', e));
 
-      // Start foreground service ONLY if not already started (must be in foreground)
-      if (!foregroundServiceStarted.current) {
-        startForegroundService();
-      }
       initAudioRecord();
       connectWebSocket();
 
@@ -206,7 +202,10 @@ const App = () => {
       (async () => {
         const granted = await isOverlayPermissionGranted();
         if (!granted) {
-          await requestOverlayPermission();
+          // Hanya minta jika aplikasi aktif
+          if (AppState.currentState === 'active') {
+            await requestOverlayPermission();
+          }
         }
       })();
     } else {
@@ -217,7 +216,7 @@ const App = () => {
       if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
       if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
       if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
-      notifee.stopForegroundService();
+      notifee.stopForegroundService().catch(() => {});
     }
 
     return () => {
@@ -227,7 +226,7 @@ const App = () => {
       stopLocationTracking();
       audioRecordInitDone.current = false;
       AudioRecord.stop().catch(() => {});
-      notifee.stopForegroundService();
+      notifee.stopForegroundService().catch(() => {});
     };
   }, [activeDevice]);
 
@@ -238,6 +237,16 @@ const App = () => {
       if (nextAppState === 'active' && activeDeviceRef.current) {
         // App came to foreground — hide overlay, aggressively reconnect
         hideOverlay().catch(() => {});
+        
+        // Start foreground service only when active and after a small delay to ensure stability
+        if (!foregroundServiceStarted.current) {
+          setTimeout(() => {
+            if (AppState.currentState === 'active') {
+              startForegroundService();
+            }
+          }, 2000);
+        }
+
         const ws = wsRef.current;
         if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
           console.log('App returned to foreground, reconnecting WS...');
@@ -252,8 +261,11 @@ const App = () => {
           if (granted) {
             // Beri sedikit jeda agar transisi activity selesai
             setTimeout(() => {
-              showOverlay().catch(err => console.log('Failed to show overlay:', err));
-            }, 500);
+              // Hanya tampilkan jika masih di background
+              if (AppState.currentState === 'background') {
+                showOverlay().catch(err => console.log('Failed to show overlay:', err));
+              }
+            }, 1000);
           }
         });
         const ws = wsRef.current;
@@ -263,6 +275,16 @@ const App = () => {
         }
       }
     });
+
+    // Handle initial state if it starts as active
+    if (AppState.currentState === 'active' && activeDeviceRef.current && !foregroundServiceStarted.current) {
+      setTimeout(() => {
+        if (AppState.currentState === 'active') {
+          startForegroundService();
+        }
+      }, 3000);
+    }
+
     return () => subscription.remove();
   }, []);
 
@@ -405,6 +427,11 @@ const App = () => {
 
   const startForegroundService = async () => {
     try {
+      if (AppState.currentState !== 'active') {
+        console.log('Skipping foreground service start because app is not active.');
+        return;
+      }
+
       const channelId = await notifee.createChannel({
         id: 'ptt-service',
         name: 'Push To Talk Service',
@@ -432,6 +459,7 @@ const App = () => {
       console.log('Foreground service started successfully');
     } catch (e) {
       console.log('Foreground service failed (non-fatal):', e);
+      foregroundServiceStarted.current = false;
     }
   };
 
