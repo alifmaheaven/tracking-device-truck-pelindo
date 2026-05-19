@@ -709,14 +709,14 @@ const App = () => {
   const handleSignaling = async (data: any, ws: WebSocket) => {
     switch (data.type) {
       case 'incomingCall':
-        if (data.callerId === 'center-main') {
-          // AUTO-ANSWER for Center Calls
-          console.log('Auto-answering call from Center...');
+        if (data.callerId && data.callerId.startsWith('center')) {
+          // AUTO-ANSWER for all Center Calls (starts with 'center')
+          console.log(`Auto-answering call from Center (${data.callerId})...`);
           ws.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
           callSessionRef.current = { active: true, callerId: data.callerId, incomingPending: false };
           setCallStatus('Terhubung dengan Pusat');
         } else {
-          // Manual answer for others
+          // Manual answer for others (truck to truck)
           await showIncomingCallNotification(data.callerId);
           callSessionRef.current = { active: false, callerId: data.callerId, incomingPending: true };
           setCallStatus('Panggilan Masuk... Tekan untuk Jawab');

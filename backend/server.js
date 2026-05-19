@@ -12,6 +12,11 @@ const clients = new Map();
 // Map of clientId -> partnerClientId (who they are currently in a call with)
 const sessions = new Map();
 
+// Helper to get all command center connections
+function getCenterClients() {
+  return Array.from(clients.entries()).filter(([id]) => id.startsWith('center'));
+}
+
 console.log(`WebSocket Relay Server started on port ${PORT}`);
 
 wss.on('connection', (ws) => {
@@ -24,16 +29,18 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message, isBinary) => {
     if (isBinary) {
-      // 1. Always forward a copy to center-main for global monitoring
-      if (currentClientId) {
-        const centerWs = clients.get('center-main');
-        if (centerWs && centerWs.readyState === WebSocket.OPEN && currentClientId !== 'center-main') {
-          centerWs.send(JSON.stringify({
-            type: 'audioStream',
-            from: currentClientId,
-            data: message.toString('base64')
-          }));
-        }
+      // 1. Always forward a copy to ALL center clients for global monitoring
+      if (currentClientId && !currentClientId.startsWith('center')) {
+        const centers = getCenterClients();
+        centers.forEach(([id, centerWs]) => {
+          if (centerWs.readyState === WebSocket.OPEN) {
+            centerWs.send(JSON.stringify({
+              type: 'audioStream',
+              from: currentClientId,
+              data: message.toString('base64')
+            }));
+          }
+        });
       }
 
       // 2. Forward to session partner if active
@@ -42,8 +49,8 @@ wss.on('connection', (ws) => {
         if (partnerId) {
           const partnerWs = clients.get(partnerId);
           if (partnerWs && partnerWs.readyState === WebSocket.OPEN) {
-            // For mobile, send raw binary
-            if (partnerId !== 'center-main') {
+            // For mobile trucks, send raw binary
+            if (!partnerId.startsWith('center')) {
               partnerWs.send(message, { binary: true });
             }
           }
@@ -75,30 +82,51 @@ wss.on('connection', (ws) => {
             clients.set(currentClientId, ws);
             console.log(`Client registered: ${currentClientId} (total clients: ${clients.size})`);
             
-            // Broadcast updated status to center-main
+            // Broadcast updated status to all centers
             broadcastConnectionStatus();
             break;
 
           case 'call':
             // { type: 'call', targetId: 'truck-123' }
             const targetId = data.targetId;
-            const targetWs = clients.get(targetId);
+            
+            // Special case: if calling 'center-main', find any available center
+            let finalTargetId = targetId;
+            if (targetId === 'center-main') {
+              const centers = getCenterClients();
+              if (centers.length > 0) {
+                // For now, call the first available center or broadcast to all centers?
+                // User says: "bisa denger semuanya maupun merespon"
+                // So we broadcast the incoming call to all centers.
+                centers.forEach(([id, centerWs]) => {
+                  if (centerWs.readyState === WebSocket.OPEN) {
+                    centerWs.send(JSON.stringify({
+                      type: 'incomingCall',
+                      callerId: currentClientId
+                    }));
+                  }
+                });
+                console.log(`Call broadcasted from ${currentClientId} to all centers`);
+                return;
+              }
+            }
 
-            console.log(`Call request: ${currentClientId} -> ${targetId}`);
+            const targetWs = clients.get(finalTargetId);
+            console.log(`Call request: ${currentClientId} -> ${finalTargetId}`);
             if (targetWs && targetWs.readyState === WebSocket.OPEN) {
               // Forward call request
               targetWs.send(JSON.stringify({
                 type: 'incomingCall',
                 callerId: currentClientId
               }));
-              console.log(`Call initiated from ${currentClientId} to ${targetId}`);
+              console.log(`Call initiated from ${currentClientId} to ${finalTargetId}`);
             } else {
               // Target not found or offline
               ws.send(JSON.stringify({
                 type: 'error',
-                message: `Target is offline or not found (targetId: ${targetId})`
+                message: `Target is offline or not found (targetId: ${finalTargetId})`
               }));
-              console.log(`Call FAILED: target '${targetId}' not in clients map`);
+              console.log(`Call FAILED: target '${finalTargetId}' not in clients map`);
             }
             break;
 
@@ -114,7 +142,7 @@ wss.on('connection', (ws) => {
             break;
 
           case 'acceptCall':
-            // { type: 'acceptCall', callerId: 'center-main' }
+            // { type: 'acceptCall', callerId: 'truck-123' }
             const callerId = data.callerId;
             const callerWs = clients.get(callerId);
             
@@ -128,6 +156,9 @@ wss.on('connection', (ws) => {
                 targetId: currentClientId
               }));
               console.log(`Call accepted: Session formed between ${currentClientId} and ${callerId}`);
+              
+              // Notify other centers that this call was handled? 
+              // (Optional improvement: centers see which truck is busy)
             }
             break;
 
@@ -152,10 +183,12 @@ wss.on('connection', (ws) => {
 
           case 'locationUpdate':
             // { type: 'locationUpdate', deviceId: '...', coordinates: [lat, lng] }
-            const centerWsLoc = clients.get('center-main');
-            if (centerWsLoc && centerWsLoc.readyState === WebSocket.OPEN) {
-              centerWsLoc.send(message.toString());
-            }
+            const centers = getCenterClients();
+            centers.forEach(([id, centerWs]) => {
+              if (centerWs.readyState === WebSocket.OPEN) {
+                centerWs.send(message.toString());
+              }
+            });
             break;
         }
       } catch (err) {
@@ -183,7 +216,7 @@ wss.on('connection', (ws) => {
         sessions.delete(partnerId);
       }
       
-      // Update center dashboard about disconnection
+      // Update centers dashboard about disconnection
       broadcastConnectionStatus();
     }
   });
@@ -191,14 +224,17 @@ wss.on('connection', (ws) => {
 
 // Helper to notify dashboard about which trucks are online for PTT
 function broadcastConnectionStatus() {
-  const centerWs = clients.get('center-main');
-  if (centerWs && centerWs.readyState === WebSocket.OPEN) {
-    const onlineIds = Array.from(clients.keys()).filter(id => id !== 'center-main');
-    centerWs.send(JSON.stringify({
-      type: 'connectionStatusUpdate',
-      onlineDeviceIds: onlineIds
-    }));
-  }
+  const centers = getCenterClients();
+  const onlineIds = Array.from(clients.keys()).filter(id => !id.startsWith('center'));
+  
+  centers.forEach(([id, centerWs]) => {
+    if (centerWs.readyState === WebSocket.OPEN) {
+      centerWs.send(JSON.stringify({
+        type: 'connectionStatusUpdate',
+        onlineDeviceIds: onlineIds
+      }));
+    }
+  });
 }
 
 // Ping all clients every 25 seconds to keep connections alive
