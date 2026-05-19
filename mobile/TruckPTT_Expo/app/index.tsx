@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   AppState,
   Linking,
+  BackHandler,
 } from 'react-native';
 import notifee, { AndroidImportance, AndroidForegroundServiceType, AndroidCategory, EventType } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
@@ -20,7 +21,7 @@ import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped } from '../modules/ptt-overlay';
+import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped, minimizeApp } from '../modules/ptt-overlay';
 
 // Polyfill Buffer jika tidak tersedia secara global
 if (typeof global.Buffer === 'undefined') {
@@ -54,6 +55,31 @@ const App = () => {
   useEffect(() => {
     requestPermissions();
     loadStoredDevice();
+
+    const backAction = () => {
+      Alert.alert('Konfirmasi', 'Apakah kamu yakin ingin keluar dari aplikasi?', [
+        {
+          text: 'Batal',
+          onPress: () => null,
+          style: 'cancel',
+        },
+        {
+          text: 'Keluar',
+          onPress: () => {
+            minimizeApp().catch(() => {
+              // Fallback jika native minimize gagal
+              BackHandler.exitApp();
+            });
+          },
+        },
+      ]);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
 
     // Handle foreground service notification action presses
     const unsubscribe = notifee.onForegroundEvent(async ({ type, detail }) => {
@@ -128,6 +154,7 @@ const App = () => {
     });
 
     return () => {
+      backHandler.remove();
       unsubscribe();
       unsubPressIn.remove();
       unsubPressOut.remove();
@@ -207,26 +234,32 @@ const App = () => {
   // Handle app foreground/background transitions
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
+      console.log('AppState changed to:', nextAppState);
       if (nextAppState === 'active' && activeDeviceRef.current) {
         // App came to foreground — hide overlay, aggressively reconnect
         hideOverlay().catch(() => {});
         const ws = wsRef.current;
         if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
           console.log('App returned to foreground, reconnecting WS...');
-          // Clear any pending reconnect timer since we're reconnecting now
           if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
           connectWebSocket();
         }
       }
       if (nextAppState === 'background' && activeDeviceRef.current) {
         // App going to background — show floating bubble, send ping
+        console.log('App backgrounded, handling background tasks...');
         isOverlayPermissionGranted().then(granted => {
-          if (granted) showOverlay().catch(() => {});
+          if (granted) {
+            // Beri sedikit jeda agar transisi activity selesai
+            setTimeout(() => {
+              showOverlay().catch(err => console.log('Failed to show overlay:', err));
+            }, 500);
+          }
         });
         const ws = wsRef.current;
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'ping' }));
-          console.log('App backgrounded, keepalive ping sent');
+          console.log('Keepalive ping sent');
         }
       }
     });
@@ -253,6 +286,8 @@ const App = () => {
         };
         setActiveDevice(deviceData);
         await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
+        // Request permissions after successful login for the first time
+        requestPermissions();
       } else {
         Alert.alert('Gagal Login', 'PPT Code tidak valid atau sudah kadaluarsa.');
       }
@@ -293,9 +328,12 @@ const App = () => {
           console.warn('Foreground location permission denied');
         }
         
-        const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-        if (backgroundStatus !== 'granted') {
-          console.warn('Background location permission denied');
+        // Hanya minta background jika foreground diberikan
+        if (foregroundStatus === 'granted') {
+          const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+          if (backgroundStatus !== 'granted') {
+            console.warn('Background location permission denied');
+          }
         }
 
         // Request microphone permission
@@ -316,16 +354,8 @@ const App = () => {
         // Request notification permission (Android 13+)
         await notifee.requestPermission();
 
-        // Request battery optimization exemption for persistent background service
-        try {
-          await Linking.sendIntent(
-            'android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
-            [{ key: 'package', value: 'com.pelindo.truckptt' }]
-          );
-        } catch (batteryErr) {
-          // Non-fatal: user may have already granted or dismissed
-          console.log('Battery optimization request skipped:', batteryErr);
-        }
+        // Request battery optimization exemption ONLY IF needed (manually for now to avoid loops)
+        // We will only do this if specifically requested or on first setup
       } catch (err) {
         console.warn(err);
       }

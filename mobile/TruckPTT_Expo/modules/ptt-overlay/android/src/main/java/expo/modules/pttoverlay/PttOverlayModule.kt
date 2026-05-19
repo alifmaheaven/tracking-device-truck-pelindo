@@ -71,5 +71,11 @@ class PttOverlayModule : Module() {
     AsyncFunction("isVisible") {
       PttOverlayService.isVisible()
     }
+
+    AsyncFunction("minimizeApp") {
+      val activity = appContext.legacyModule<ActivityProvider>()?.currentActivity
+      activity?.moveTaskToBack(true)
+      null
+    }
   }
 }

@@ -31,10 +31,12 @@ object PttOverlayService {
 
   fun show(activity: Activity) {
     if (visible) return
+    if (activity.isFinishing || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && activity.isDestroyed)) return
 
-    windowManager = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    // Set size to 160dp (half of the previous 320dp)
-    val sizePx = dpToPx(160f, activity).toInt()
+    val appContext = activity.applicationContext
+    windowManager = appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    // Set size to 80dp (half of the previous 160dp)
+    val sizePx = dpToPx(80f, appContext).toInt()
 
     val layoutFlag: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -58,19 +60,27 @@ object PttOverlayService {
     params.y = 400
 
     // Create bubble container
-    bubbleView = FrameLayout(activity).apply {
+    bubbleView = FrameLayout(appContext).apply {
       layoutParams = WindowManager.LayoutParams(sizePx, sizePx, layoutFlag, 0, PixelFormat.TRANSLUCENT)
       setOnTouchListener(bubbleTouchListener)
-      addView(createBubbleContent(activity, sizePx))
+      addView(createBubbleContent(appContext, sizePx))
     }
 
-    windowManager?.addView(bubbleView, params)
-    visible = true
+    try {
+      windowManager?.addView(bubbleView, params)
+      visible = true
+    } catch (e: Exception) {
+      visible = false
+      bubbleView = null
+    }
   }
 
   fun hide(activity: Activity) {
     try {
-      bubbleView?.let { windowManager?.removeView(it) }
+      bubbleView?.let { 
+        val wm = windowManager ?: (activity.applicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+        wm.removeView(it) 
+      }
     } catch (e: Exception) {
       // Already removed
     }

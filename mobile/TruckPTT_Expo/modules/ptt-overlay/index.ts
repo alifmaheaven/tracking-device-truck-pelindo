@@ -9,6 +9,7 @@ interface PttOverlayInterface extends NativeModule {
   isOverlayPermissionGranted(): Promise<boolean>;
   requestOverlayPermission(): Promise<void>;
   isVisible(): Promise<boolean>;
+  minimizeApp(): Promise<void>;
 }
 
 const PttOverlayModule = requireNativeModule<PttOverlayInterface>('PttOverlay');
@@ -19,6 +20,13 @@ export type PttOverlayEvents = {
   pttPressOut: () => void;
   bubbleTapped: () => void;
 };
+
+/**
+ * Minimize the application (move task to back).
+ */
+export async function minimizeApp(): Promise<void> {
+  return PttOverlayModule.minimizeApp();
+}
 
 /**
  * Show the floating PTT bubble overlay.
