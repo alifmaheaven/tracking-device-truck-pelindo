@@ -21,6 +21,7 @@ import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DeviceInfo from 'react-native-device-info';
 import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped, minimizeApp } from '../modules/ptt-overlay';
 
 // Polyfill Buffer jika tidak tersedia secara global
@@ -36,6 +37,8 @@ const App = () => {
   const [activeDevice, setActiveDevice] = useState<{ id: string; name: string; tags?: any[] } | null>(null);
   const [pptCodeInput, setPptCodeInput] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
+  const [hardwareId, setHardwareId] = useState<string>('');
 
   const [isConnected, setIsConnected] = useState(false);
   const [callStatus, setCallStatus] = useState('Idle');
@@ -54,7 +57,7 @@ const App = () => {
 
   useEffect(() => {
     requestPermissions();
-    loadStoredDevice();
+    initializeSession();
 
     const backAction = () => {
       Alert.alert('Konfirmasi', 'Apakah kamu yakin ingin keluar dari aplikasi?', [
@@ -162,15 +165,62 @@ const App = () => {
     };
   }, []);
 
-  const loadStoredDevice = async () => {
+  const initializeSession = async () => {
     try {
+      // Get Hardware ID immediately for display
+      const id = await DeviceInfo.getUniqueId();
+      setHardwareId(id);
+
+      // 1. Cek apakah sudah ada session di AsyncStorage
       const stored = await AsyncStorage.getItem('activeDevice');
       if (stored) {
         setActiveDevice(JSON.parse(stored));
+        return;
       }
+
+      // 2. Jika tidak ada session, coba Auto-Login berdasarkan hardware Device ID
+      await attemptAutoLogin(id);
     } catch (e) {
-      console.error('Failed to load stored device', e);
+      console.error('Failed to initialize session', e);
     }
+  };
+
+  const attemptAutoLogin = async (id: string) => {
+    setIsAutoLoggingIn(true);
+    try {
+      console.log('Attempting auto-login with DeviceInfo ID:', id);
+
+      const response = await fetch(API_URL);
+      const data = await response.json();
+
+      const found = data.find((d: any) => d.deviceId === id);
+      if (found) {
+        console.log('Auto-login successful!');
+        const deviceData = {
+          id: found.deviceId,
+          name: found.serialNumber || found.deviceId,
+          tags: found.deviceTags || []
+        };
+        setActiveDevice(deviceData);
+        await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
+        requestPermissions();
+      } else {
+        console.log('Hardware ID not found in API list:', id);
+        Alert.alert(
+          'Device Belum Terdaftar',
+          'Hardware ID device ini (' + id + ') tidak ditemukan di sistem. Silakan masukkan PPT Code untuk mendaftarkan device ini secara manual.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (err) {
+      console.log('Auto-login error:', err);
+    } finally {
+      setIsAutoLoggingIn(false);
+    }
+  };
+
+  const loadStoredDevice = async () => {
+    // Dipindahkan ke initializeSession
   };
 
   // Keep activeDeviceRef in sync with state
@@ -855,14 +905,19 @@ const App = () => {
           <TouchableOpacity 
             style={styles.loginBtn}
             onPress={handleLogin}
-            disabled={isLoggingIn}
+            disabled={isLoggingIn || isAutoLoggingIn}
           >
-            {isLoggingIn ? (
+            {isLoggingIn || isAutoLoggingIn ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.loginBtnText}>Masuk & Hubungkan</Text>
             )}
           </TouchableOpacity>
+
+          <View style={{ marginTop: 30, borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 20, alignItems: 'center' }}>
+            <Text style={{ color: '#94a3b8', fontSize: 12 }}>ID Perangkat Anda:</Text>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginTop: 5 }}>{hardwareId || 'Mencari ID...'}</Text>
+          </View>
         </View>
       </SafeAreaView>
     );
