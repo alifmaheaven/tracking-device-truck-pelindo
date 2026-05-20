@@ -39,9 +39,14 @@ function updateCallStackUI() {
     // Only show in stack if NOT the main active focus
     if (id === state.pttActiveTarget) return;
 
+    const safeTruckNumber = document.createTextNode(data.truckNumber || '').textContent;
+
     let tagsHtml = '';
     if (data.tags && data.tags.length > 0) {
-      const badges = data.tags.map(tag => `<span class="tag-badge" style="font-size: 10px; padding: 2px 6px; margin-right: 4px; display: inline-block; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+      const badges = data.tags.map(tag => {
+        const safeTag = document.createTextNode(tag.tagValue || tag).textContent;
+        return `<span class="tag-badge" style="font-size: 10px; padding: 2px 6px; margin-right: 4px; display: inline-block; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${safeTag}</span>`;
+      }).join('');
       tagsHtml = `<div style="margin-top: 4px;">${badges}</div>`;
     }
 
@@ -49,7 +54,7 @@ function updateCallStackUI() {
     item.className = 'ptt-stack-item';
     item.innerHTML = `
       <div style="flex: 1;">
-        <div class="truck-name">${data.truckNumber}</div>
+        <div class="truck-name">${safeTruckNumber}</div>
         ${tagsHtml}
         <div class="stack-status" style="margin-top: 4px;">Panggilan Aktif</div>
       </div>
@@ -78,10 +83,14 @@ export function focusCall(targetId, targetName, targetTags = []) {
   if (pttTargetName) {
     let tagsHtml = '';
     if (targetTags && targetTags.length > 0) {
-       const badges = targetTags.map(tag => `<span class="tag-badge" style="font-size: 12px; padding: 4px 8px; margin-left: 8px; vertical-align: middle; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+       const badges = targetTags.map(tag => {
+         const safeTag = document.createTextNode(tag.tagValue || tag).textContent;
+         return `<span class="tag-badge" style="font-size: 12px; padding: 4px 8px; margin-left: 8px; vertical-align: middle; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${safeTag}</span>`;
+       }).join('');
        tagsHtml = ` ${badges}`;
     }
-    pttTargetName.innerHTML = `${targetName}${tagsHtml}`;
+    const safeTargetName = document.createTextNode(targetName || '').textContent;
+    pttTargetName.innerHTML = `${safeTargetName}${tagsHtml}`;
   }
   
   if (pttPanel) pttPanel.classList.remove('hidden');

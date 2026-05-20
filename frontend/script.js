@@ -1100,7 +1100,7 @@ window.audioCtx = null;
 
 setupPtt({
     wsUrl: WS_URL,
-    registrationSecret: REGISTRATION_SECRET,
+    registrationSecret: REGISTRATION_SECRET
 });
 
 bindPttButtons();

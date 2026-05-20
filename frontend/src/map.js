@@ -195,9 +195,17 @@ export function renderDeviceList(devices) {
     card.id = `card-${device.id}`;
     card.addEventListener('click', () => focusDevice(device.id));
 
+    // Sanitize values to prevent XSS
+    const safeTruckNumber = document.createTextNode(device.truckNumber || '').textContent;
+    const safeSerialNumber = document.createTextNode(device.serialNumber || 'N/A').textContent;
+    const safePptCode = document.createTextNode(device.pptCode || '------').textContent;
+    
     let tagsHtml = '<div style="color: var(--text-muted); font-size: 13px; font-style: italic;">No Tag</div>';
     if (device.tags && device.tags.length > 0) {
-      const badges = device.tags.map(tag => `<span class="tag-badge" style="font-size: 15px; padding: 6px 12px; border-radius: 6px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+      const badges = device.tags.map(tag => {
+        const safeTag = document.createTextNode(tag.tagValue || tag).textContent;
+        return `<span class="tag-badge" style="font-size: 15px; padding: 6px 12px; border-radius: 6px;"><i class="fa-solid fa-tag"></i> ${safeTag}</span>`;
+      }).join('');
       tagsHtml = `<div class="device-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">${badges}</div>`;
     }
 
@@ -211,7 +219,7 @@ export function renderDeviceList(devices) {
           ${tagsHtml}
         </div>
         <div class="battery-status" title="Battery: ${battery.text}" style="color: ${battery.color}; font-weight: 700; font-size: 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-          <div style="font-size: 10px; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 600; margin-bottom: 2px;">SN: ${device.serialNumber || 'N/A'}</div>
+          <div style="font-size: 10px; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 600; margin-bottom: 2px;">SN: ${safeSerialNumber}</div>
           <div style="display: flex; align-items: center; gap: 4px;">
             <i class="fa-solid ${battery.icon}" style="font-size: 20px;"></i>
             <span style="font-size: 12px;">${battery.text}</span>
@@ -221,9 +229,9 @@ export function renderDeviceList(devices) {
       <div style="display: flex; gap: 8px; margin-top: 8px;">
         <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; font-weight: bold; font-size: 14px; color: #0f172a; display: flex; align-items: center; justify-content: center; letter-spacing: 1px;" title="PPT Code untuk login Tablet">
           <i class="fa-solid fa-key" style="margin-right: 6px; color: #64748b; font-size: 12px;"></i>
-          ${device.pptCode || '------'}
+          ${safePptCode}
         </div>
-        <button class="call-btn" style="flex: 1; margin-top: 0;" onclick="event.stopPropagation(); startPttCall('${device.id}', '${device.truckNumber}')">
+        <button class="call-btn" style="flex: 1; margin-top: 0;" onclick="event.stopPropagation(); startPttCall('${device.id}', '${safeTruckNumber}')">
           <i class="fa-solid fa-headset"></i> Panggil Operator
         </button>
       </div>
