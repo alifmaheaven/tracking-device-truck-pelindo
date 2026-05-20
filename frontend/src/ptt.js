@@ -10,8 +10,9 @@ import { state } from './state.js';
 let pttPanel, pttTargetName, pttTalkBtn, pttEndBtn, pttStatusText, scrollGuide, scrollGuideText, pttCallStack;
 let wsUrl = '';
 let regSecret = '';
+let isTakenOver = false;
 
-// Track multiple active calls { deviceId: { truckNumber, startTime } }
+// Track multiple active calls { deviceId: { truckNumber, tags, startTime } }
 const activeCalls = new Map();
 
 /**
@@ -38,12 +39,19 @@ function updateCallStackUI() {
     // Only show in stack if NOT the main active focus
     if (id === state.pttActiveTarget) return;
 
+    let tagsHtml = '';
+    if (data.tags && data.tags.length > 0) {
+      const badges = data.tags.map(tag => `<span class="tag-badge" style="font-size: 10px; padding: 2px 6px; margin-right: 4px; display: inline-block; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+      tagsHtml = `<div style="margin-top: 4px;">${badges}</div>`;
+    }
+
     const item = document.createElement('div');
     item.className = 'ptt-stack-item';
     item.innerHTML = `
       <div style="flex: 1;">
         <div class="truck-name">${data.truckNumber}</div>
-        <div class="stack-status">Panggilan Aktif</div>
+        ${tagsHtml}
+        <div class="stack-status" style="margin-top: 4px;">Panggilan Aktif</div>
       </div>
       <div class="stack-actions">
         <button class="stack-btn end" data-id="${id}" title="Akhiri"><i class="fa-solid fa-phone-slash"></i></button>
@@ -52,7 +60,7 @@ function updateCallStackUI() {
 
     item.addEventListener('click', (e) => {
       if (e.target.closest('.stack-btn')) return;
-      focusCall(id, data.truckNumber);
+      focusCall(id, data.truckNumber, data.tags);
     });
 
     item.querySelector('.end').addEventListener('click', (e) => {
@@ -64,9 +72,18 @@ function updateCallStackUI() {
   });
 }
 
-export function focusCall(targetId, targetName) {
+export function focusCall(targetId, targetName, targetTags = []) {
   state.pttActiveTarget = targetId;
-  if (pttTargetName) pttTargetName.innerText = targetName;
+  
+  if (pttTargetName) {
+    let tagsHtml = '';
+    if (targetTags && targetTags.length > 0) {
+       const badges = targetTags.map(tag => `<span class="tag-badge" style="font-size: 12px; padding: 4px 8px; margin-left: 8px; vertical-align: middle; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+       tagsHtml = ` ${badges}`;
+    }
+    pttTargetName.innerHTML = `${targetName}${tagsHtml}`;
+  }
+  
   if (pttPanel) pttPanel.classList.remove('hidden');
   if (pttStatusText) pttStatusText.innerText = 'Status: Terhubung';
   
@@ -244,12 +261,13 @@ export function initPttWebSocket() {
           
           const device = state.devicesData.find(d => d.id === data.callerId);
           const name = device ? device.truckNumber : data.callerId;
+          const tags = device ? (device.deviceTags || device.tags || []) : [];
           
-          activeCalls.set(data.callerId, { truckNumber: name, startTime: Date.now() });
+          activeCalls.set(data.callerId, { truckNumber: name, tags: tags, startTime: Date.now() });
           
           // If no one is focused, focus this one
           if (!state.pttActiveTarget) {
-            focusCall(data.callerId, name);
+            focusCall(data.callerId, name, tags);
           } else {
             updateCallStackUI();
           }
@@ -257,8 +275,9 @@ export function initPttWebSocket() {
         case 'callAccepted':
           const accDevice = state.devicesData.find(d => d.id === data.targetId);
           const accName = accDevice ? accDevice.truckNumber : data.targetId;
-          activeCalls.set(data.targetId, { truckNumber: accName, startTime: Date.now() });
-          focusCall(data.targetId, accName);
+          const accTags = accDevice ? (accDevice.deviceTags || accDevice.tags || []) : [];
+          activeCalls.set(data.targetId, { truckNumber: accName, tags: accTags, startTime: Date.now() });
+          focusCall(data.targetId, accName, accTags);
           break;
         case 'callEnded':
           const peerId = data.peerId || data.targetId;

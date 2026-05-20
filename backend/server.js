@@ -1,7 +1,7 @@
 require('dotenv').config();
 const WebSocket = require('ws');
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 9090;
 const REGISTRATION_SECRET = process.env.REGISTRATION_SECRET;
 
 const wss = new WebSocket.Server({ port: PORT });
@@ -75,6 +75,12 @@ wss.on('connection', (ws) => {
             const oldWs = clients.get(data.id);
             if (oldWs && oldWs !== ws) {
               console.log(`Closing stale connection for client: ${data.id}`);
+              try {
+                oldWs.send(JSON.stringify({ 
+                  type: 'takenOver', 
+                  message: 'Koneksi terputus karena ID ini telah login di perangkat/tab lain.' 
+                }));
+              } catch (e) { /* ignore */ }
               oldWs.close();
             }
 
