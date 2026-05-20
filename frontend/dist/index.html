@@ -28,7 +28,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link rel="icon" href="https://www.teluklamong.co.id/images/favicon.png">
-  <script type="module" crossorigin src="/assets/index-C8AOznTA.js"></script>
+  <script type="module" crossorigin src="/assets/index-DVGbYXQG.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-WcOu_hyR.css">
 </head>
 <body>
@@ -213,6 +213,27 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Takeover Confirm Modal -->
+    <div id="takeoverConfirmModal" class="modal-overlay hidden" style="z-index: 9999;">
+      <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px 20px;">
+        <h3 style="color: #ef4444; font-size: 20px; margin-bottom: 10px;"><i class="fa-solid fa-triangle-exclamation"></i> Sesi Aktif Ditemukan</h3>
+        <p style="margin: 15px 0; color: #475569; font-size: 15px; line-height: 1.5;">Sesi Command Center ini sudah terhubung di tab atau perangkat lain. Apakah Anda ingin memutuskan koneksi lama dan mengambil alih sesi ini?</p>
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+          <button id="btnCancelTakeover" class="btn-secondary" style="padding: 10px 20px;">Batal</button>
+          <button id="btnConfirmTakeover" class="btn-primary" style="background-color: #ef4444; padding: 10px 20px;">Ya, Ambil Alih</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Taken Over Notice Modal -->
+    <div id="takenOverNoticeModal" class="modal-overlay hidden" style="z-index: 9999;">
+      <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px 20px;">
+        <h3 style="color: #ef4444; font-size: 20px; margin-bottom: 10px;"><i class="fa-solid fa-plug-circle-xmark"></i> Koneksi Terputus</h3>
+        <p style="margin: 15px 0; color: #475569; font-size: 15px; line-height: 1.5;">Koneksi Anda telah diambil alih oleh tab atau perangkat lain. Tab ini tidak lagi terhubung ke server PTT.</p>
+        <button id="btnReloadTakenOver" class="btn-primary" style="margin-top: 20px; padding: 10px 20px; width: 100%;">Muat Ulang Halaman</button>
+      </div>
     </div>
 
     <!-- Leaflet JS -->

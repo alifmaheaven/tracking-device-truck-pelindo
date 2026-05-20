@@ -255,6 +255,43 @@ export function initPttWebSocket() {
           state.activeRealtimeDevices[data.deviceId] = Date.now();
           updateDeviceCoordinates(data.deviceId, data.coordinates);
           break;
+        case 'confirmTakeover':
+          const confirmModal = document.getElementById('takeoverConfirmModal');
+          const btnConfirm = document.getElementById('btnConfirmTakeover');
+          const btnCancel = document.getElementById('btnCancelTakeover');
+          
+          if (confirmModal) confirmModal.classList.remove('hidden');
+          
+          if (btnConfirm) {
+            btnConfirm.onclick = () => {
+              confirmModal.classList.add('hidden');
+              state.pttWs.send(JSON.stringify({
+                type: 'register',
+                id: 'center-main',
+                secret: regSecret,
+                force: true
+              }));
+            };
+          }
+          
+          if (btnCancel) {
+            btnCancel.onclick = () => {
+              confirmModal.classList.add('hidden');
+              state.pttWs.close(); // Cancel connection
+            };
+          }
+          break;
+        case 'takenOver':
+          isTakenOver = true;
+          const noticeModal = document.getElementById('takenOverNoticeModal');
+          if (noticeModal) {
+            noticeModal.classList.remove('hidden');
+            const btnReload = document.getElementById('btnReloadTakenOver');
+            if (btnReload) btnReload.onclick = () => location.reload();
+          } else {
+            alert(data.message);
+          }
+          break;
         case 'incomingCall':
           console.log('Incoming multi-call from: ', data.callerId);
           state.pttWs.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));

@@ -74,14 +74,23 @@ wss.on('connection', (ws) => {
             // Clean up old connection with same ID if exists
             const oldWs = clients.get(data.id);
             if (oldWs && oldWs !== ws) {
-              console.log(`Closing stale connection for client: ${data.id}`);
-              try {
-                oldWs.send(JSON.stringify({ 
-                  type: 'takenOver', 
-                  message: 'Koneksi terputus karena ID ini telah login di perangkat/tab lain.' 
+              if (!data.force) {
+                // If not forced, ask for confirmation first
+                ws.send(JSON.stringify({ 
+                  type: 'confirmTakeover', 
+                  message: 'ID ini sudah digunakan. Ambil alih sesi?' 
                 }));
-              } catch (e) { /* ignore */ }
-              oldWs.close();
+                return; // Do not register yet
+              } else {
+                console.log(`Force closing stale connection for client: ${data.id}`);
+                try {
+                  oldWs.send(JSON.stringify({ 
+                    type: 'takenOver', 
+                    message: 'Koneksi terputus karena ID ini telah diambil alih oleh perangkat/tab lain.' 
+                  }));
+                } catch (e) { /* ignore */ }
+                oldWs.close();
+              }
             }
 
             currentClientId = data.id;
@@ -97,13 +106,10 @@ wss.on('connection', (ws) => {
             const targetId = data.targetId;
             
             // Special case: if calling 'center-main', find any available center
-            let finalTargetId = targetId;
             if (targetId === 'center-main') {
               const centers = getCenterClients();
               if (centers.length > 0) {
-                // For now, call the first available center or broadcast to all centers?
-                // User says: "bisa denger semuanya maupun merespon"
-                // So we broadcast the incoming call to all centers.
+                // Broadcast the incoming call to all centers.
                 centers.forEach(([id, centerWs]) => {
                   if (centerWs.readyState === WebSocket.OPEN) {
                     centerWs.send(JSON.stringify({
@@ -112,27 +118,36 @@ wss.on('connection', (ws) => {
                     }));
                   }
                 });
-                console.log(`Call broadcasted from ${currentClientId} to all centers`);
+                console.log(`Call broadcasted from ${currentClientId} to ${centers.length} centers`);
+                return;
+              } else {
+                // NO CENTERS ONLINE
+                ws.send(JSON.stringify({
+                  type: 'error',
+                  code: 'CENTER_OFFLINE',
+                  message: 'Command Center sedang offline. Silakan coba lagi nanti.'
+                }));
+                console.log(`Call FAILED: no command centers online for ${currentClientId}`);
                 return;
               }
             }
 
-            const targetWs = clients.get(finalTargetId);
-            console.log(`Call request: ${currentClientId} -> ${finalTargetId}`);
+            const targetWs = clients.get(targetId);
+            console.log(`Call request: ${currentClientId} -> ${targetId}`);
             if (targetWs && targetWs.readyState === WebSocket.OPEN) {
               // Forward call request
               targetWs.send(JSON.stringify({
                 type: 'incomingCall',
                 callerId: currentClientId
               }));
-              console.log(`Call initiated from ${currentClientId} to ${finalTargetId}`);
+              console.log(`Call initiated from ${currentClientId} to ${targetId}`);
             } else {
               // Target not found or offline
               ws.send(JSON.stringify({
                 type: 'error',
-                message: `Target is offline or not found (targetId: ${finalTargetId})`
+                message: `Target tidak ditemukan atau sedang offline (ID: ${targetId})`
               }));
-              console.log(`Call FAILED: target '${finalTargetId}' not in clients map`);
+              console.log(`Call FAILED: target '${targetId}' not in clients map`);
             }
             break;
 

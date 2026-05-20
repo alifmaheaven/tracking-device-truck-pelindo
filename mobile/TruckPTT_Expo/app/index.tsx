@@ -768,7 +768,13 @@ const App = () => {
         break;
       case 'error':
         await dismissCallNotification();
-        Alert.alert('Error', data.message);
+        if (data.code === 'CENTER_OFFLINE') {
+           setCallStatus('Idle');
+           callSessionRef.current = { active: false, callerId: null, incomingPending: false };
+           Alert.alert('Pusat Offline', data.message);
+        } else {
+           Alert.alert('Error', data.message);
+        }
         break;
       case 'voiceMessage':
         if (data.audioBase64) {
