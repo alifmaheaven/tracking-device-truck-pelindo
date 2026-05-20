@@ -19,7 +19,7 @@ const activeCalls = new Map();
  * Initialize PTT module with configuration and DOM refs.
  */
 export function setupPtt(config) {
-  wsUrl = config.wsUrl || 'ws://43.157.242.182:9090';
+  wsUrl = config.wsUrl || state.WS_URL;
   regSecret = config.registrationSecret || '';
   pttPanel = document.getElementById('pttActivePanel');
   pttTargetName = document.getElementById('pttTargetName');

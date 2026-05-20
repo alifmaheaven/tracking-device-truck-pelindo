@@ -2,7 +2,12 @@
  * Shared mutable state — imported by all modules.
  * All modules see the same object reference.
  */
+
+const HOST = import.meta.env.VITE_HOST || '10.118.62.60';
+
 export const state = {
+  BASE_URL: `http://${HOST}:5678/webhook`,
+  WS_URL: `ws://${HOST}:9090`,
   devicesData: [],
   onlineDeviceIds: [], // IDs connected via WebSocket PTT
   activeRealtimeDevices: {}, // deviceId -> last_ws_update_timestamp

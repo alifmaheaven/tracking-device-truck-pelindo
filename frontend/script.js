@@ -2,9 +2,9 @@ import { getBatteryDisplay, playPcmAudio } from './src/utils.js';
 import { setupMap, fetchDeviceData, renderMarkers, renderDeviceList, handleSearchInput } from './src/map.js';
 import { state } from './src/state.js';
 
-// Konfigurasi API N8N dari Environment Variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://10.118.62.60:5678/webhook/device-cordinate';
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://10.118.62.60:9090';
+// Konfigurasi API N8N dari state
+const API_URL = `${state.BASE_URL}/device-cordinate`;
+const WS_URL = state.WS_URL;
 const REGISTRATION_SECRET = import.meta.env.VITE_REGISTRATION_SECRET || '';
 
 // Map init
@@ -290,7 +290,7 @@ routingRadios.forEach(radio => {
 });
 
 function buildHistoryUrl(deviceId) {
-    let baseUrl = `http://10.118.62.60:5678/webhook/device-history?deviceId=${deviceId}`;
+    let baseUrl = `${state.BASE_URL}/device-history?deviceId=${deviceId}`;
     if (!historyTimePreset) return baseUrl;
 
     const preset = historyTimePreset.value;
