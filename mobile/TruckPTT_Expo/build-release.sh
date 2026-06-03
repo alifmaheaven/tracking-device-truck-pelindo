@@ -41,6 +41,32 @@ echo "🧹 Cleaning output dir..."
 rm -rf "$BUILD_OUTPUT_DIR"
 mkdir -p "$BUILD_OUTPUT_DIR"
 
+# ---- Auto increment versionCode ----
+echo "🔢 Auto incrementing versionCode..."
+CURRENT_VERSION_CODE=$(python3 -c "
+import json
+with open('app.json') as f:
+    data = json.load(f)
+print(data.get('expo', {}).get('android', {}).get('versionCode', 1))
+")
+NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+python3 -c "
+import json
+with open('app.json', 'r') as f:
+    data = json.load(f)
+data['expo']['android']['versionCode'] = $NEW_VERSION_CODE
+with open('app.json', 'w') as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+    f.write('\n')
+"
+VERSION_NAME=$(python3 -c "
+import json
+with open('app.json') as f:
+    data = json.load(f)
+print(data.get('expo', {}).get('version', '1.0.0'))
+")
+echo "✅ versionCode: $CURRENT_VERSION_CODE → $NEW_VERSION_CODE (versionName: $VERSION_NAME)"
+
 # ---- Prebuild: regenerate android/ with native modules linked ----
 echo "🔧 Regenerating android/ with native modules (expo prebuild)..."
 npx expo prebuild --platform android --no-install 2>&1 | tail -5
@@ -81,6 +107,7 @@ if [ -f "$APK_SOURCE" ]; then
   echo "📦 APK:  $BUILD_OUTPUT_DIR/$APK_NAME"
   echo "📦 Latest: $BUILD_OUTPUT_DIR/TruckPTT_latest.apk"
   echo "📏 Size:  $(du -h "$BUILD_OUTPUT_DIR/$APK_NAME" | cut -f1)"
+  echo "🔢 Version: $VERSION_NAME (versionCode: $NEW_VERSION_CODE)"
   echo ""
   echo "Install on device:"
   echo "  adb install -r $BUILD_OUTPUT_DIR/TruckPTT_latest.apk"
