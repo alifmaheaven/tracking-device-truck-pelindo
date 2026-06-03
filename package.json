@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "captcha-canvas": "^3.4.0"
+  }
+}

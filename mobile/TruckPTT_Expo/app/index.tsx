@@ -29,7 +29,7 @@ if (typeof global.Buffer === 'undefined') {
   global.Buffer = Buffer;
 }
 
-const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'ws://10.118.62.60:9090';
+const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'ws://10.118.62.60:9090/ws';
 const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'http://10.118.62.60:5678/webhook/device-cordinate';
 const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || '';
 
@@ -167,10 +167,10 @@ const App = () => {
 
   const initializeSession = async () => {
     try {
-      // Get Hardware ID immediately for display
-      const id = await DeviceInfo.getUniqueId();
-      setHardwareId(id);
-
+      // Get Serial Number (hardware-persistent identifier)
+      const serialNumber = await DeviceInfo.getSerialNumber();
+      setHardwareId(serialNumber); // Display serial number instead
+      
       // 1. Cek apakah sudah ada session di AsyncStorage
       const stored = await AsyncStorage.getItem('activeDevice');
       if (stored) {
@@ -178,8 +178,8 @@ const App = () => {
         return;
       }
 
-      // 2. Jika tidak ada session, coba Auto-Login berdasarkan hardware Device ID
-      await attemptAutoLogin(id);
+      // 2. Jika tidak ada session, coba Auto-Login berdasarkan Serial Number
+      await attemptAutoLogin(serialNumber);
     } catch (e) {
       console.error('Failed to initialize session', e);
     }
@@ -188,12 +188,13 @@ const App = () => {
   const attemptAutoLogin = async (id: string) => {
     setIsAutoLoggingIn(true);
     try {
-      console.log('Attempting auto-login with DeviceInfo ID:', id);
+      console.log('Attempting auto-login with Serial Number:', id);
 
       const response = await fetch(API_URL);
       const data = await response.json();
 
-      const found = data.find((d: any) => d.deviceId === id);
+      // Search by serialNumber (hardware-persistent identifier)
+      const found = data.find((d: any) => d.serialNumber === id);
       if (found) {
         console.log('Auto-login successful!');
         const deviceData = {
@@ -205,10 +206,10 @@ const App = () => {
         await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
         requestPermissions();
       } else {
-        console.log('Hardware ID not found in API list:', id);
+        console.log('Serial Number not found in API list:', id);
         Alert.alert(
           'Device Belum Terdaftar',
-          'Hardware ID device ini (' + id + ') tidak ditemukan di sistem. Silakan masukkan PPT Code untuk mendaftarkan device ini secara manual.',
+          'Serial Number device ini (' + id + ') tidak ditemukan di sistem. Silakan masukkan PPT Code untuk mendaftarkan device ini secara manual.',
           [{ text: 'OK' }]
         );
       }
