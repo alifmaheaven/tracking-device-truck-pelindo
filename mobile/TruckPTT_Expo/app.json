@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.pelindo.truckptt",
-      "versionCode": 6,
+      "versionCode": 7,
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.FOREGROUND_SERVICE",
@@ -27,9 +27,7 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.jpg",
-        "backgroundImage": "./assets/images/android-icon-background.jpg",
-        "monochromeImage": "./assets/images/android-icon-monochrome.jpg"
+        "foregroundImage": "./assets/images/android-icon-foreground.jpg"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
