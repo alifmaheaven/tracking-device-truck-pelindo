@@ -43,6 +43,7 @@ const App = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [callStatus, setCallStatus] = useState('Idle');
   const [isRecording, setIsRecording] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const activeDeviceRef = useRef<{ id: string; name: string; tags?: any[] } | null>(null);
   const foregroundServiceStarted = useRef(false);
@@ -819,9 +820,11 @@ const App = () => {
         break;
       case 'error':
         await dismissCallNotification();
+        setCallStatus('Idle');
+        callSessionRef.current = { active: false, callerId: null, incomingPending: false };
+        setIsRecording(false);
+        AudioRecord.stop().catch(() => {});
         if (data.code === 'CENTER_OFFLINE') {
-           setCallStatus('Idle');
-           callSessionRef.current = { active: false, callerId: null, incomingPending: false };
            Alert.alert('Pusat Offline', data.message);
         } else {
            Alert.alert('Error', data.message);
@@ -848,10 +851,28 @@ const App = () => {
           }
         }
         break;
+      case 'muteStatus':
+        setIsMuted(data.muted);
+        if (data.muted) {
+          // If muted while in a call, end the call on our side
+          if (callSessionRef.current.active) {
+            callSessionRef.current = { active: false, callerId: null, incomingPending: false };
+            setCallStatus('Idle');
+            setIsRecording(false);
+            AudioRecord.stop().catch(() => {});
+          }
+        }
+        break;
     }
   };
 
   const handlePressIn = () => {
+    // If muted, don't allow any call action
+    if (isMuted) {
+      Alert.alert('Device Di-Mute', 'Anda sedang di-mute oleh Command Center. Tidak dapat melakukan panggilan.');
+      return;
+    }
+
     // If incoming call is pending, accept it instead of placing a new call
     if (callSessionRef.current.incomingPending && callSessionRef.current.callerId) {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -954,7 +975,7 @@ const App = () => {
       <View style={styles.callBox}>
         <Text style={styles.callStatusLabel}>Status Panggilan:</Text>
         <Text style={[styles.callStatusValue, callSessionRef.current.active && styles.textBlue]}>
-          {callStatus}
+          {isMuted ? '🔇 Di-Mute oleh Pusat' : callStatus}
         </Text>
       </View>
 
@@ -962,15 +983,15 @@ const App = () => {
         <TouchableOpacity
           style={[
             styles.pttButton,
-            isRecording ? styles.pttActive : styles.pttIdle,
-            !callSessionRef.current.active && styles.pttDisabled,
+            isMuted ? styles.pttMuted : (isRecording ? styles.pttActive : styles.pttIdle),
+            !callSessionRef.current.active && !isMuted && styles.pttDisabled,
           ]}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           activeOpacity={0.8}
         >
           <Text style={styles.pttText}>
-            {isRecording ? 'MEREKAM...' : 'TAHAN UNTUK BICARA'}
+            {isMuted ? '🔇 MUTED' : (isRecording ? 'MEREKAM...' : 'TAHAN UNTUK BICARA')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -1162,6 +1183,9 @@ const styles = StyleSheet.create({
   },
   pttDisabled: {
     opacity: 0.5,
+  },
+  pttMuted: {
+    backgroundColor: '#dc2626',
   },
   pttText: {
     color: '#ffffff',

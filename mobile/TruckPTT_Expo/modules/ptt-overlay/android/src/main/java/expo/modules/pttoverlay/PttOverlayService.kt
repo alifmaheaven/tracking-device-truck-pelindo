@@ -93,14 +93,25 @@ object PttOverlayService {
   fun updateStatus(status: String, recording: Boolean) {
     currentStatus = status
     isRecording = recording
+    val isMuted = status.equals("muted", ignoreCase = true) || status.equals("disabled", ignoreCase = true)
+
     statusText?.let { tv ->
-      tv.text = if (recording) "BICARA" else "TEKAN PTT"
+      tv.text = when {
+        isMuted -> "MUTED"
+        recording -> "BICARA"
+        else -> "TEKAN PTT"
+      }
       tv.setTextColor(Color.WHITE)
     }
     // Update bubble color
     bubbleView?.let { bv ->
       val bg = (bv.getChildAt(0) as? FrameLayout)?.background as? GradientDrawable
-      bg?.setColor(Color.parseColor(if (recording) "#EF4444" else "#1E40AF"))
+      val color = when {
+        isMuted -> "#64748B"
+        recording -> "#EF4444"
+        else -> "#1E40AF"
+      }
+      bg?.setColor(Color.parseColor(color))
     }
   }
 
@@ -146,6 +157,7 @@ object PttOverlayService {
 
   private val bubbleTouchListener = View.OnTouchListener { view, event ->
     val clickThreshold = dpToPx(15f, view.context)
+    val isMuted = currentStatus.equals("muted", ignoreCase = true) || currentStatus.equals("disabled", ignoreCase = true)
 
     when (event.action) {
       MotionEvent.ACTION_DOWN -> {
@@ -154,13 +166,14 @@ object PttOverlayService {
         dragInitialTouchX = event.rawX
         dragInitialTouchY = event.rawY
 
-        moduleRef?.sendEvent("pttPressIn")
-
-        val bg = (view as? FrameLayout)?.getChildAt(0)?.let { child ->
-          (child as? FrameLayout)?.background as? GradientDrawable
+        if (!isMuted) {
+          moduleRef?.sendEvent("pttPressIn")
+          val bg = (view as? FrameLayout)?.getChildAt(0)?.let { child ->
+            (child as? FrameLayout)?.background as? GradientDrawable
+          }
+          bg?.setColor(Color.parseColor("#DC2626")) 
+          bg?.alpha = 255
         }
-        bg?.setColor(Color.parseColor("#DC2626")) 
-        bg?.alpha = 255
 
         return@OnTouchListener true
       }
@@ -174,7 +187,9 @@ object PttOverlayService {
         return@OnTouchListener true
       }
       MotionEvent.ACTION_UP -> {
-        moduleRef?.sendEvent("pttPressOut")
+        if (!isMuted) {
+          moduleRef?.sendEvent("pttPressOut")
+        }
 
         val dx = Math.abs(event.rawX - dragInitialTouchX)
         val dy = Math.abs(event.rawY - dragInitialTouchY)
@@ -185,17 +200,31 @@ object PttOverlayService {
         val bg = (view as? FrameLayout)?.getChildAt(0)?.let { child ->
           (child as? FrameLayout)?.background as? GradientDrawable
         }
-        bg?.setColor(Color.parseColor(if (isRecording) "#EF4444" else "#1E40AF"))
+        
+        val finalColor = when {
+          isMuted -> "#64748B"
+          isRecording -> "#EF4444"
+          else -> "#1E40AF"
+        }
+        bg?.setColor(Color.parseColor(finalColor))
         bg?.alpha = 220
 
         return@OnTouchListener true
       }
       MotionEvent.ACTION_CANCEL -> {
-        moduleRef?.sendEvent("pttPressOut")
+        if (!isMuted) {
+          moduleRef?.sendEvent("pttPressOut")
+        }
         val bg = (view as? FrameLayout)?.getChildAt(0)?.let { child ->
           (child as? FrameLayout)?.background as? GradientDrawable
         }
-        bg?.setColor(Color.parseColor(if (isRecording) "#EF4444" else "#1E40AF"))
+        
+        val cancelColor = when {
+          isMuted -> "#64748B"
+          isRecording -> "#EF4444"
+          else -> "#1E40AF"
+        }
+        bg?.setColor(Color.parseColor(cancelColor))
         bg?.alpha = 220
         return@OnTouchListener true
       }

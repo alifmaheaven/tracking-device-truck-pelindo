@@ -107,6 +107,8 @@ const clients = new Map();
 const sessions = new Map();
 // Set of deviceIds that are muted by Command Center
 const mutedDevices = new Set();
+// Map of session clientId -> last activity timestamp (for auto-end inactive calls)
+const callActivity = new Map();
 
 // Helper to get all command center connections
 function getCenterClients() {
@@ -151,6 +153,11 @@ wss.on('connection', async (ws, req) => {
       // 1. Always forward a copy to ALL center clients for global monitoring
       // MUTE CHECK: skip forwarding audio from muted devices
       if (currentClientId && !currentClientId.startsWith('center') && !mutedDevices.has(currentClientId)) {
+        // Track call activity timestamp
+        callActivity.set(currentClientId, Date.now());
+        const partnerId = sessions.get(currentClientId);
+        if (partnerId) callActivity.set(partnerId, Date.now());
+        
         const centers = getCenterClients();
         centers.forEach(([id, centerWs]) => {
           if (centerWs.readyState === WebSocket.OPEN) {
@@ -281,6 +288,13 @@ wss.on('connection', async (ws, req) => {
           case 'voiceMessage':
             if (ws.userRole === 'viewer') return; // blok voice message dari viewer
             
+            // Track call activity for auto-end timeout
+            if (currentClientId) {
+              callActivity.set(currentClientId, Date.now());
+              const partnerId = sessions.get(currentClientId);
+              if (partnerId) callActivity.set(partnerId, Date.now());
+            }
+            
             // If this is a center client sending voice, broadcast to all center clients
             if (currentClientId && currentClientId.startsWith('center')) {
               const centers = getCenterClients();
@@ -312,6 +326,10 @@ wss.on('connection', async (ws, req) => {
               sessions.set(currentClientId, callerId);
               sessions.set(callerId, currentClientId);
               
+              // Init call activity timestamps
+              callActivity.set(currentClientId, Date.now());
+              callActivity.set(callerId, Date.now());
+              
               callerWs.send(JSON.stringify({
                 type: 'callAccepted',
                 targetId: currentClientId
@@ -335,6 +353,8 @@ wss.on('connection', async (ws, req) => {
               }
               sessions.delete(currentClientId);
               sessions.delete(activePartnerId);
+              callActivity.delete(currentClientId);
+              callActivity.delete(activePartnerId);
             }
             break;
 
@@ -416,6 +436,8 @@ wss.on('connection', async (ws, req) => {
         }
         sessions.delete(currentClientId);
         sessions.delete(partnerId);
+        callActivity.delete(currentClientId);
+        callActivity.delete(partnerId);
       }
       
       // Update centers dashboard about disconnection
@@ -468,6 +490,36 @@ const keepaliveInterval = setInterval(() => {
   });
 }, 25000);
 
+// Auto-end inactive calls after 25 seconds of no audio exchange
+const AUTO_END_DELAY = 25000; // 25 seconds threshold
+const autoEndInterval = setInterval(() => {
+  const now = Date.now();
+  sessions.forEach((partnerId, clientId) => {
+    const lastActivity = callActivity.get(clientId) || 0;
+    if (now - lastActivity > AUTO_END_DELAY) {
+      console.log(`Auto-ending inactive call: ${clientId} ↔ ${partnerId}`);
+      
+      // Notify both parties
+      const clientWs = clients.get(clientId);
+      const partnerWs = clients.get(partnerId);
+      
+      if (clientWs && clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(JSON.stringify({ type: 'callEnded', peerId: partnerId, reason: 'inactivity' }));
+      }
+      if (partnerWs && partnerWs.readyState === WebSocket.OPEN) {
+        partnerWs.send(JSON.stringify({ type: 'callEnded', peerId: clientId, reason: 'inactivity' }));
+      }
+      
+      // Clean up sessions
+      sessions.delete(clientId);
+      sessions.delete(partnerId);
+      callActivity.delete(clientId);
+      callActivity.delete(partnerId);
+    }
+  });
+}, 10000);
+
 wss.on('close', () => {
   clearInterval(keepaliveInterval);
+  clearInterval(autoEndInterval);
 });

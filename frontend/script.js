@@ -185,6 +185,7 @@ const closeHistoryModalBtn = document.getElementById('closeHistoryModalBtn');
 const loadingHistory = document.getElementById('loadingHistory');
 let historyMapInstance = null;
 let historyLayerGroup = null;
+let historyAutoHideTimer = null; // Auto-hide after 10 minutes
 
 // TABS UI DOM
 const tabMapBtn = document.getElementById('tabMapBtn');
@@ -382,6 +383,20 @@ async function openHistoryModal(deviceId, truckNumber) {
     loadingHistory.innerHTML = 'Sedang memuat data rute perjalanan...';
     loadingHistory.style.display = 'flex'; // Tampilkan Loading
     distanceInfoBox.style.display = 'none'; // Sembunyikan jarak sementara
+    
+    // Clear previous auto-hide timer
+    if (historyAutoHideTimer) { clearTimeout(historyAutoHideTimer); historyAutoHideTimer = null; }
+    // Auto-hide history panel after 10 minutes (600,000 ms)
+    historyAutoHideTimer = setTimeout(() => {
+      historyModal.classList.remove('active');
+      distanceInfoBox.style.display = 'none';
+      if (tabMapBtn && tabChartBtn) {
+        tabMapBtn.classList.add('active');
+        tabChartBtn.classList.remove('active');
+        mapTabContent.style.display = 'flex';
+        chartTabContent.style.display = 'none';
+      }
+    }, 600000);
     totalDistanceText.innerText = '-';
     
     // Inisiasi History Map jika belum pernah dirender
@@ -870,6 +885,8 @@ async function openHistoryModal(deviceId, truckNumber) {
 // Tutup History Modal
 closeHistoryModalBtn.addEventListener('click', () => {
     historyModal.classList.remove('active');
+    // Clear auto-hide timer
+    if (historyAutoHideTimer) { clearTimeout(historyAutoHideTimer); historyAutoHideTimer = null; }
     // Kembalikan text loading dan sembunyikan jarak
     distanceInfoBox.style.display = 'none';
 
