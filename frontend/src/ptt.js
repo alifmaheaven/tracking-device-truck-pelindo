@@ -10,17 +10,56 @@ import { state } from './state.js';
 let pttPanel, pttTargetName, pttTalkBtn, pttEndBtn, pttStatusText, scrollGuide, scrollGuideText, pttCallStack;
 let wsUrl = '';
 let regSecret = '';
-let isTakenOver = false;
+let centerId = ''; // Unique center ID per browser session
 
 // Track multiple active calls { deviceId: { truckNumber, tags, startTime } }
 const activeCalls = new Map();
 
 /**
+ * Generate unique center ID based on timestamp + random value.
+ * This ensures each browser tab gets a unique ID while maintaining consistency
+ * within the same session (until page refresh).
+ */
+function generateCenterId() {
+  // Check if already generated in sessionStorage
+  const stored = sessionStorage.getItem('ptt_center_id');
+  if (stored) return stored;
+  
+  // Generate new unique ID: center-<timestamp>-<random>
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  const newId = `center-${timestamp}-${random}`;
+  
+  sessionStorage.setItem('ptt_center_id', newId);
+  return newId;
+}
+
+/**
+ * Send muteDevice command to server.
+ */
+export function muteDevice(deviceId) {
+  if (state.pttWs && state.pttWs.readyState === WebSocket.OPEN) {
+    state.pttWs.send(JSON.stringify({ type: 'muteDevice', targetId: deviceId }));
+  }
+}
+
+/**
+ * Send unmuteDevice command to server.
+ */
+export function unmuteDevice(deviceId) {
+  if (state.pttWs && state.pttWs.readyState === WebSocket.OPEN) {
+    state.pttWs.send(JSON.stringify({ type: 'unmuteDevice', targetId: deviceId }));
+  }
+}
+
+/**
  * Initialize PTT module with configuration and DOM refs.
  */
 export function setupPtt(config) {
-  wsUrl = config.wsUrl || state.WS_URL;
+  wsUrl = config.wsUrl || 'ws://43.157.242.182:9090/ws';
   regSecret = config.registrationSecret || '';
+  centerId = generateCenterId(); // Generate unique ID for this browser session
+  
   pttPanel = document.getElementById('pttActivePanel');
   pttTargetName = document.getElementById('pttTargetName');
   pttTalkBtn = document.getElementById('pttTalkBtn');
@@ -39,14 +78,9 @@ function updateCallStackUI() {
     // Only show in stack if NOT the main active focus
     if (id === state.pttActiveTarget) return;
 
-    const safeTruckNumber = document.createTextNode(data.truckNumber || '').textContent;
-
     let tagsHtml = '';
     if (data.tags && data.tags.length > 0) {
-      const badges = data.tags.map(tag => {
-        const safeTag = document.createTextNode(tag.tagValue || tag).textContent;
-        return `<span class="tag-badge" style="font-size: 10px; padding: 2px 6px; margin-right: 4px; display: inline-block; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${safeTag}</span>`;
-      }).join('');
+      const badges = data.tags.map(tag => `<span class="tag-badge" style="font-size: 10px; padding: 2px 6px; margin-right: 4px; display: inline-block; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
       tagsHtml = `<div style="margin-top: 4px;">${badges}</div>`;
     }
 
@@ -54,7 +88,7 @@ function updateCallStackUI() {
     item.className = 'ptt-stack-item';
     item.innerHTML = `
       <div style="flex: 1;">
-        <div class="truck-name">${safeTruckNumber}</div>
+        <div class="truck-name">${data.truckNumber}</div>
         ${tagsHtml}
         <div class="stack-status" style="margin-top: 4px;">Panggilan Aktif</div>
       </div>
@@ -83,14 +117,10 @@ export function focusCall(targetId, targetName, targetTags = []) {
   if (pttTargetName) {
     let tagsHtml = '';
     if (targetTags && targetTags.length > 0) {
-       const badges = targetTags.map(tag => {
-         const safeTag = document.createTextNode(tag.tagValue || tag).textContent;
-         return `<span class="tag-badge" style="font-size: 12px; padding: 4px 8px; margin-left: 8px; vertical-align: middle; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${safeTag}</span>`;
-       }).join('');
+       const badges = targetTags.map(tag => `<span class="tag-badge" style="font-size: 12px; padding: 4px 8px; margin-left: 8px; vertical-align: middle; background-color: var(--primary); color: white; border-radius: 4px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
        tagsHtml = ` ${badges}`;
     }
-    const safeTargetName = document.createTextNode(targetName || '').textContent;
-    pttTargetName.innerHTML = `${safeTargetName}${tagsHtml}`;
+    pttTargetName.innerHTML = `${targetName}${tagsHtml}`;
   }
   
   if (pttPanel) pttPanel.classList.remove('hidden');
@@ -177,6 +207,11 @@ function stopRecording() {
 }
 
 async function handleIncomingAudioStream(fromId, base64Data) {
+  // Skip audio from muted devices
+  if (state.mutedDeviceIds && state.mutedDeviceIds.includes(fromId)) {
+    return;
+  }
+
   const binaryString = window.atob(base64Data);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
@@ -235,7 +270,7 @@ export function initPttWebSocket() {
   state.pttWs.onopen = () => {
     state.pttWs.send(JSON.stringify({
       type: 'register',
-      id: 'center-main',
+      id: centerId, // Use unique center ID per browser session
       secret: regSecret
     }));
     const dot = document.getElementById('wsDot');
@@ -244,6 +279,7 @@ export function initPttWebSocket() {
       dot.style.backgroundColor = '#10b981';
       text.innerText = 'Server PTT Terhubung';
     }
+    console.log(`Center registered with ID: ${centerId}`);
   };
 
   state.pttWs.onmessage = async (event) => {
@@ -257,49 +293,19 @@ export function initPttWebSocket() {
           break;
         case 'connectionStatusUpdate':
           state.onlineDeviceIds = data.onlineDeviceIds;
+          if (data.mutedDeviceIds) {
+            state.mutedDeviceIds = data.mutedDeviceIds;
+          }
+          renderDeviceList();
+          break;
+        case 'muteStatusUpdate':
+          state.mutedDeviceIds = data.mutedDeviceIds || [];
           renderDeviceList();
           break;
         case 'locationUpdate':
           // { type: 'locationUpdate', deviceId: '...', coordinates: [lat, lng] }
           state.activeRealtimeDevices[data.deviceId] = Date.now();
           updateDeviceCoordinates(data.deviceId, data.coordinates);
-          break;
-        case 'confirmTakeover':
-          const confirmModal = document.getElementById('takeoverConfirmModal');
-          const btnConfirm = document.getElementById('btnConfirmTakeover');
-          const btnCancel = document.getElementById('btnCancelTakeover');
-          
-          if (confirmModal) confirmModal.classList.remove('hidden');
-          
-          if (btnConfirm) {
-            btnConfirm.onclick = () => {
-              confirmModal.classList.add('hidden');
-              state.pttWs.send(JSON.stringify({
-                type: 'register',
-                id: 'center-main',
-                secret: regSecret,
-                force: true
-              }));
-            };
-          }
-          
-          if (btnCancel) {
-            btnCancel.onclick = () => {
-              confirmModal.classList.add('hidden');
-              state.pttWs.close(); // Cancel connection
-            };
-          }
-          break;
-        case 'takenOver':
-          isTakenOver = true;
-          const noticeModal = document.getElementById('takenOverNoticeModal');
-          if (noticeModal) {
-            noticeModal.classList.remove('hidden');
-            const btnReload = document.getElementById('btnReloadTakenOver');
-            if (btnReload) btnReload.onclick = () => location.reload();
-          } else {
-            alert(data.message);
-          }
           break;
         case 'incomingCall':
           console.log('Incoming multi-call from: ', data.callerId);
@@ -386,4 +392,8 @@ export function bindPttButtons() {
     pttTalkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, { passive: false });
     pttTalkBtn.addEventListener('touchend', stopRecording);
   }
+}
+
+export function isOperatorOnline() {
+  return state.pttWs && state.pttWs.readyState === WebSocket.OPEN;
 }

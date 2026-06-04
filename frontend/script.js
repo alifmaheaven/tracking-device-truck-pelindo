@@ -1,11 +1,31 @@
 import { getBatteryDisplay, playPcmAudio } from './src/utils.js';
 import { setupMap, fetchDeviceData, renderMarkers, renderDeviceList, handleSearchInput } from './src/map.js';
+import { setupAuth } from './src/auth.js';
 import { state } from './src/state.js';
+import { initRoleGuard } from './src/roleGuard.js';
 
-// Konfigurasi API N8N dari state
-const API_URL = `${state.BASE_URL}/device-cordinate`;
-const WS_URL = state.WS_URL;
+// Konfigurasi Dinamis berdasarkan Hostname
+const hostname = window.location.hostname;
+let API_URL, WS_URL, HISTORY_API_URL;
+
+if (hostname.includes('teluk-lamong.freeat.me')) {
+    // Gunakan proxy backend untuk hindari CORS + tambah auth
+    const N8N_BASE = 'https://n8n-teluk-lamong.freeat.me/webhook';
+    API_URL = N8N_BASE + '/device-cordinate';
+    HISTORY_API_URL = N8N_BASE + '/device-history';
+    WS_URL = 'wss://websocket-teluk-lamong.freeat.me/ws';
+} else {
+    API_URL = import.meta.env.VITE_API_URL || 'http://10.118.62.60:5678/webhook/device-cordinate';
+    HISTORY_API_URL = import.meta.env.VITE_HISTORY_API_URL || 'http://10.118.62.60:5678/webhook/device-history';
+    WS_URL = import.meta.env.VITE_WS_URL || 'ws://10.118.62.60:9090/ws';
+}
 const REGISTRATION_SECRET = import.meta.env.VITE_REGISTRATION_SECRET || '';
+
+// Proxy helper for N8N data (goes through backend to avoid CORS + add auth)
+function n8nProxy(originalUrl) {
+    if (originalUrl.startsWith('/api/')) return originalUrl; // already proxied
+    return '/api/proxy/n8n?url=' + encodeURIComponent(originalUrl);
+}
 
 // Map init
 const map = L.map('map').setView([-7.195, 112.68], 15);
@@ -20,30 +40,49 @@ const deviceListContainer = document.getElementById('deviceList');
 const searchInput = document.getElementById('searchInput');
 const totalDeviceCount = document.getElementById('totalDeviceCount');
 
-// Configure map module with shared state bindings
-function _navActive() { return isNavigating; }
-function _navTarget() { return navTargetDevice; }
-setupMap({
-  apiUrl: API_URL,
-  searchInput,
-  deviceListContainer,
-  totalDeviceCount,
-  isNavActive: _navActive,
-  getNavTarget: _navTarget,
-  openHistoryModal: (id, name) => openHistoryModal(id, name),
-  startDirectionMode: (d) => startDirectionMode(d),
+// Initialize Auth (Captcha)
+setupAuth({
+    wsUrl: WS_URL,
+    onAuthenticated: () => {
+        // Start app only after successful captcha
+        initRoleGuard();
+        initApp();
+    }
 });
 
-// Search listener
-searchInput.addEventListener('input', handleSearchInput);
+function initApp() {
+    // Configure map module with shared state bindings
+    function _navActive() { return isNavigating; }
+    function _navTarget() { return navTargetDevice; }
+    setupMap({
+        apiUrl: n8nProxy(API_URL),
+        searchInput,
+        deviceListContainer,
+        totalDeviceCount,
+        isNavActive: _navActive,
+        getNavTarget: _navTarget,
+        openHistoryModal: (id, name) => openHistoryModal(id, name),
+        startDirectionMode: (d) => startDirectionMode(d),
+    });
 
-// Menjalankan fetch data petama kali
-fetchDeviceData();
+    // Search listener
+    searchInput.addEventListener('input', handleSearchInput);
+
+    // Menjalankan fetch data petama kali
+    fetchDeviceData();
+
+    // Start WebSocket PTT
+    initPttWebSocket();
+
+    // Start interval
+    setInterval(updateRefreshCounter, 1000);
+}
 
 // auto update data lokasi secara real-time dengan counter countdown dinamis
 let refreshInterval = state.refreshInterval;
 let countdown = state.countdown;
 const refreshCircle = document.getElementById('refreshCircle');
+
 const refreshText = document.getElementById('refreshText');
 
 const floatingRefreshBtn = document.getElementById('floatingRefreshBtn');
@@ -290,7 +329,7 @@ routingRadios.forEach(radio => {
 });
 
 function buildHistoryUrl(deviceId) {
-    let baseUrl = `${state.BASE_URL}/device-history?deviceId=${deviceId}`;
+    let baseUrl = `${HISTORY_API_URL}?deviceId=${deviceId}`;
     if (!historyTimePreset) return baseUrl;
 
     const preset = historyTimePreset.value;
@@ -331,7 +370,7 @@ function buildHistoryUrl(deviceId) {
     lastAppliedStartDate = startDate;
     lastAppliedEndDate = endDate;
 
-    return `${baseUrl}&createdDate_gte=${startIso}&createdDate_lte=${endIso}`;
+    return n8nProxy(`${baseUrl}&createdDate_gte=${startIso}&createdDate_lte=${endIso}`);
 }
 
 // Fungsi memanggil API histori dan merender garis
@@ -364,7 +403,7 @@ async function openHistoryModal(deviceId, truckNumber) {
 
     try {
         const fetchUrl = buildHistoryUrl(deviceId);
-        const response = await fetch(fetchUrl);
+        const response = await fetch(fetchUrl, { credentials: 'include' });
         const data = await response.json();
         
         if (data && data.length > 0) {
@@ -1094,17 +1133,19 @@ async function updateNavRoute() {
 // ==========================================
 // PUSH-TO-TALK (PTT) WEBSOCKET LOGIC
 // ==========================================
-import { setupPtt, initPttWebSocket, startPttCall, bindPttButtons } from './src/ptt.js';
+import { setupPtt, initPttWebSocket, startPttCall, bindPttButtons, muteDevice, unmuteDevice } from './src/ptt.js';
 
 window.audioCtx = null;
 
 setupPtt({
     wsUrl: WS_URL,
-    registrationSecret: REGISTRATION_SECRET
+    registrationSecret: REGISTRATION_SECRET,
 });
 
 bindPttButtons();
-initPttWebSocket();
+// REMOVED: initPttWebSocket(); // Now called inside initApp after captcha
 
 // Expose to global for inline onclick handlers
 window.startPttCall = startPttCall;
+window.mutePttDevice = muteDevice;
+window.unmutePttDevice = unmuteDevice;

@@ -33,7 +33,7 @@ body {
 
 /* Sidebar Styles */
 .sidebar {
-    width: 380px;
+    width: 420px;
     flex-shrink: 0;
     background-color: var(--sidebar-bg);
     display: flex;
@@ -45,7 +45,7 @@ body {
 }
 
 .sidebar.collapsed {
-    margin-left: -380px;
+    margin-left: -420px;
 }
 
 .sidebar-header {
@@ -149,7 +149,10 @@ body {
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    position: relative;
+    /* overflow: hidden; */
+    min-height: 120px;
 }
 
 .device-card:hover {
@@ -919,6 +922,36 @@ body {
     background: #059669; /* Emerald lebih gelap */
 }
 
+.popup-call-btn {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background: #2563eb;
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.popup-call-btn:hover {
+    background: #1d4ed8;
+}
+
+.popup-call-btn-disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.popup-call-btn-disabled:hover {
+    background: #9ca3af;
+}
+
 /* PTT Call Stack & Multi-call Styling */
 .ptt-call-stack {
     position: fixed;
@@ -1251,6 +1284,81 @@ body {
     background-color: #059669;
 }
 
+/* Disabled Call Button (PTT Offline) */
+.call-btn-disabled,
+.call-btn-disabled:hover {
+    background-color: #94a3b8 !important;
+    color: #e2e8f0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Mute Button */
+.mute-btn {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.mute-btn:hover {
+    background-color: #e2e8f0;
+    color: #475569;
+    border-color: #94a3b8;
+}
+
+.mute-btn.muted {
+    background-color: #fef2f2;
+    color: #ef4444;
+    border-color: #fecaca;
+}
+
+.mute-btn.muted:hover {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+/* Muted Device Card */
+.device-card.device-muted {
+    position: relative;
+    border-left: 4px solid #ef4444 !important;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%) !important;
+}
+
+/* Muted Overlay Banner */
+.muted-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 0 8px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 2;
+    animation: muted-pulse 2s ease-in-out infinite;
+}
+
+@keyframes muted-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
 /* Talking Indicator & PTT Notification */
 .device-card.is-talking {
     border-left: 5px solid #ef4444 !important;
@@ -1310,4 +1418,204 @@ body {
 @keyframes bounce-down {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(4px); }
+}
+
+/* CAPTCHA MODAL OVERLAY - MODERNIZED */
+.captcha-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Gradient overlay for better depth */
+    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: none; 
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; backdrop-filter: blur(0px); }
+    to { opacity: 1; backdrop-filter: blur(12px); }
+}
+
+.captcha-overlay.active {
+    display: flex;
+}
+
+.captcha-card {
+    background: #ffffff;
+    padding: 40px 35px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    width: 90%;
+    max-width: 420px;
+    color: #1e293b;
+    transform: translateY(0);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.captcha-card h2 {
+    margin-bottom: 8px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #0f172a;
+}
+
+.captcha-card p {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.captcha-image-container {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    cursor: pointer;
+    position: relative;
+    min-height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px dashed #cbd5e1;
+    transition: all 0.2s ease;
+}
+
+.captcha-image-container:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.captcha-image-container svg, 
+.captcha-image-container canvas {
+    width: 100%;
+    height: auto;
+    max-height: 70px;
+    border-radius: 8px;
+}
+
+.captcha-image-container::after {
+    content: "\f021  Klik untuk ganti gambar";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #64748b;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.captcha-image-container:hover::after {
+    opacity: 1;
+}
+
+.captcha-input-group {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.captcha-input {
+    width: 100%;
+    padding: 16px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 8px;
+    color: #0f172a;
+    transition: all 0.2s ease;
+}
+
+.login-field {
+    text-transform: none;
+    letter-spacing: 0;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 16px;
+}
+
+#captchaInput {
+    text-transform: uppercase;
+    letter-spacing: 8px;
+}
+
+.captcha-input::placeholder {
+    color: #94a3b8;
+    letter-spacing: 2px;
+    font-weight: 500;
+}
+
+.captcha-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.captcha-submit {
+    width: 100%;
+    padding: 16px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.captcha-submit:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+}
+
+.captcha-submit:active {
+    transform: translateY(0);
+}
+
+.captcha-error {
+    color: #ef4444;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 16px;
+    display: none;
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }

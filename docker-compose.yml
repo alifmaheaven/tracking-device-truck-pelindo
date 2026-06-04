@@ -1,7 +1,56 @@
 services:
-  nginx-web:
+  frontend:
     build: ./frontend
-    container_name: pelindo-tracker-ui
+    container_name: pelindo-frontend
     ports:
-      - "8123:80"
+      - "80:80"
     restart: unless-stopped
+    env_file:
+      - ./frontend/.env
+
+  backend:
+    build: ./backend
+    container_name: pelindo-backend
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+
+  mongo:
+    image: mongo:latest
+    container_name: pelindo-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: pelindo-mongo-express
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+    depends_on:
+      - mongo
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: pelindo-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  mongo_data:
+  n8n_data:
+    external: true
+    name: deploy_pelindo_n8n_data

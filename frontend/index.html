@@ -31,12 +31,48 @@
     <link rel="icon" href="https://www.teluklamong.co.id/images/favicon.png">
 </head>
 <body>
+    <!-- Captcha Overlay -->
+    <div id="captchaOverlay" class="captcha-overlay active">
+        <div class="captcha-card">
+            <div style="margin-bottom: 20px;">
+                <img src="assets/logo.png" alt="Logo" style="height: 40px;">
+            </div>
+            <h2>Login Dashboard</h2>
+            <p>Masukkan kredensial untuk mengakses dashboard monitoring.</p>
+            
+            <div class="form-group" style="text-align: left; margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;"><i class="fa-solid fa-user"></i> Username</label>
+                <input type="text" id="loginUsername" class="captcha-input login-field" style="width: 100%;" autocomplete="username" maxlength="30" placeholder="admin">
+            </div>
+            
+            <div class="form-group" style="text-align: left; margin-bottom: 15px;">
+                <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;"><i class="fa-solid fa-lock"></i> Password</label>
+                <input type="password" id="loginPassword" class="captcha-input login-field" style="width: 100%;" autocomplete="current-password" maxlength="128" placeholder="••••••••">
+            </div>
+            
+            <div class="captcha-input-group">
+                <div id="captchaImage" class="captcha-image-container" title="Klik untuk menukar kode" style="flex: 1; min-width: 120px; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;">
+                    <div style="color: #64748b; font-size: 12px; line-height: 50px;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
+                </div>
+                <input type="text" id="captchaInput" class="captcha-input" placeholder="KODE CAPTCHA" maxlength="5" autocomplete="off" style="flex: 1; min-width: 100px;">
+            </div>
+            <button id="captchaSubmit" class="captcha-submit">
+                <span>Login</span>
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+            <div id="captchaError" class="captcha-error"><i class="fa-solid fa-triangle-exclamation"></i> Kode captcha salah, coba lagi.</div>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar Kiri -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2><i class="fa-solid fa-truck-fast"></i> Device Tracker</h2>
                 <p>Tracking Posisi Truck Teluk Lamong</p>
+                <div id="userBadge" style="margin-top: 8px; font-size: 12px; font-weight: 600; color: #f8fafc; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                    <i class="fa-solid fa-user"></i> Loading...
+                </div>
                 <div id="wsIndicator" style="margin-top: 8px; font-size: 11px; display: flex; align-items: center; gap: 6px; color: #cbd5e1;">
                     <div id="wsDot" style="width: 8px; height: 8px; border-radius: 50%; background-color: #ef4444;"></div>
                     <span id="wsText">Server PTT Terputus</span>
@@ -82,6 +118,14 @@
                         <input type="radio" name="appMode" value="journey">
                         <span><i class="fa-solid fa-location-crosshairs" style="width: 16px;"></i> Perjalanan</span>
                     </label>
+                    <div style="border-top: 1px solid #e2e8f0; margin-top: 8px; padding-top: 8px;">
+                        <button id="adminPanelBtn" class="mode-option" style="width: 100%; border: none; background: none; text-align: left; color: #2563eb; cursor: pointer;">
+                            <span><i class="fa-solid fa-users-gear" style="width: 16px;"></i> Kelola User</span>
+                        </button>
+                        <button id="logoutBtn" class="mode-option" style="width: 100%; border: none; background: none; text-align: left; color: #ef4444; cursor: pointer;">
+                            <span><i class="fa-solid fa-right-from-bracket" style="width: 16px;"></i> Logout</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -122,7 +166,7 @@
     </div>
 
     <!-- PTT Active Panel -->
-    <div id="pttActivePanel" class="ptt-panel hidden">
+    <div id="pttActivePanel" class="ptt-panel hidden" data-require-operator>
         <div class="ptt-header">
             <h3><i class="fa-solid fa-headset"></i> Panggilan PTT Aktif</h3>
             <div id="pttTargetName">Truk B 1234 CD</div>
@@ -214,25 +258,92 @@
         </div>
     </div>
 
-    <!-- Takeover Confirm Modal -->
-    <div id="takeoverConfirmModal" class="modal-overlay hidden" style="z-index: 9999;">
-      <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px 20px;">
-        <h3 style="color: #ef4444; font-size: 20px; margin-bottom: 10px;"><i class="fa-solid fa-triangle-exclamation"></i> Sesi Aktif Ditemukan</h3>
-        <p style="margin: 15px 0; color: #475569; font-size: 15px; line-height: 1.5;">Sesi Command Center ini sudah terhubung di tab atau perangkat lain. Apakah Anda ingin memutuskan koneksi lama dan mengambil alih sesi ini?</p>
-        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
-          <button id="btnCancelTakeover" class="btn-secondary" style="padding: 10px 20px;">Batal</button>
-          <button id="btnConfirmTakeover" class="btn-primary" style="background-color: #ef4444; padding: 10px 20px;">Ya, Ambil Alih</button>
+    <!-- Admin Panel Modal -->
+    <div id="adminPanelModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 850px; height: 85vh;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-users-gear"></i> Manajemen User</h3>
+                <button id="closeAdminPanelBtn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; color: #1e293b; font-size: 16px;">Daftar Pengguna</h4>
+                    <button id="btnCreateUser" style="padding: 10px 20px; background-color: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;"><i class="fa-solid fa-user-plus"></i> Tambah User</button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 12px; color: #475569; font-weight: 600;">Username</th>
+                                <th style="padding: 12px; color: #475569; font-weight: 600;">Nama</th>
+                                <th style="padding: 12px; color: #475569; font-weight: 600;">Role</th>
+                                <th style="padding: 12px; color: #475569; font-weight: 600;">Status</th>
+                                <th style="padding: 12px; color: #475569; font-weight: 600;">Login</th>
+                                <th style="padding: 12px; color: #475569; font-weight: 600; text-align: right;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px;">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
-    <!-- Taken Over Notice Modal -->
-    <div id="takenOverNoticeModal" class="modal-overlay hidden" style="z-index: 9999;">
-      <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px 20px;">
-        <h3 style="color: #ef4444; font-size: 20px; margin-bottom: 10px;"><i class="fa-solid fa-plug-circle-xmark"></i> Koneksi Terputus</h3>
-        <p style="margin: 15px 0; color: #475569; font-size: 15px; line-height: 1.5;">Koneksi Anda telah diambil alih oleh tab atau perangkat lain. Tab ini tidak lagi terhubung ke server PTT.</p>
-        <button id="btnReloadTakenOver" class="btn-primary" style="margin-top: 20px; padding: 10px 20px; width: 100%;">Muat Ulang Halaman</button>
-      </div>
+    <!-- User Form Sub-Modal -->
+    <div id="userFormModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 480px; height: auto; min-height: 420px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white;">
+                <h3 id="userFormTitle"><i class="fa-solid fa-user-plus"></i> Tambah User</h3>
+                <button id="closeUserFormBtn" class="close-btn" style="color: white;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-at"></i> Username</label>
+                    <input type="text" id="ufUsername" class="captcha-input login-field" placeholder="nama.user" maxlength="30">
+                </div>
+                <div class="form-group" id="ufPasswordGroup">
+                    <label><i class="fa-solid fa-lock"></i> Password</label>
+                    <input type="password" id="ufPassword" class="captcha-input login-field" placeholder="Min. 8 karakter" maxlength="128">
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Minimal 8 karakter, gunakan kombinasi huruf & angka</div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-id-card"></i> Nama Lengkap</label>
+                    <input type="text" id="ufDisplayName" class="captcha-input login-field" placeholder="Nama lengkap pengguna" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-user-tag"></i> Role</label>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <label class="role-radio" style="flex: 1; display: flex; align-items: center; gap: 6px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+                            <input type="radio" name="ufRole" value="viewer" style="accent-color: #10b981;">
+                            <span style="font-size: 13px; font-weight: 600; color: #10b981;">Viewer</span>
+                        </label>
+                        <label class="role-radio" style="flex: 1; display: flex; align-items: center; gap: 6px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+                            <input type="radio" name="ufRole" value="operator" checked style="accent-color: #3b82f6;">
+                            <span style="font-size: 13px; font-weight: 600; color: #3b82f6;">Operator</span>
+                        </label>
+                        <label class="role-radio" style="flex: 1; display: flex; align-items: center; gap: 6px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+                            <input type="radio" name="ufRole" value="admin" style="accent-color: #ef4444;">
+                            <span style="font-size: 13px; font-weight: 600; color: #ef4444;">Admin</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group" id="ufActiveGroup">
+                    <label><i class="fa-solid fa-toggle-on"></i> Status Aktif</label>
+                    <label style="display: flex; align-items: center; gap: 10px; margin-top: 4px; cursor: pointer;">
+                        <input type="checkbox" id="ufIsActive" checked style="width: 18px; height: 18px; accent-color: #10b981;">
+                        <span style="font-size: 13px; font-weight: 500;">Akun aktif</span>
+                    </label>
+                </div>
+                <div id="ufError" style="display: none; padding: 10px 14px; background: #fee2e2; color: #dc2626; border-radius: 8px; font-size: 13px; font-weight: 500;"></div>
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <button id="btnCancelUserForm" style="flex: 1; padding: 12px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">Batal</button>
+                    <button id="btnSaveUser" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Leaflet JS -->
