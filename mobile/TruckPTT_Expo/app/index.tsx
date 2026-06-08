@@ -232,8 +232,9 @@ const App = () => {
 
   // Sync call status to floating overlay
   useEffect(() => {
-    updateOverlayStatus(callStatus, isRecording).catch(() => {});
-  }, [callStatus, isRecording]);
+    const status = isMuted ? 'muted' : callStatus;
+    updateOverlayStatus(status, isRecording).catch(() => {});
+  }, [callStatus, isRecording, isMuted]);
 
   // Hanya connect WebSockets dan Service ketika sudah login (punya activeDevice)
   useEffect(() => {
@@ -854,6 +855,8 @@ const App = () => {
       case 'muteStatus':
         setIsMuted(data.muted);
         if (data.muted) {
+          // Update floating bubble to muted color
+          updateOverlayStatus('muted', false).catch(() => {});
           // If muted while in a call, end the call on our side
           if (callSessionRef.current.active) {
             callSessionRef.current = { active: false, callerId: null, incomingPending: false };
@@ -861,6 +864,9 @@ const App = () => {
             setIsRecording(false);
             AudioRecord.stop().catch(() => {});
           }
+        } else {
+          // Restore normal bubble color when unmuted
+          updateOverlayStatus(callStatus, isRecording).catch(() => {});
         }
         break;
     }
