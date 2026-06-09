@@ -226,6 +226,10 @@ wss.on('connection', async (ws, req) => {
             clients.set(currentClientId, ws);
             console.log(`Client registered: ${currentClientId} (total clients: ${clients.size})`);
             
+            // Jika client ini masih ada di daftar mute, kirim info mute ke dia agar status mobile menyesuaikan
+            if (mutedDevices.has(currentClientId)) {
+              ws.send(JSON.stringify({ type: 'muteStatus', muted: true }));
+            }
             // Broadcast updated status to all centers
             broadcastConnectionStatus();
             break;
@@ -417,11 +421,6 @@ wss.on('connection', async (ws, req) => {
   ws.on('close', () => {
     if (currentClientId) {
       clients.delete(currentClientId);
-      // Clean up mute status on disconnect
-      if (mutedDevices.has(currentClientId)) {
-        mutedDevices.delete(currentClientId);
-        broadcastMuteStatus();
-      }
       console.log(`Client disconnected: ${currentClientId}`);
       
       const partnerId = sessions.get(currentClientId);

@@ -69,6 +69,7 @@ object PttOverlayService {
     try {
       windowManager?.addView(bubbleView, params)
       visible = true
+      updateStatus(currentStatus, isRecording)
     } catch (e: Exception) {
       visible = false
       bubbleView = null

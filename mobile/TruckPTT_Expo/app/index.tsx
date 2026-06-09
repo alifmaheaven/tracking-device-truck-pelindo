@@ -990,7 +990,7 @@ const App = () => {
           style={[
             styles.pttButton,
             isMuted ? styles.pttMuted : (isRecording ? styles.pttActive : styles.pttIdle),
-            !callSessionRef.current.active && !isMuted && styles.pttDisabled,
+            (!callSessionRef.current.active && !isMuted) || isMuted ? styles.pttDisabled : null,
           ]}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
@@ -1191,7 +1191,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   pttMuted: {
-    backgroundColor: '#dc2626',
+    backgroundColor: '#64748b',
+    borderColor: '#475569',
   },
   pttText: {
     color: '#ffffff',
