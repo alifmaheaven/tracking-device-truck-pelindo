@@ -29,8 +29,8 @@ if (typeof global.Buffer === 'undefined') {
   global.Buffer = Buffer;
 }
 
-const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'ws://10.118.62.60:9090/ws';
-const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'http://10.118.62.60:5678/webhook/device-cordinate';
+const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'wss://websocket-teluk-lamong.freeat.me/ws';
+const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'https://n8n-teluk-lamong.freeat.me/webhook/device-cordinate';
 const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || '';
 
 const App = () => {
