@@ -7,11 +7,19 @@
       "android": {
         "buildType": "apk"
       },
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://n8n-teluk-lamong.freeat.me/webhook/device-cordinate",
+        "EXPO_PUBLIC_WS_URL": "wss://websocket-teluk-lamong.freeat.me/ws"
+      }
     },
     "production": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://n8n-teluk-lamong.freeat.me/webhook/device-cordinate",
+        "EXPO_PUBLIC_WS_URL": "wss://websocket-teluk-lamong.freeat.me/ws"
       }
     }
   }
