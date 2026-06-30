@@ -36,7 +36,16 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "📋 Build mode: $BUILD_MODE${BUILD_MODE=="cloud" ? " (profile: $EAS_PROFILE)" : ""}${CUSTOM_VERSION ? " (version: $CUSTOM_VERSION)" : ""}"
+# Build mode summary (POSIX-safe, no ternary)
+MODE_INFO="local"
+if [ "$BUILD_MODE" = "cloud" ]; then
+  MODE_INFO="cloud (profile: $EAS_PROFILE)"
+fi
+VERSION_INFO=""
+if [ -n "$CUSTOM_VERSION" ]; then
+  VERSION_INFO=" (version: $CUSTOM_VERSION)"
+fi
+echo "📋 Build mode: $MODE_INFO$VERSION_INFO"
 
 cd "$PROJECT_ROOT"
 
@@ -108,11 +117,23 @@ if [ "$BUILD_MODE" = "cloud" ]; then
 
   # EAS uses .env automatically if EAS_BUILD_SCRIPT or env vars are set in eas.json
   # But we also export EXPO_PUBLIC_* from .env for inline embedding
-  npx eas build \
+  # Prefer local eas-cli (node_modules/.bin) if installed, fallback to global `eas`
+  if [ -x "./node_modules/.bin/eas" ]; then
+    EAS_CMD="./node_modules/.bin/eas"
+  elif command -v eas >/dev/null 2>&1; then
+    EAS_CMD="eas"
+  else
+    echo ""
+    echo "❌ eas-cli not found. Install with one of:"
+    echo "     npm install --save-dev eas-cli   # local"
+    echo "     npm install -g eas-cli          # global"
+    exit 1
+  fi
+
+  $EAS_CMD build \
     --platform android \
     --profile "$EAS_PROFILE" \
-    --non-interactive \
-    --auto-submit-with-profile=production 2>&1 || true
+    --non-interactive 2>&1 || true
 
   EAS_EXIT=$?
   if [ $EAS_EXIT -ne 0 ]; then

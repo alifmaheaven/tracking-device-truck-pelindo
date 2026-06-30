@@ -2,7 +2,7 @@
   "expo": {
     "name": "Push To Talk!",
     "slug": "TruckPTT_Expo",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.jpg",
     "scheme": "truckpttexpo",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.pelindo.truckptt",
-      "versionCode": 13,
+      "versionCode": 16,
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.FOREGROUND_SERVICE",
