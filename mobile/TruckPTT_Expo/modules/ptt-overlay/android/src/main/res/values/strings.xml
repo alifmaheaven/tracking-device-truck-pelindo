@@ -1,0 +1,4 @@
+<resources>
+    <string name="knox_sn_title">Serial Number (Auto-Login)</string>
+    <string name="knox_sn_description">Serial Number device untuk auto-login TruckPTT. Inject dari Knox Manage console.</string>
+</resources>

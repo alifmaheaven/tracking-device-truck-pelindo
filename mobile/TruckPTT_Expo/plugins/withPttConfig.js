@@ -1,4 +1,5 @@
 const { withAndroidManifest, withPlugins } = require('@expo/config-plugins');
+const withAppRestrictions = require('./withAppRestrictions');
 
 const withPttService = (config) => {
   return withAndroidManifest(config, (config) => {
@@ -34,5 +35,5 @@ const withPttService = (config) => {
 };
 
 module.exports = (config) => {
-  return withPlugins(config, [withPttService]);
+  return withPlugins(config, [withPttService, withAppRestrictions]);
 };

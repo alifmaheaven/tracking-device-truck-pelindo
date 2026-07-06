@@ -22,7 +22,7 @@ import { Audio } from 'expo-av';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DeviceInfo from 'react-native-device-info';
-import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped, minimizeApp } from '../modules/ptt-overlay';
+import { showOverlay, hideOverlay, updateOverlayStatus, isOverlayPermissionGranted, requestOverlayPermission, onPttPressIn, onPttPressOut, onBubbleTapped, minimizeApp, getManagedSerialNumber, registerRestrictionsReceiver, onRestrictionsChanged } from '../modules/ptt-overlay';
 
 // Polyfill Buffer jika tidak tersedia secara global
 if (typeof global.Buffer === 'undefined') {
@@ -168,23 +168,94 @@ const App = () => {
 
   const initializeSession = async () => {
     try {
-      // Get Serial Number (hardware-persistent identifier)
-      const serialNumber = await DeviceInfo.getSerialNumber();
-      setHardwareId(serialNumber); // Display serial number instead
-      
-      // 1. Cek apakah sudah ada session di AsyncStorage
+      // ---- 4-TIER SN RESOLUTION CHAIN (no single point of failure) ----
+
+      let sn: string | null = null;
+
+      // TIER 1: Knox AppConfig (IT admin inject via Knox Manage console — highest priority)
+      try {
+        sn = await getManagedSerialNumber();
+        if (sn) {
+          console.log('[SN] Tier 1: Knox AppConfig SN:', sn);
+          setHardwareId(sn);
+          await AsyncStorage.setItem('cachedSerialNumber', sn);
+        }
+      } catch (e) {
+        console.log('[SN] Tier 1 failed (Knox AppConfig):', e);
+      }
+
+      // TIER 2: AsyncStorage cache (last-known SN, survive reboot/Knox config delay)
+      if (!sn) {
+        try {
+          const cached = await AsyncStorage.getItem('cachedSerialNumber');
+          if (cached && cached.length > 0) {
+            sn = cached;
+            console.log('[SN] Tier 2: Cached SN:', sn);
+            setHardwareId(sn);
+          }
+        } catch (e) {
+          console.log('[SN] Tier 2 failed (cache):', e);
+        }
+      }
+
+      // TIER 3: DeviceInfo.getSerialNumber() (hardware SN fallback)
+      if (!sn) {
+        try {
+          const hardwareSN = await DeviceInfo.getSerialNumber();
+          if (hardwareSN && hardwareSN !== 'unknown' && hardwareSN.length > 0) {
+            sn = hardwareSN;
+            console.log('[SN] Tier 3: Hardware SN:', sn);
+            setHardwareId(sn);
+            await AsyncStorage.setItem('cachedSerialNumber', sn);
+          }
+        } catch (e) {
+          console.log('[SN] Tier 3 failed (hardware):', e);
+        }
+      }
+
+      // ---- Session check ----
       const stored = await AsyncStorage.getItem('activeDevice');
       if (stored) {
         setActiveDevice(JSON.parse(stored));
         return;
       }
 
-      // 2. Jika tidak ada session, coba Auto-Login berdasarkan Serial Number
-      await attemptAutoLogin(serialNumber);
+      // ---- Auto-login dengan SN yang resolved ----
+      if (sn) {
+        await attemptAutoLogin(sn);
+      }
+      // TIER 4: Manual PPT Code (last resort — UI tetap ditampilkan ke user)
     } catch (e) {
       console.error('Failed to initialize session', e);
     }
   };
+
+  // ---- Live Knox AppConfig update listener ----
+  // Jika IT admin push SN baru via KM console, app pickup otomatis tanpa restart
+  useEffect(() => {
+    let unsubscribe: { remove: () => void } | null = null;
+    (async () => {
+      try {
+        await registerRestrictionsReceiver();
+        unsubscribe = onRestrictionsChanged(async (event) => {
+          const newSN = event?.serial_number;
+          if (!newSN || newSN.length === 0) return;
+          console.log('[Knox] Live update: new SN pushed:', newSN);
+          setHardwareId(newSN);
+          await AsyncStorage.setItem('cachedSerialNumber', newSN);
+          // Clear session & re-login with new SN
+          await AsyncStorage.removeItem('activeDevice');
+          setActiveDevice(null);
+          await attemptAutoLogin(newSN);
+        });
+      } catch (e) {
+        console.log('[Knox] registerRestrictionsReceiver error:', e);
+      }
+    })();
+    return () => {
+      if (unsubscribe) unsubscribe.remove();
+    };
+  }, []);
 
   const attemptAutoLogin = async (id: string) => {
     setIsAutoLoggingIn(true);

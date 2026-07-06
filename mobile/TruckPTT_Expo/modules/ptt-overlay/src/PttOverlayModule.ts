@@ -12,4 +12,9 @@ declare module '../index' {
   export function onPttPressIn(callback: () => void): { remove: () => void };
   export function onPttPressOut(callback: () => void): { remove: () => void };
   export function onBubbleTapped(callback: () => void): { remove: () => void };
+  // Knox AppConfig stubs (real impl in Kotlin)
+  export function getManagedConfig(key: string): Promise<string | Record<string, string> | null>;
+  export function getManagedSerialNumber(): Promise<string | null>;
+  export function registerRestrictionsReceiver(): Promise<boolean>;
+  export function onRestrictionsChanged(callback: (event: { serial_number: string }) => void): { remove: () => void };
 }

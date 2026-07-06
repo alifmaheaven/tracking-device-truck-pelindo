@@ -47,6 +47,9 @@ if [ -n "$CUSTOM_VERSION" ]; then
 fi
 echo "📋 Build mode: $MODE_INFO$VERSION_INFO"
 
+# Ensure NODE_ENV is set (some expo plugins require it)
+export NODE_ENV="${NODE_ENV:-production}"
+
 cd "$PROJECT_ROOT"
 
 # ---- Env check ----

@@ -10,15 +10,24 @@ interface PttOverlayInterface extends NativeModule {
   requestOverlayPermission(): Promise<void>;
   isVisible(): Promise<boolean>;
   minimizeApp(): Promise<void>;
+  // Knox AppConfig / Managed Configuration
+  getManagedConfig(key: string): Promise<string | Record<string, string> | null>;
+  registerRestrictionsReceiver(): Promise<boolean>;
 }
 
 const PttOverlayModule = requireNativeModule<PttOverlayInterface>('PttOverlay');
-const emitter = new EventEmitter<{ pttPressIn: () => void; pttPressOut: () => void; bubbleTapped: () => void }>(PttOverlayModule);
+const emitter = new EventEmitter<{
+  pttPressIn: () => void;
+  pttPressOut: () => void;
+  bubbleTapped: () => void;
+  restrictionsChanged: (event: { serial_number: string }) => void;
+}>(PttOverlayModule);
 
 export type PttOverlayEvents = {
   pttPressIn: () => void;
   pttPressOut: () => void;
   bubbleTapped: () => void;
+  restrictionsChanged: (event: { serial_number: string }) => void;
 };
 
 /**
@@ -85,4 +94,50 @@ export function onPttPressOut(callback: () => void) {
 
 export function onBubbleTapped(callback: () => void) {
   return emitter.addListener('bubbleTapped', callback);
+}
+
+/**
+ * Get a managed configuration value injected by Knox Manage (AppConfig).
+ * Returns the string value if found, null otherwise.
+ */
+export async function getManagedConfig(key: string): Promise<string | Record<string, string> | null> {
+  try {
+    return await PttOverlayModule.getManagedConfig(key);
+  } catch (e) {
+    console.log('getManagedConfig error:', e);
+    return null;
+  }
+}
+
+/**
+ * Convenience: get the injected serial_number (Tier 1 of the auto-login chain).
+ */
+export async function getManagedSerialNumber(): Promise<string | null> {
+  const value = await getManagedConfig('serial_number');
+  if (typeof value === 'string' && value.length > 0) {
+    return value;
+  }
+  return null;
+}
+
+/**
+ * Subscribe to live updates when IT admin pushes a new serial_number
+ * via Knox Manage console. App re-logs in automatically without restart.
+ * Returns an unsubscribe function.
+ */
+export function onRestrictionsChanged(callback: (event: { serial_number: string }) => void) {
+  return emitter.addListener('restrictionsChanged', callback);
+}
+
+/**
+ * Register the native BroadcastReceiver for ACTION_APPLICATION_RESTRICTIONS_CHANGED.
+ * Call once at app startup.
+ */
+export async function registerRestrictionsReceiver(): Promise<boolean> {
+  try {
+    return await PttOverlayModule.registerRestrictionsReceiver();
+  } catch (e) {
+    console.log('registerRestrictionsReceiver error:', e);
+    return false;
+  }
 }
