@@ -5,19 +5,21 @@ import { state } from './src/state.js';
 import { initRoleGuard } from './src/roleGuard.js';
 
 // Konfigurasi Dinamis berdasarkan Hostname
+// M01: konsolidasi ke ptt.teluklamong.co.id
 const hostname = window.location.hostname;
 let API_URL, WS_URL, HISTORY_API_URL;
 
-if (hostname.includes('teluk-lamong.freeat.me')) {
-    // Gunakan proxy backend untuk hindari CORS + tambah auth
-    const N8N_BASE = 'https://n8n-teluk-lamong.freeat.me/webhook';
-    API_URL = N8N_BASE + '/device-cordinate';
-    HISTORY_API_URL = N8N_BASE + '/device-history';
-    WS_URL = 'wss://websocket-teluk-lamong.freeat.me/ws';
+if (hostname.includes('ptt.teluklamong.co.id')) {
+    // Production via subdomain baru
+    const PTT_BASE = 'https://ptt.teluklamong.co.id';
+    API_URL = PTT_BASE + '/webhook/device-cordinate';
+    HISTORY_API_URL = PTT_BASE + '/webhook/device-history';
+    WS_URL = 'wss://ptt.teluklamong.co.id/ws';
 } else {
+    // Dev / fallback (IP server lokal)
     API_URL = import.meta.env.VITE_API_URL || 'http://10.118.62.60:5678/webhook/device-cordinate';
     HISTORY_API_URL = import.meta.env.VITE_HISTORY_API_URL || 'http://10.118.62.60:5678/webhook/device-history';
-    WS_URL = import.meta.env.VITE_WS_URL || 'ws://10.118.62.60:9090/ws';
+    WS_URL = import.meta.env.VITE_WS_URL || 'wss://ptt.teluklamong.co.id/ws';
 }
 const REGISTRATION_SECRET = import.meta.env.VITE_REGISTRATION_SECRET || '';
 

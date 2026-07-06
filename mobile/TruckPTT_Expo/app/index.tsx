@@ -29,8 +29,8 @@ if (typeof global.Buffer === 'undefined') {
   global.Buffer = Buffer;
 }
 
-const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'wss://websocket-teluk-lamong.freeat.me/ws';
-const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'https://n8n-teluk-lamong.freeat.me/webhook/device-cordinate';
+const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'wss://ptt.teluklamong.co.id/ws';
+const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'https://ptt.teluklamong.co.id/webhook/device-cordinate';
 const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || '';
 
 const App = () => {
@@ -444,26 +444,8 @@ const App = () => {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Konfirmasi',
-      'Yakin ingin keluar dan memutuskan sesi PTT?',
-      [
-        { text: 'Batal', style: 'cancel' },
-        { 
-          text: 'Keluar', 
-          style: 'destructive',
-          onPress: async () => {
-            setActiveDevice(null);
-            setPptCodeInput('');
-            setIsConnected(false);
-            setCallStatus('Idle');
-            await AsyncStorage.removeItem('activeDevice');
-          }
-        }
-      ]
-    );
-  };
+  // Removed handleLogout — M01 P3: logout harus dari pusat, tombol UI jadi Minimize.
+  // Fungsi clear session tetap dipanggil di handler WS 'forceLogout' (lihat onmessage switch).
 
   const requestPermissions = async () => {
     if (Platform.OS === 'android') {
@@ -694,11 +676,16 @@ const App = () => {
       }
     };
 
-    ws.onclose = () => {
-      console.log('WS Disconnected');
+    ws.onclose = (event) => {
+      console.log('WS Disconnected', event?.code || '');
       setIsConnected(false);
       // Clean up ping interval
       if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
+      // M01 P4: server force-logout pakai close code 4001 — jangan reconnect
+      if (event?.code === 4001) {
+        console.log('WS closed by server (force-logout). Skipping reconnect.');
+        return;
+      }
       // Auto reconnect if still logged in
       if (activeDeviceRef.current) {
         if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
@@ -940,6 +927,29 @@ const App = () => {
           updateOverlayStatus(callStatus, isRecording).catch(() => {});
         }
         break;
+      case 'forceLogout':
+        // M01 P4: pusat (admin) force-logout device ini. Clear session + kembali ke login.
+        console.log('[WS] Force logout from center:', data.reason || 'no reason');
+        // Stop any active PTT/recording
+        if (notificationRecordingRef.current) {
+          notificationRecordingRef.current = false;
+          await AudioRecord.stop().catch(() => {});
+          updateNotificationAction(false);
+        }
+        setIsRecording(false);
+        callSessionRef.current = { active: false, callerId: null, incomingPending: false };
+        // Clear session
+        setActiveDevice(null);
+        setPptCodeInput('');
+        setIsConnected(false);
+        setCallStatus('Idle');
+        await AsyncStorage.removeItem('activeDevice');
+        // Close WS (server will close with 4001)
+        if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
+        // Stop foreground service
+        try { await notifee.stopForegroundService(); } catch (e) { console.log('stopForegroundService err:', e); }
+        Alert.alert('Sesi diakhiri', 'Sesi Anda telah diakhiri oleh pusat. Silakan login ulang.');
+        break;
     }
   };
 
@@ -1037,8 +1047,8 @@ const App = () => {
             ))}
           </View>
         </View>
-        <TouchableOpacity style={styles.logoutBtnSmall} onPress={handleLogout}>
-          <Text style={styles.logoutBtnText}>Logout</Text>
+        <TouchableOpacity style={styles.logoutBtnSmall} onPress={() => minimizeApp()}>
+          <Text style={styles.logoutBtnText}>Minimize</Text>
         </TouchableOpacity>
       </View>
 

@@ -56,7 +56,7 @@ export function unmuteDevice(deviceId) {
  * Initialize PTT module with configuration and DOM refs.
  */
 export function setupPtt(config) {
-  wsUrl = config.wsUrl || 'ws://43.157.242.182:9090/ws';
+  wsUrl = config.wsUrl || 'wss://ptt.teluklamong.co.id/ws';
   regSecret = config.registrationSecret || '';
   centerId = generateCenterId(); // Generate unique ID for this browser session
   
@@ -397,3 +397,16 @@ export function bindPttButtons() {
 export function isOperatorOnline() {
   return state.pttWs && state.pttWs.readyState === WebSocket.OPEN;
 }
+
+// M01 P4: admin force-logout device dari pusat via WS event.
+export function forceLogoutDevice(deviceId, deviceLabel) {
+  if (!confirm(`Logout paksa device "${deviceLabel}" (${deviceId})? Device akan kembali ke layar login.`)) return;
+  if (!state.pttWs || state.pttWs.readyState !== WebSocket.OPEN) {
+    alert('Koneksi PTT tidak aktif. Coba lagi sebentar.');
+    return;
+  }
+  state.pttWs.send(JSON.stringify({ type: 'forceLogout', targetId: deviceId }));
+  console.log(`[PTT] forceLogout sent for ${deviceId}`);
+}
+// Expose ke window agar onclick="forceLogoutDevice(...)" di inline HTML bisa akses.
+window.forceLogoutDevice = forceLogoutDevice;

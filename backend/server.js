@@ -32,7 +32,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: true,
+  origin: ['https://ptt.teluklamong.co.id'],
   credentials: true
 }));
 app.use(express.json());
@@ -71,9 +71,12 @@ app.get('/api/proxy/n8n', authMiddleware, async (req, res) => {
     if (!targetUrl) return res.status(400).send('Missing url parameter');
 
     // SSRF Prevention + Internal Docker hostname rewrite
-    const N8N_EXTERNAL = 'n8n-teluk-lamong.freeat.me';
+    // M01: N8N ikut migrasi ke ptt.teluklamong.co.id. Backend rewrite external URL
+    //      ke internal Docker hostname (pelindo-n8n:5678) untuk efisiensi.
+    //      Client (frontend) akses via ptt.teluklamong.co.id, backend ke N8N lewat Docker network.
+    const N8N_EXTERNAL = 'ptt.teluklamong.co.id';
     const N8N_INTERNAL = 'pelindo-n8n:5678';
-    const allowedHosts = ['10.118.62.60:5678', N8N_EXTERNAL];
+    const allowedHosts = ['10.118.62.60:5678', N8N_EXTERNAL, 'n8n-teluk-lamong.freeat.me'];
     let finalUrl = targetUrl;
     
     try {
@@ -399,6 +402,23 @@ wss.on('connection', async (ws, req) => {
               
               // Broadcast updated mute list to all centers
               broadcastMuteStatus();
+            }
+            break;
+
+          case 'forceLogout':
+            // { type: 'forceLogout', targetId: 'device-123' } — sent by Command Center (admin)
+            // M01 P4: admin kick device dari pusat. Device akan clear state + kembali ke login.
+            if (currentClientId && currentClientId.startsWith('center')) {
+              const targetId = data.targetId;
+              console.log(`Device ${targetId} force-logout by ${currentClientId}`);
+              const targetWs = clients.get(targetId);
+              if (targetWs && targetWs.readyState === WebSocket.OPEN) {
+                targetWs.send(JSON.stringify({ type: 'forceLogout', reason: 'logout_from_center' }));
+                setTimeout(() => {
+                  const ws = clients.get(targetId);
+                  if (ws) ws.close(4001, 'force_logout');
+                }, 1000);
+              }
             }
             break;
 

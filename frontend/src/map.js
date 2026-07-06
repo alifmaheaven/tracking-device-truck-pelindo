@@ -260,6 +260,11 @@ export function renderDeviceList(devices) {
             <i class="fa-solid ${battery.icon}" style="font-size: 20px;"></i>
             <span style="font-size: 12px;">${battery.text}</span>
           </div>
+          ${window.currentUser?.role === 'admin' ? `
+          <button class="force-logout-btn" title="Logout paksa device ini dari pusat (M01 P4)" onclick="event.stopPropagation(); forceLogoutDevice('${device.id}', '${(device.truckNumber || device.id).replace(/'/g, "\\'")}')" style="margin-top: 4px; background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; justify-content: center; width: 100%;">
+            <i class="fa-solid fa-right-from-bracket"></i> Force Logout
+          </button>
+          ` : ''}
         </div>
       </div>
       <div style="display: flex; gap: 8px; margin-top: 8px;">

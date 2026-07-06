@@ -152,7 +152,6 @@ body {
     gap: 12px;
     position: relative;
     /* overflow: hidden; */
-    min-height: 120px;
 }
 
 .device-card:hover {
