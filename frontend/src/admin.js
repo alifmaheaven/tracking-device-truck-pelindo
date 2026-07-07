@@ -22,6 +22,12 @@ export function setupAdminPanel() {
     btnAdmin.onclick = () => { panel.classList.add('active'); fetchUsers(); };
     closePanel.onclick = () => panel.classList.remove('active');
     closeForm.onclick = btnCancel.onclick = () => formModal.classList.remove('active');
+    // FE-#11: bind password reset modal close
+    const resetPwModal = document.getElementById('resetPasswordModal');
+    const closeResetPwBtn = document.getElementById('closeResetPwBtn');
+    const btnCancelResetPw = document.getElementById('btnCancelResetPw');
+    if (closeResetPwBtn) closeResetPwBtn.onclick = () => resetPwModal?.classList.remove('active');
+    if (btnCancelResetPw) btnCancelResetPw.onclick = () => resetPwModal?.classList.remove('active');
     btnCreate.onclick = () => openForm();
 
     function openForm(user = null) {
@@ -137,9 +143,24 @@ export function setupAdminPanel() {
             if (confirm('Hapus user ini? Tindakan tidak dapat dibatalkan.')) deleteUser(b.dataset.id);
         });
         tbody.querySelectorAll('.btn-reset').forEach(b => b.onclick = () => {
-            const pw = prompt('Password baru (min 8 karakter):');
-            if (pw && pw.length >= 8) resetPassword(b.dataset.id, pw);
-            else if (pw) alert('Password minimal 8 karakter!');
+            // FE-#11: use modal instead of prompt() — prompt shows password in plain text.
+            const targetUser = usersCache.find(x => x._id === b.dataset.id);
+            document.getElementById('rpwTargetUser').innerHTML = '<strong>User:</strong> ' + escapeHtml(targetUser ? targetUser.username : b.dataset.id);
+            document.getElementById('rpwPassword').value = '';
+            document.getElementById('rpwError').style.display = 'none';
+            document.getElementById('resetPasswordModal').classList.add('active');
+            const userId = b.dataset.id;
+            document.getElementById('btnSaveResetPw').onclick = null;
+            document.getElementById('btnSaveResetPw').onclick = async () => {
+                const pw = document.getElementById('rpwPassword').value;
+                if (pw.length < 8) {
+                    document.getElementById('rpwError').innerText = 'Password minimal 8 karakter!';
+                    document.getElementById('rpwError').style.display = 'block';
+                    return;
+                }
+                await resetPassword(userId, pw);
+                document.getElementById('resetPasswordModal').classList.remove('active');
+            };
         });
     }
 

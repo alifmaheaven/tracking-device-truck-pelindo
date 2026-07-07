@@ -28,7 +28,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link rel="icon" href="https://www.teluklamong.co.id/images/favicon.png">
-  <script type="module" crossorigin src="/assets/index-BH2ssjqS.js"></script>
+  <script type="module" crossorigin src="/assets/index-ziyHFF3D.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-DKJFN0vd.css">
 </head>
 <body>
@@ -343,6 +343,29 @@
                 <div style="display: flex; gap: 10px; margin-top: 8px;">
                     <button id="btnCancelUserForm" style="flex: 1; padding: 12px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">Batal</button>
                     <button id="btnSaveUser" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset Sub-Modal (FE-#11: replace prompt() with proper <input type="password">) -->
+    <div id="resetPasswordModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 420px; height: auto; min-height: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #d97706, #f59e0b); color: white;">
+                <h3><i class="fa-solid fa-key"></i> Reset Password</h3>
+                <button id="closeResetPwBtn" class="close-btn" style="color: white;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                <div id="rpwTargetUser" style="font-size: 14px; color: #475569; margin-bottom: 4px;"></div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-lock"></i> Password Baru</label>
+                    <input type="password" id="rpwPassword" class="captcha-input login-field" placeholder="Min. 8 karakter, kombinasi huruf & angka" maxlength="128" autocomplete="new-password">
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Minimal 8 karakter, harus mengandung huruf besar, huruf kecil, dan angka</div>
+                </div>
+                <div id="rpwError" style="display: none; background: #fef2f2; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px;"></div>
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <button id="btnCancelResetPw" style="flex: 1; padding: 12px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">Batal</button>
+                    <button id="btnSaveResetPw" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;"><i class="fa-solid fa-check"></i> Reset Password</button>
                 </div>
             </div>
         </div>

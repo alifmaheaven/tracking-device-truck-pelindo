@@ -159,6 +159,13 @@ async function startRecording() {
   if (!pttTalkBtn || pttTalkBtn.style.pointerEvents === 'none' || !state.pttActiveTarget) return;
   if (state.mediaRecorder && state.mediaRecorder.state === 'recording') return;
 
+  // FE-#14: check MediaRecorder existence — Safari iOS lacks this API entirely.
+  //   Without this guard, new MediaRecorder() throws ReferenceError and crashes PTT.
+  if (typeof MediaRecorder === 'undefined') {
+    alert('Browser tidak mendukung perekaman suara. Gunakan browser modern (Chrome/Firefox/Edge) di desktop.');
+    return;
+  }
+
   if (!state.audioStream) {
     try {
       state.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -209,9 +216,24 @@ function stopRecording() {
   }
 }
 
+// FE-#10: cap in-flight audio buffers to prevent OOM when server floods audio.
+//   Max schedule-ahead: 2 seconds into future. If nextStartTime is already >2s ahead,
+//   skip scheduling — audio is fast enough without this frame.
+const MAX_AUDIO_SCHEDULE_AHEAD_MS = 2000;
+
 async function handleIncomingAudioStream(fromId, base64Data) {
   // Skip audio from muted devices
   if (state.mutedDeviceIds && state.mutedDeviceIds.includes(fromId)) {
+    return;
+  }
+
+  if (!window.audioCtx) window.audioCtx = new AudioContext();
+  if (window.audioCtx.state === 'suspended') {
+    await window.audioCtx.resume();
+  }
+
+  // FE-#10: drop frame if schedule-ahead exceeds cap
+  if (state.pttNextStartTime && (state.pttNextStartTime - window.audioCtx.currentTime) * 1000 > MAX_AUDIO_SCHEDULE_AHEAD_MS) {
     return;
   }
 
@@ -219,11 +241,6 @@ async function handleIncomingAudioStream(fromId, base64Data) {
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
-  }
-
-  if (!window.audioCtx) window.audioCtx = new AudioContext();
-  if (window.audioCtx.state === 'suspended') {
-    await window.audioCtx.resume();
   }
 
   state.pttNextStartTime = playPcmAudio(window.audioCtx, bytes.buffer, state.pttNextStartTime);
@@ -288,9 +305,22 @@ export function initPttWebSocket() {
   };
 
   state.pttWs.onmessage = async (event) => {
+    // FE-#15: handle both Blob and ArrayBuffer binary types explicitly.
+    //   Previous code only checked instanceof Blob and had an empty handler —
+    //   silent data loss on binary WS messages. If binaryType is changed to 'arraybuffer',
+    //   or server unexpectedly sends binary, we warn and ignore instead of crashing on JSON.parse.
     if (event.data instanceof Blob) {
-       // Logic for raw binary if needed
-    } else {
+      // Binary audio from mobile trucks — centers process via handleIncomingAudioStream
+      // which is triggered by the non-binary audioStream JSON path. If raw binary arrives
+      // here we just warn (currently unused path for centers).
+      console.warn('[PTT] Received raw Blob — ignoring (centers process audio via JSON audioStream)');
+      return;
+    }
+    if (event.data instanceof ArrayBuffer) {
+      console.warn('[PTT] Received ArrayBuffer — ignoring (centers process audio via JSON audioStream)');
+      return;
+    }
+    if (typeof event.data === 'string') {
       const data = JSON.parse(event.data);
       switch (data.type) {
         case 'audioStream':

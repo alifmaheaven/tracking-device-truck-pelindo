@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongodb');
 const { getDb } = require('../db');
-const { ACTIONS, logAction, getAuditLogs } = require('../utils/auditLog');
+const { ACTIONS, logAction, getAuditLogs, buildAuditLogFilter } = require('../utils/auditLog');
 const { authMiddleware } = require('../middleware/auth');
 const { requireAdmin, ROLES } = require('../middleware/roles');
 
@@ -31,19 +31,34 @@ router.get('/users', async (req, res) => {
 // Create new user
 router.post('/users', async (req, res) => {
   const { username, password, displayName, role } = req.body;
-  
+
   if (!username || !password || !displayName || !role) {
     return res.status(400).json({ error: 'Semua field wajib diisi' });
   }
-  
+
+  // BE-#13: input validation — length caps + regex to prevent control chars abuse
+  //   and giant payloads (10MB displayName was accepted before).
+  if (typeof username !== 'string' || username.length < 3 || username.length > 32) {
+    return res.status(400).json({ error: 'Username harus 3-32 karakter' });
+  }
+  if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+    return res.status(400).json({ error: 'Username hanya boleh huruf, angka, titik, garis bawah, dan strip' });
+  }
+  if (typeof displayName !== 'string' || displayName.length < 1 || displayName.length > 100) {
+    return res.status(400).json({ error: 'Display name maksimal 100 karakter' });
+  }
+
   // Validasi Role
   if (!Object.values(ROLES).includes(role)) {
     return res.status(400).json({ error: 'Role tidak valid' });
   }
-  
+
   // Password Complexity minimal 8 karakter + minimal 1 upper, 1 lower, 1 digit
   if (password.length < 8) {
     return res.status(400).json({ error: 'Password minimal 8 karakter' });
+  }
+  if (password.length > 128) {
+    return res.status(400).json({ error: 'Password maksimal 128 karakter' });
   }
   // H5: enforce a real password policy. Without this, "aaaaaaaa" passes.
   if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
@@ -223,9 +238,12 @@ router.delete('/users/:id', async (req, res) => {
 
 // Get audit logs
 router.get('/audit-logs', async (req, res) => {
+  // BE-#14: remove self-log to prevent recursive noise (every admin panel access
+  //   logged itself). Use query params for pagination: ?since&before&limit&action&userId
   try {
-    await logAction(ACTIONS.ADMIN_PANEL_ACCESSED, req.user.id, null, { section: 'audit-logs' }, req);
-    const logs = await getAuditLogs({}, 100);
+    const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+    const filter = buildAuditLogFilter(req.query);
+    const logs = await getAuditLogs(filter, limit);
     res.json(logs);
   } catch (error) {
     console.error('Fetch logs error:', error);

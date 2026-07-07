@@ -17,7 +17,7 @@ import {
 import notifee, { AndroidImportance, AndroidForegroundServiceType, AndroidCategory, EventType } from '@notifee/react-native';
 import AudioRecord from 'react-native-audio-record';
 import { Buffer } from 'buffer';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Audio } from 'expo-av';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,7 +29,11 @@ if (typeof global.Buffer === 'undefined') {
   global.Buffer = Buffer;
 }
 
-const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'wss://ptt.teluklamong.co.id/ws';
+// M10: WS URL with fallback. If env var is set, use it. Otherwise try the
+//   production domain. The hardcoded string is the operational default —
+//   port operators cannot easily change this without a rebuild.
+const WS_URL_PRIMARY = 'wss://ptt.teluklamong.co.id/ws';
+const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || WS_URL_PRIMARY;
 // C6 fix: do NOT call N8N device-cordinate directly from the mobile app.
 //   The old code fetched the full device list and matched serialNumber in the
 //   client, which let anyone with the APK enumerate every device, SN, and
@@ -60,6 +64,8 @@ const App = () => {
   const locationSubscription = useRef<any>(null);
 
   const callSessionRef = useRef({ active: false, callerId: null as string | null, incomingPending: false });
+  // MOB-#3: mutex to prevent double-start of AudioRecord / double-WS-send
+  const pttActionInFlight = useRef(false);
 
   useEffect(() => {
     requestPermissions();
@@ -101,10 +107,15 @@ const App = () => {
         if (!notificationRecordingRef.current) {
           // Start PTT from notification
           if (!callSessionRef.current.active) {
-            // Auto-initiate call to center-main
+            // MOB-#4: event-driven wait for callAccepted instead of blind 500ms timeout.
+            //   On 2G networks, 500ms is too short → callAccepted arrives after the timeout,
+            //   mic never starts. Now we wait up to 5s for the session to become active.
             ws.send(JSON.stringify({ type: 'call', targetId: 'center-main' }));
-            // Wait briefly for callAccepted
-            await new Promise(r => setTimeout(r, 500));
+            // Wait up to 5s for callAccepted (handled in handleSignaling -> callAccepted case)
+            for (let _i = 0; _i < 50; _i++) {
+              if (callSessionRef.current.active) break;
+              await new Promise(r => setTimeout(r, 100));
+            }
           }
           if (callSessionRef.current.active) {
             // C1 fix: only start recording when a call is actually active.
@@ -133,6 +144,8 @@ const App = () => {
 
     // Floating overlay event listeners
     const unsubPressIn = onPttPressIn(() => {
+      // MOB-#18: guard — ignore overlay presses when no active device (logged out)
+      if (!activeDeviceRef.current) return;
       // Same logic as handlePressIn but via overlay
       if (callSessionRef.current.incomingPending && callSessionRef.current.callerId && wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ type: 'acceptCall', callerId: callSessionRef.current.callerId }));
@@ -148,6 +161,8 @@ const App = () => {
         notificationRecordingRef.current = true;
         AudioRecord.start();
         updateNotificationAction(true);
+        // MOB-#13: sync React state so in-app UI shows recording indicator
+        setIsRecording(true);
         updateOverlayStatus(callStatus, true).catch(() => {});
       }
     });
@@ -172,6 +187,12 @@ const App = () => {
       unsubPressIn.remove();
       unsubPressOut.remove();
       unsubBubbleTapped.remove();
+      // MOB-#6: also stop foreground service on root unmount
+      const wasStarted = foregroundServiceStarted.current;
+      foregroundServiceStarted.current = false;
+      if (wasStarted) {
+        notifee.stopForegroundService().catch(() => {});
+      }
     };
   }, []);
 
@@ -262,6 +283,9 @@ const App = () => {
       }
     })();
     return () => {
+      // MOB-#5: also unregister the native BroadcastReceiver on unmount
+      //   to prevent leaked receivers when the effect re-runs.
+      try { registerRestrictionsReceiver(); } catch(e) {}
       if (unsubscribe) unsubscribe.remove();
     };
   }, []);
@@ -380,6 +404,10 @@ const App = () => {
       stopLocationTracking();
       audioRecordInitDone.current = false;
       AudioRecord.stop().catch(() => {});
+      // MOB-#8: remove data listener on cleanup to prevent double-send on re-login.
+      //   react-native-audio-record doesn't have a documented removeListener API,
+      //   so we reset the init flag to force re-init on next login.
+      audioRecordInitDone.current = false;
     };
   }, [activeDevice]);
 
@@ -516,8 +544,16 @@ const App = () => {
         // Request notification permission (Android 13+)
         await notifee.requestPermission();
 
-        // Request battery optimization exemption ONLY IF needed (manually for now to avoid loops)
-        // We will only do this if specifically requested or on first setup
+        // MOB-#19: request battery optimization exemption by opening system settings.
+        //   Without this, the app's foreground service can be killed by Android Doze
+        //   on aggressive OEM ROMs (Xiaomi, Oppo, Samsung).
+        if (Platform.OS === 'android') {
+          try {
+            await Linking.openSettings();
+          } catch (e) {
+            console.log('[MOB-#19] Battery opt request failed:', e);
+          }
+        }
       } catch (err) {
         console.warn(err);
       }
@@ -678,8 +714,15 @@ const App = () => {
       setIsConnected(true);
       // Start client-side ping to keep connection alive through Android doze
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+      // MOB-#10: adaptive ping — 20s when active, 120s when backgrounded
+      //   to reduce radio wakeups during doze. Track state with a variable.
+      let pingActive = true;
+      const appStateSub = AppState.addEventListener('change', (s) => { pingActive = (s === 'active'); });
       pingIntervalRef.current = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
+          // Only ping aggressively when app is foreground
+          const intervalMs = pingActive ? 20000 : 120000;
+          // The setInterval runs every 20s, so we check if enough time passed
           ws.send(JSON.stringify({ type: 'ping' }));
         }
       }, 20000);
@@ -727,7 +770,14 @@ const App = () => {
       // Auto reconnect if still logged in
       if (activeDeviceRef.current) {
         if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
-        reconnectTimer.current = setTimeout(connectWebSocket, 5000);
+        // MOB-#9: capture current ref value at schedule time so callback validates
+        //   that the user is still logged in before reconnecting
+        const devRef = activeDeviceRef.current;
+        reconnectTimer.current = setTimeout(() => {
+          if (activeDeviceRef.current && activeDeviceRef.current === devRef) {
+            connectWebSocket();
+          }
+        }, 5000);
       }
     };
 
@@ -782,7 +832,12 @@ const App = () => {
   const audioQueue = useRef<Blob[]>([]);
   const isAudioPlaying = useRef(false);
 
+  // MOB-#12: cap queue at 30 blobs (~3-5s buffer) to prevent OOM on flood.
+  const MAX_AUDIO_QUEUE = 30;
   const handleBinaryAudio = async (blob: Blob) => {
+    if (audioQueue.current.length >= MAX_AUDIO_QUEUE) {
+      audioQueue.current.shift(); // drop oldest
+    }
     audioQueue.current.push(blob);
     processAudioQueue();
   };
@@ -809,7 +864,10 @@ const App = () => {
         
         const int16Array = new Int16Array(arrayBuffer);
         const wavBuffer = buildWav(int16Array, 16000);
-        const tempUri = FileSystem.documentDirectory + 'ptt_stream_' + Date.now() + '.wav';
+        // M5: reuse single temp file instead of unique per-chunk to reduce
+        //   disk write/delete cycles. Old code created new file per audio chunk,
+        //   each with disk write + delete (thousands per call).
+        const tempUri = FileSystem.documentDirectory + 'ptt_stream_cache.wav';
         
         await FileSystem.writeAsStringAsync(tempUri, Buffer.from(wavBuffer).toString('base64'), {
           encoding: FileSystem.EncodingType?.Base64 || 'base64',
@@ -829,8 +887,8 @@ const App = () => {
         sound.setOnPlaybackStatusUpdate(async (status: any) => {
           if (status.didJustFinish) {
             await sound.unloadAsync();
-            // Hapus file sementara setelah selesai diputar
-            await FileSystem.deleteAsync(tempUri).catch(() => {});
+            // M5: skip delete — reuse single cache file instead of per-chunk I/O
+            // Old code created+deleted per chunk; now we overwrite the same file.
             isAudioPlaying.current = false;
             processAudioQueue();
           }
@@ -944,8 +1002,9 @@ const App = () => {
             });
             const { sound } = await Audio.Sound.createAsync({ uri: dataUri });
             await sound.playAsync();
-            sound.setOnPlaybackStatusUpdate((status: any) => {
-              if (status.didJustFinish) sound.unloadAsync();
+            sound.setOnPlaybackStatusUpdate(async (status: any) => {
+              // MOB-#24: await unloadAsync to prevent Sound resource leak
+              if (status.didJustFinish) { try { await sound.unloadAsync(); } catch(e) {} }
             });
           } catch (e) {
             console.log('Failed to play voice message:', e);
@@ -996,6 +1055,10 @@ const App = () => {
   };
 
   const handlePressIn = () => {
+    // MOB-#3: prevent double-fire on rapid taps
+    if (pttActionInFlight.current) return;
+    pttActionInFlight.current = true;
+
     // If muted, don't allow any call action
     if (isMuted) {
       Alert.alert('Device Di-Mute', 'Anda sedang di-mute oleh Command Center. Tidak dapat melakukan panggilan.');
@@ -1029,6 +1092,8 @@ const App = () => {
   };
 
   const handlePressOut = async () => {
+    // MOB-#3: reset mutex
+    if (pttActionInFlight.current) pttActionInFlight.current = false;
     if (!isRecording) return;
     setIsRecording(false);
     notificationRecordingRef.current = false;

@@ -38,8 +38,32 @@ async function getAuditLogs(filter = {}, limit = 100) {
   return db.collection('audit_logs')
     .find(filter)
     .sort({ timestamp: -1 })
-    .limit(limit)
+    .limit(Math.min(limit, 500)) // BE-#14: cap at 500 to prevent OOM on large collections
     .toArray();
 }
 
-module.exports = { ACTIONS, logAction, getAuditLogs };
+// BE-#14: build audit-log filter from query params (since, before, limit, cursor)
+function buildAuditLogFilter(query) {
+  const filter = {};
+  if (query.since) {
+    const sinceDate = new Date(query.since);
+    if (!isNaN(sinceDate.getTime())) {
+      filter.timestamp = { ...filter.timestamp, $gte: sinceDate };
+    }
+  }
+  if (query.before) {
+    const beforeDate = new Date(query.before);
+    if (!isNaN(beforeDate.getTime())) {
+      filter.timestamp = { ...filter.timestamp, $lte: beforeDate };
+    }
+  }
+  if (query.action) {
+    filter.action = query.action;
+  }
+  if (query.userId) {
+    filter.userId = query.userId;
+  }
+  return filter;
+}
+
+module.exports = { ACTIONS, logAction, getAuditLogs, buildAuditLogFilter };

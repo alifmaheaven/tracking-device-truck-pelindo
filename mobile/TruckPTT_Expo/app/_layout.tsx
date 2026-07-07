@@ -6,10 +6,11 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import notifee from '@notifee/react-native';
 
+// MOB-#2: return a resolved promise with the notification to prevent unsettled
+//   promise accumulation. The foreground service lifecycle is managed by notifee
+//   internally — our promise just expresses that we acknowledge the service start.
 notifee.registerForegroundService((notification) => {
-  return new Promise(() => {
-    // Keep the service alive indefinitely for background PTT
-  });
+  return Promise.resolve();  // MOB-#2: return void to match ForegroundServiceTask signature
 });
 
 export const unstable_settings = {

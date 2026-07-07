@@ -9,7 +9,14 @@ async function connectDB() {
   const MONGO_DB = process.env.MONGO_DB || 'pelindo_maps';
   
   try {
-    const client = new MongoClient(MONGO_URI);
+    // BE-#12: explicit timeouts + pool size for flaky 2G backhaul.
+    //   Previous no-options connect could hang indefinitely on network blips
+    //   and had no connection limit, risking OOM under load.
+    const client = new MongoClient(MONGO_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 10000,
+      maxPoolSize: 20,
+    });
     await client.connect();
     console.log('Connected to MongoDB for Users & Sessions');
     

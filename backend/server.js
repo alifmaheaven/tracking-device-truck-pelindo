@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 
-const { connectDB } = require('./db');
+const { connectDB, getDb } = require('./db');
 const { seedAdmin } = require('./seed');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
@@ -44,6 +44,9 @@ const WS_ALLOWED_ORIGINS = (process.env.WS_ALLOWED_ORIGINS || 'ptt.teluklamong.c
 // Connect to MongoDB
 connectDB().then(async () => {
   await seedAdmin();
+}).catch(err => {
+  console.error('FATAL: Failed to connect to MongoDB:', err.message);
+  process.exit(1);
 });
 
 // Security headers
@@ -64,6 +67,17 @@ if (!cookieSecret || cookieSecret.length < 32) {
   process.exit(1);
 }
 app.use(cookieParser(cookieSecret));
+
+// BE-#11: global rejection/exception handlers — without these the process keeps running
+//   with dbInstance === null after a transient DB failure, returning 500 to all auth routes.
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('FATAL: unhandledRejection — crashing to prevent silent data loss:', reason);
+  process.exit(1);
+});
+process.on('uncaughtException', (err) => {
+  console.error('FATAL: uncaughtException — crashing:', err);
+  process.exit(1);
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -216,7 +230,11 @@ wss.on('connection', async (ws, req) => {
         const rawValue = decodeURIComponent(cookie.split('=')[1]);
         if (rawValue.startsWith('s:')) {
           // SECURITY (M02 H1): use the validated cookieSecret declared at startup (no fallback).
-          const unsigned = cookieParser.signedCookie(rawValue.slice(2), cookieSecret);
+          // BUGFIX: pass rawValue (including 's:' prefix) to signedCookie. Previous
+          //   .slice(2) removed the prefix, causing signedCookie to return the raw
+          //   string (value.signature) instead of unsigned value. This made session
+          //   lookup fail with "Unauthorized: valid login session required" after BE-#3.
+          const unsigned = cookieParser.signedCookie(rawValue, cookieSecret);
           if (unsigned !== false) authToken = unsigned;
         } else {
           authToken = rawValue;
@@ -228,23 +246,39 @@ wss.on('connection', async (ws, req) => {
   let currentClientId = null;
   ws.isAlive = true;
   // SECURITY (M02 M4): per-conn flood control. Max 50 binary frames / second.
+  // BE-#9: also enforce byte budget — 50 frames of 1MB each = 50MB/s, so cap total
+  //   bytes per second at 5MB (average 100KB/frame). Close conn if exceeded.
   let audioFrameCount = 0;
   let audioFrameWindow = Date.now();
+  let audioByteBudget = 0;
+  let audioByteBudgetWindow = Date.now();
 
   // Respond to pong
   ws.on('pong', () => { ws.isAlive = true; });
 
   ws.on('message', async (message, isBinary) => {
     if (isBinary) {
-      // SECURITY (M02 M4): enforce per-conn audio frame rate. If exceeded, drop frame
-      //   and log. This caps broadcast amplification from a single flooder.
+      // SECURITY (M02 M4): enforce per-conn audio frame rate + byte budget.
+      //   If exceeded, drop frame and log. This caps broadcast amplification.
       const now = Date.now();
       if (now - audioFrameWindow >= 1000) {
         audioFrameCount = 0;
         audioFrameWindow = now;
       }
+      if (now - audioByteBudgetWindow >= 1000) {
+        audioByteBudget = 0;
+        audioByteBudgetWindow = now;
+      }
       audioFrameCount++;
       if (audioFrameCount > 50) return;
+      // BE-#9: per-second byte budget. 50 frames × 1MB each = 50MB/s possible
+      //   with maxPayload=1MB. Cap at 5MB/s and kill conn if exceeded.
+      audioByteBudget += message.length || message.byteLength || 0;
+      if (audioByteBudget > 5 * 1024 * 1024) {
+        console.warn('Audio byte budget exceeded, closing connection');
+        ws.close(4009, 'byte_budget_exceeded');
+        return;
+      }
       // 1. Always forward a copy to ALL center clients for global monitoring
       // MUTE CHECK: skip forwarding audio from muted devices
       if (currentClientId && !currentClientId.startsWith('center') && !mutedDevices.has(currentClientId)) {
@@ -285,6 +319,14 @@ wss.on('connection', async (ws, req) => {
         
         switch (data.type) {
           case 'register':
+            // BE-#18: validate client ID format — reject control chars/log injection
+            //   Previously no regex was applied, allowing values like
+            //   'truck-1[CRITICAL]' to inject fake log lines.
+            if (!data.id || typeof data.id !== 'string' || !/^[a-zA-Z0-9._:-]{1,64}$/.test(data.id)) {
+              ws.send(JSON.stringify({ type: 'error', message: 'Invalid client ID format' }));
+              ws.close(4002, 'invalid_id');
+              return;
+            }
             // Web browser (center-*) sudah login via HTTP, izinkan
             // Mobile truck harus kirim REGISTRATION_SECRET
             if (data.id && data.id.startsWith('center')) {
@@ -437,7 +479,15 @@ wss.on('connection', async (ws, req) => {
               const centers = getCenterClients();
               centers.forEach(([id, centerWs]) => {
                 if (centerWs.readyState === WebSocket.OPEN && id !== currentClientId) {
-                  centerWs.send(message.toString());
+                  // BE-#8: serialize through JSON.parse+stringify to guarantee clean
+                  //   JSON output. message.toString() on binary data would corrupt audio.
+                  //   Even though we're in the JSON branch, this protects against edge
+                  //   cases where isBinary=false but content is binary-like.
+                  try {
+                    centerWs.send(JSON.stringify(JSON.parse(message.toString())));
+                  } catch (e) {
+                    console.error('voiceMessage forward error:', e.message);
+                  }
                 }
               });
             }
@@ -447,8 +497,12 @@ wss.on('connection', async (ws, req) => {
             if (partnerIdMsg) {
               const partnerWsMsg = clients.get(partnerIdMsg);
               if (partnerWsMsg && partnerWsMsg.readyState === WebSocket.OPEN) {
-                // Forward the voice message JSON as-is
-                partnerWsMsg.send(message.toString());
+                // BE-#8: same safe serialization for partner forward
+                try {
+                  partnerWsMsg.send(JSON.stringify(JSON.parse(message.toString())));
+                } catch (e) {
+                  console.error('voiceMessage partner forward error:', e.message);
+                }
               }
             }
             break;
@@ -677,6 +731,28 @@ const keepaliveInterval = setInterval(() => {
 //     operator was silently monitoring (mic off, audio still playing).
 //     Dispatcher use-case requires longer idle tolerance.
 const AUTO_END_DELAY = 90 * 1000;
+// BE-#4: periodic callActivity janitor — sweep entries whose clientId is no longer
+//   in the clients Map. Without this, devices that disconnect during a call (or crash)
+//   leave stale callActivity entries that grow memory unboundedly.
+const callActivityJanitor = setInterval(() => {
+  const clientIds = new Set(clients.keys());
+  for (const key of callActivity.keys()) {
+    if (!clientIds.has(key)) callActivity.delete(key);
+  }
+}, 60000);
+
+// BE-#5: captchaRateLimit janitor — sweep stale entries when size exceeds threshold.
+//   An attacker cycling through IPs or behind a large NAT could grow this Map
+//   unboundedly without periodic cleanup.
+const captchaRateLimitJanitor = setInterval(() => {
+  if (captchaRateLimit.size > 10000) {
+    const now = Date.now();
+    for (const [ip, entry] of captchaRateLimit) {
+      if (now > entry.resetAt) captchaRateLimit.delete(ip);
+    }
+  }
+}, 300000); // every 5 min
+
 const autoEndInterval = setInterval(() => {
   const now = Date.now();
   sessions.forEach((partnerId, clientId) => {
@@ -704,7 +780,18 @@ const autoEndInterval = setInterval(() => {
   });
 }, 10000);
 
+// BE-#19: also listen on server.close() — if HTTP server is closed directly
+//   without wss.close(), the intervals would orphan.
+server.on('close', () => {
+  clearInterval(keepaliveInterval);
+  clearInterval(callActivityJanitor);
+  clearInterval(captchaRateLimitJanitor);
+  clearInterval(autoEndInterval);
+});
+
 wss.on('close', () => {
   clearInterval(keepaliveInterval);
+  clearInterval(callActivityJanitor);
+  clearInterval(captchaRateLimitJanitor);
   clearInterval(autoEndInterval);
 });

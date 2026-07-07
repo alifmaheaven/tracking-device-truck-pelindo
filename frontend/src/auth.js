@@ -3,7 +3,13 @@ import { state } from './state.js';
 let _config = {};
 let apiUrl = '';
 
+// FE-#4: HMR guard — prevent double onAuthenticated() on Vite HMR reload.
+//   Without this, onAuthenticated() fires twice, re-registering listeners, double-fetching API,
+//   and stacking event listeners.
+let _authenticated = false;
+
 export function setupAuth(config) {
+    if (_authenticated) return;
     _config = config;
     apiUrl = config.apiUrl || '';
     const { onAuthenticated } = config;
@@ -40,6 +46,7 @@ export function setupAuth(config) {
                 const user = await res.json();
                 window.currentUser = user;
                 overlay.classList.remove('active');
+                _authenticated = true;
                 onAuthenticated();
                 return true;
             }
@@ -78,6 +85,7 @@ export function setupAuth(config) {
             if (res.ok && data.success) {
                 window.currentUser = data.user;
                 overlay.classList.remove('active');
+                _authenticated = true;
                 onAuthenticated();
             } else {
                 // Gagal (wrong password, lockout, etc)
