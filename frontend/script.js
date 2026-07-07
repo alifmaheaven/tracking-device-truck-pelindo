@@ -1,4 +1,4 @@
-import { getBatteryDisplay, playPcmAudio } from './src/utils.js';
+import { getBatteryDisplay, playPcmAudio, escapeHtml } from './src/utils.js';
 import { setupMap, fetchDeviceData, renderMarkers, renderDeviceList, handleSearchInput } from './src/map.js';
 import { setupAuth } from './src/auth.js';
 import { state } from './src/state.js';
@@ -76,8 +76,9 @@ function initApp() {
     // Start WebSocket PTT
     initPttWebSocket();
 
-    // Start interval
-    setInterval(updateRefreshCounter, 1000);
+    // H7 fix: do NOT start the countdown interval here — the duplicate at
+    //   line 159 already handles it. Previous code ran two setInterval
+    //   callbacks, decrementing the countdown 2x/sec and doubling API fetches.
 }
 
 // auto update data lokasi secara real-time dengan counter countdown dinamis
@@ -311,7 +312,7 @@ if (resetHistoryFilterBtn) {
         if (customDateRange) customDateRange.style.display = 'none';
         if (histStartDate) histStartDate.value = '';
         if (histEndDate) histEndDate.value = '';
-        
+
         const manualRadio = document.querySelector('input[name="routingMode"][value="manual"]');
         if (manualRadio) manualRadio.checked = true;
 
@@ -319,6 +320,72 @@ if (resetHistoryFilterBtn) {
             openHistoryModal(currentModalDeviceId, currentModalTruckNumber);
         }
     });
+}
+
+// Phase 3: Export CSV — uses same date range logic as the on-screen history.
+const exportReportBtn = document.getElementById('exportReportBtn');
+if (exportReportBtn) {
+    exportReportBtn.addEventListener('click', async () => {
+        if (!currentModalDeviceId) {
+            alert('Buka histori truk terlebih dahulu sebelum export.');
+            return;
+        }
+        const range = computeHistoryRange();
+        if (!range) return;
+        const url = `/api/reports/${encodeURIComponent(currentModalDeviceId)}?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}&format=csv`;
+        const originalHtml = exportReportBtn.innerHTML;
+        exportReportBtn.disabled = true;
+        exportReportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...';
+        try {
+            const res = await fetch(url, { credentials: 'include' });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `HTTP ${res.status}`);
+            }
+            const blob = await res.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = objectUrl;
+            a.download = `laporan-${currentModalDeviceId}-${range.from.slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(objectUrl);
+        } catch (err) {
+            alert('Gagal export laporan: ' + err.message);
+        } finally {
+            exportReportBtn.disabled = false;
+            exportReportBtn.innerHTML = originalHtml;
+        }
+    });
+}
+
+// Extract date range from current UI state. Returns {from, to} in ISO UTC or null.
+function computeHistoryRange() {
+    if (!historyTimePreset) return null;
+    const preset = historyTimePreset.value;
+    let startDate = new Date();
+    let endDate = new Date();
+    if (preset === '1hour') startDate.setHours(endDate.getHours() - 1);
+    else if (preset === '3hour') startDate.setHours(endDate.getHours() - 3);
+    else if (preset === '6hour') startDate.setHours(endDate.getHours() - 6);
+    else if (preset === '12hour') startDate.setHours(endDate.getHours() - 12);
+    else if (preset === '1day') startDate.setDate(endDate.getDate() - 1);
+    else if (preset === '1week') startDate.setDate(endDate.getDate() - 7);
+    else if (preset === '1month') startDate.setMonth(endDate.getMonth() - 1);
+    else if (preset === 'custom') {
+        if (histStartDate?.value && histEndDate?.value) {
+            startDate = new Date(histStartDate.value);
+            endDate = new Date(histEndDate.value);
+        } else {
+            startDate.setDate(endDate.getDate() - 1);
+        }
+    } else {
+        startDate.setHours(endDate.getHours() - 1);
+    }
+    lastAppliedStartDate = startDate;
+    lastAppliedEndDate = endDate;
+    return { from: startDate.toISOString(), to: endDate.toISOString() };
 }
 
 // Listener Mode Routing (OSRM vs Manual)
@@ -1075,7 +1142,7 @@ function startDirectionMode(device) {
         modeJourneyRadio.dispatchEvent(new Event('change')); 
     }
     
-    navTargetName.innerHTML = `🚗 Menuju Target: ${device.truckNumber}`;
+    navTargetName.innerHTML = `🚗 Menuju Target: ${escapeHtml(device.truckNumber)}`;
     navigationCard.classList.add('active');
     
     renderMarkers(); 

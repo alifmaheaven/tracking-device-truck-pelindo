@@ -23,22 +23,27 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 router.post('/login', loginLimiter, async (req, res) => {
   const { username, password, captchaCode } = req.body;
+  // SECURITY (M02 H3): force-string type check to defeat Mongo NoSQL operator injection
+  //   (e.g. {"username":{"$ne":null}}). Without this, findOne({username: {$ne: null}}) would
+  //   return the first user in the collection.
+  const safeUsername = typeof username === 'string' ? username : null;
+  const safeCaptchaCode = typeof captchaCode === 'string' ? captchaCode : null;
   const expectedCaptcha = req.signedCookies.captcha_text;
-  
+
   // Validate request body
-  if (!username || !password || !captchaCode) {
+  if (!safeUsername || typeof password !== 'string' || !safeCaptchaCode) {
     return res.status(400).json({ success: false, message: 'Harap isi semua field' });
   }
 
   // Verify Captcha
-  if (!expectedCaptcha || captchaCode.toLowerCase() !== expectedCaptcha.toLowerCase()) {
+  if (!expectedCaptcha || safeCaptchaCode.toLowerCase() !== expectedCaptcha.toLowerCase()) {
     return res.status(400).json({ success: false, message: 'Kode captcha tidak valid' });
   }
 
   try {
     const db = getDb();
     const users = db.collection('users');
-    const user = await users.findOne({ username });
+    const user = await users.findOne({ username: safeUsername });
 
     // Anti-enumeration: if user not found, give generic error
     if (!user) {
@@ -66,20 +71,31 @@ router.post('/login', loginLimiter, async (req, res) => {
     const match = await bcrypt.compare(password, user.passwordHash);
     
     if (!match) {
-      // Handle failed attempt
-      let failedAttempts = (user.failedAttempts || 0) + 1;
-      let lockedUntil = null;
-      
-      if (failedAttempts >= MAX_FAILED_ATTEMPTS) {
-        lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
-      }
-      
-      await users.updateOne(
+      // BE-#1: atomic $inc to prevent lockout bypass via race condition.
+      //   Previous read-modify-write pattern allowed two concurrent wrong-password
+      //   POSTs to both read the same failedAttempts=4, both write 5, and lockout
+      //   never triggers. Now $inc is atomic — each failed attempt is counted exactly once.
+      const updateResult = await users.findOneAndUpdate(
         { _id: user._id },
-        { $set: { failedAttempts, lockedUntil } }
+        { $inc: { failedAttempts: 1 } },
+        { returnDocument: 'after' }
       );
-      
-      await logAction(ACTIONS.LOGIN_FAILED, user._id, null, { username, reason: 'wrong_password', attempts: failedAttempts }, req);
+
+      if (!updateResult) {
+        return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+      }
+
+      const currentFailedAttempts = updateResult.failedAttempts || 0;
+
+      // Conditionally set lockedUntil after the atomic increment
+      if (currentFailedAttempts >= MAX_FAILED_ATTEMPTS) {
+        await users.updateOne(
+          { _id: user._id },
+          { $set: { lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS) } }
+        );
+      }
+
+      await logAction(ACTIONS.LOGIN_FAILED, user._id, null, { username, reason: 'wrong_password', attempts: currentFailedAttempts }, req);
       return res.status(401).json({ success: false, message: 'Username atau password salah' });
     }
 

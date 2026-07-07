@@ -2,9 +2,9 @@
  * Map rendering, marker management, device list sidebar, search.
  * Extracted from script.js.
  */
-import { getBatteryDisplay } from './utils.js';
+import { getBatteryDisplay, escapeHtml, escapeJsString } from './utils.js';
 import { state } from './state.js';
-import { startPttCall, isOperatorOnline } from './ptt.js';
+import { startPttCall, isOperatorOnline, forceLogoutDevice } from './ptt.js';
 
 let _config = {};
 
@@ -96,7 +96,8 @@ export function renderMarkers() {
     } else {
       let badgeHtml = '';
       if (device.tags && device.tags.length > 0) {
-        const firstTag = device.tags[0].tagValue || device.tags[0];
+        // H6: N8N tags are unauthenticated source — must escape before innerHTML
+        const firstTag = escapeHtml(device.tags[0].tagValue || device.tags[0]);
         badgeHtml = `<div class="marker-floating-badge">${firstTag}</div>`;
       }
 
@@ -126,20 +127,20 @@ export function renderMarkers() {
 
       const popupContent = `
         <div class="custom-popup-content">
-          <h3><i class="fa-solid fa-truck"></i> ${device.truckNumber}</h3>
+          <h3><i class="fa-solid fa-truck"></i> ${escapeHtml(device.truckNumber)}</h3>
           ${tagsHtml}
-          <p><strong>Device ID:</strong> ${device.id.substring(0, 8)}...</p>
+          <p><strong>Device ID:</strong> ${escapeHtml(device.id.substring(0, 8))}...</p>
           <p><strong>Baterai:</strong> <span style="color: ${battery.color}; font-weight: 600;"><i class="fa-solid ${battery.icon}"></i> ${battery.text}</span></p>
-          <p><strong>Koordinat:</strong> ${device.coordinates[0]}, ${device.coordinates[1]}</p>
-          <p><strong>Status:</strong> <span style="text-transform: capitalize;">${device.status}</span></p>
-          <p><strong>Update:</strong> ${device.lastUpdate}</p>
-          <button class="call-btn popup-call-btn" id="call-btn-${device.id}">
+          <p><strong>Koordinat:</strong> ${escapeHtml(device.coordinates[0])}, ${escapeHtml(device.coordinates[1])}</p>
+          <p><strong>Status:</strong> <span style="text-transform: capitalize;">${escapeHtml(device.status)}</span></p>
+          <p><strong>Update:</strong> ${escapeHtml(device.lastUpdate)}</p>
+          <button class="call-btn popup-call-btn" id="call-btn-${escapeHtml(device.id)}">
             <i class="fa-solid fa-headset"></i> Panggil Operator
           </button>
-          <button class="history-btn" id="hist-btn-${device.id}">
+          <button class="history-btn" id="hist-btn-${escapeHtml(device.id)}">
             <i class="fa-solid fa-route"></i> Riwayat Perjalanan
           </button>
-          <button class="direction-btn" id="dir-btn-${device.id}">
+          <button class="direction-btn" id="dir-btn-${escapeHtml(device.id)}">
             <i class="fa-solid fa-location-crosshairs"></i> Arahkan ke Truk
           </button>
         </div>
@@ -218,9 +219,14 @@ export function renderDeviceList(devices) {
     card.id = `card-${device.id}`;
     card.addEventListener('click', () => focusDevice(device.id));
 
+    // SECURITY (M02 L10): escape user-controlled strings before innerHTML
+    const safeId = escapeJsString(device.id);
+    const safeTruck = escapeJsString(device.truckNumber || device.id);
+    const safeSerial = escapeHtml(device.serialNumber || 'N/A');
+
     let tagsHtml = '<div style="color: var(--text-muted); font-size: 13px; font-style: italic;">No Tag</div>';
     if (device.tags && device.tags.length > 0) {
-      const badges = device.tags.map(tag => `<span class="tag-badge" style="font-size: 15px; padding: 6px 12px; border-radius: 6px;"><i class="fa-solid fa-tag"></i> ${tag.tagValue || tag}</span>`).join('');
+      const badges = device.tags.map(tag => `<span class="tag-badge" style="font-size: 15px; padding: 6px 12px; border-radius: 6px;"><i class="fa-solid fa-tag"></i> ${escapeHtml(tag.tagValue || tag)}</span>`).join('');
       tagsHtml = `<div class="device-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">${badges}</div>`;
     }
 
@@ -238,7 +244,7 @@ export function renderDeviceList(devices) {
     const callBtnClass = callBtnDisabled ? 'call-btn call-btn-disabled' : 'call-btn';
     const callBtnOnclick = callBtnDisabled
       ? ''
-      : `onclick="event.stopPropagation(); startPttCall('${device.id}', '${device.truckNumber}')"`;
+      : `onclick="event.stopPropagation(); startPttCall('${safeId}', '${safeTruck}')"`;
     const callBtnTitle = callBtnDisabled ? 'Device tidak terhubung ke server PTT' : 'Panggil operator di tablet';
 
     // Mute button
@@ -255,13 +261,13 @@ export function renderDeviceList(devices) {
           ${tagsHtml}
         </div>
         <div class="battery-status" title="Battery: ${battery.text}" style="color: ${battery.color}; font-weight: 700; font-size: 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-          <div style="font-size: 10px; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 600; margin-bottom: 2px;">SN: ${device.serialNumber || 'N/A'}</div>
+          <div style="font-size: 10px; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 600; margin-bottom: 2px;">SN: ${safeSerial}</div>
           <div style="display: flex; align-items: center; gap: 4px;">
             <i class="fa-solid ${battery.icon}" style="font-size: 20px;"></i>
             <span style="font-size: 12px;">${battery.text}</span>
           </div>
           ${window.currentUser?.role === 'admin' ? `
-          <button class="force-logout-btn" title="Logout paksa device ini dari pusat (M01 P4)" onclick="event.stopPropagation(); forceLogoutDevice('${device.id}', '${(device.truckNumber || device.id).replace(/'/g, "\\'")}')" style="margin-top: 4px; background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; justify-content: center; width: 100%;">
+          <button class="force-logout-btn" data-force-logout-id="${escapeHtml(device.id)}" data-force-logout-label="${escapeHtml(device.truckNumber || device.id)}" title="Logout paksa device ini dari pusat (M01 P4)" style="margin-top: 4px; background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; justify-content: center; width: 100%;">
             <i class="fa-solid fa-right-from-bracket"></i> Force Logout
           </button>
           ` : ''}
@@ -270,17 +276,37 @@ export function renderDeviceList(devices) {
       <div style="display: flex; gap: 8px; margin-top: 8px;">
         <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; font-weight: bold; font-size: 14px; color: #0f172a; display: flex; align-items: center; justify-content: center; letter-spacing: 1px;" title="PPT Code untuk login Tablet">
           <i class="fa-solid fa-key" style="margin-right: 6px; color: #64748b; font-size: 12px;"></i>
-          ${device.pptCode || '------'}
+          ${escapeHtml(device.pptCode || '------')}
         </div>
-        <button class="${muteBtnClass}" title="${muteTitle}" onclick="event.stopPropagation(); ${muteAction}('${device.id}')">
+        <button class="${muteBtnClass}" title="${escapeHtml(muteTitle)}" onclick="event.stopPropagation(); ${muteAction}('${safeId}')">
           <i class="fa-solid ${muteIcon}"></i>
         </button>
-        <button class="${callBtnClass}" style="flex: 1; margin-top: 0;" ${callBtnOnclick} title="${callBtnTitle}" ${callBtnDisabled ? 'disabled' : ''}>
+        <button class="${callBtnClass}" style="flex: 1; margin-top: 0;" ${callBtnOnclick} title="${escapeHtml(callBtnTitle)}" ${callBtnDisabled ? 'disabled' : ''}>
           <i class="fa-solid fa-headset"></i> Panggil Operator
         </button>
       </div>
     `;
     container.appendChild(card);
+  });
+
+  // SECURITY (M02 M1): bind force-logout buttons via event delegation instead of inline
+  //   onclick. Avoids exposing forceLogoutDevice to window. Re-bind on every render
+  //   (cheap — small list, listener replaces prior one).
+  bindForceLogoutButtons(container);
+}
+
+/**
+ * Attach click handlers to any .force-logout-btn inside `container`.
+ * Replaces the old window.forceLogoutDevice() global.
+ */
+function bindForceLogoutButtons(container) {
+  container.querySelectorAll('.force-logout-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.forceLogoutId;
+      const label = btn.dataset.forceLogoutLabel;
+      if (id) forceLogoutDevice(id, label);
+    };
   });
 }
 

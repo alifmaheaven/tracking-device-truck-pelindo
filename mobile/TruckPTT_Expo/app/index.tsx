@@ -30,7 +30,12 @@ if (typeof global.Buffer === 'undefined') {
 }
 
 const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WS_URL) || 'wss://ptt.teluklamong.co.id/ws';
-const API_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) || 'https://ptt.teluklamong.co.id/webhook/device-cordinate';
+// C6 fix: do NOT call N8N device-cordinate directly from the mobile app.
+//   The old code fetched the full device list and matched serialNumber in the
+//   client, which let anyone with the APK enumerate every device, SN, and
+//   active PPT code. Now the app posts (serialNumber + pptCode) to a backend
+//   endpoint that proxies N8N server-side and returns ONLY the matching device.
+const DEVICE_LOGIN_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_DEVICE_LOGIN_URL) || 'https://ptt.teluklamong.co.id/api/device/login';
 const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || '';
 
 const App = () => {
@@ -101,12 +106,16 @@ const App = () => {
             // Wait briefly for callAccepted
             await new Promise(r => setTimeout(r, 500));
           }
-          if (callSessionRef.current.active || true) {
-            // Force-start recording even if call state unclear
+          if (callSessionRef.current.active) {
+            // C1 fix: only start recording when a call is actually active.
+            //   Previous `|| true` allowed mic to stream even before call was
+            //   accepted — privacy leak. Now mic gates on callSessionRef.
             notificationRecordingRef.current = true;
             AudioRecord.start();
             updateNotificationAction(true);
             console.log('PTT recording started from notification');
+          } else {
+            console.log('Cannot start PTT: call not active yet');
           }
         } else {
           // Stop PTT from notification
@@ -262,23 +271,29 @@ const App = () => {
     try {
       console.log('Attempting auto-login with Serial Number:', id);
 
-      const response = await fetch(API_URL);
+      // C6: send the SN to backend; backend validates against N8N and returns
+      //   only the matched device. We cannot pre-validate the PPT code here
+      //   without it, so the device gets a tentative session — the user must
+      //   enter a valid PPT code on next login screen to finalize.
+      const response = await fetch(DEVICE_LOGIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serialNumber: id, pptCode: '' }),
+      });
       const data = await response.json();
 
-      // Search by serialNumber (hardware-persistent identifier)
-      const found = data.find((d: any) => d.serialNumber === id);
-      if (found) {
+      if (response.ok && data.success) {
         console.log('Auto-login successful!');
         const deviceData = {
-          id: found.deviceId,
-          name: found.serialNumber || found.deviceId,
-          tags: found.deviceTags || []
+          id: data.device.id,
+          name: data.device.name,
+          tags: data.device.tags || [],
         };
         setActiveDevice(deviceData);
         await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
         requestPermissions();
       } else {
-        console.log('Serial Number not found in API list:', id);
+        console.log('Auto-login failed:', data.message);
         Alert.alert(
           'Device Belum Terdaftar',
           'Serial Number device ini (' + id + ') tidak ditemukan di sistem. Silakan masukkan PPT Code untuk mendaftarkan device ini secara manual.',
@@ -336,21 +351,35 @@ const App = () => {
       // Cleanup ketika logout
       hideOverlay().catch(() => {});
       stopLocationTracking();
+      // C8 fix: stop foreground service BEFORE clearing the started flag,
+      //   and only clear the flag after the stop resolves. Otherwise a parallel
+      //   activeDevice state flip can re-enter startForegroundService with the
+      //   flag already false but the notification still alive → orphaned
+      //   service that never gets a stop().
+      const wasStarted = foregroundServiceStarted.current;
       foregroundServiceStarted.current = false;
+      if (wasStarted) {
+        notifee.stopForegroundService().catch(() => {});
+      }
       if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
       if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
       if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
-      notifee.stopForegroundService().catch(() => {});
     }
 
     return () => {
+      // C8 fix: also stop service in unmount path; clear started flag inside
+      //   the resolve to prevent re-entry.
+      const wasStarted = foregroundServiceStarted.current;
+      foregroundServiceStarted.current = false;
+      if (wasStarted) {
+        notifee.stopForegroundService().catch(() => {});
+      }
       if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
       if (pingIntervalRef.current) { clearInterval(pingIntervalRef.current); pingIntervalRef.current = null; }
       if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); wsRef.current = null; }
       stopLocationTracking();
       audioRecordInitDone.current = false;
       AudioRecord.stop().catch(() => {});
-      notifee.stopForegroundService().catch(() => {});
     };
   }, [activeDevice]);
 
@@ -420,25 +449,30 @@ const App = () => {
 
     setIsLoggingIn(true);
     try {
-      const response = await fetch(API_URL);
+      // C6: same backend endpoint as auto-login, this time with a real PPT code.
+      //   Server validates SN + code pair against N8N and returns the device.
+      const response = await fetch(DEVICE_LOGIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serialNumber: hardwareId, pptCode: pptCodeInput }),
+      });
       const data = await response.json();
-      
-      const found = data.find((d: any) => d.pptCode === pptCodeInput);
-      if (found) {
+
+      if (response.ok && data.success) {
         const deviceData = {
-          id: found.deviceId,
-          name: found.serialNumber || found.deviceId,
-          tags: found.deviceTags || []
+          id: data.device.id,
+          name: data.device.name,
+          tags: data.device.tags || [],
         };
         setActiveDevice(deviceData);
         await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
         // Request permissions after successful login for the first time
         requestPermissions();
       } else {
-        Alert.alert('Gagal Login', 'PPT Code tidak valid atau sudah kadaluarsa.');
+        Alert.alert('Gagal Login', data.message || 'PPT Code tidak valid atau sudah kadaluarsa.');
       }
     } catch (err) {
-      Alert.alert('Error Koneksi', 'Gagal memuat data dari server N8N.');
+      Alert.alert('Error Koneksi', 'Gagal memuat data dari server.');
     } finally {
       setIsLoggingIn(false);
     }
@@ -533,8 +567,12 @@ const App = () => {
 
   const startForegroundService = async () => {
     try {
-      if (AppState.currentState !== 'active') {
-        console.log('Skipping foreground service start because app is not active.');
+      // C2 fix: allow start in any state. The whole point of the foreground service
+      //   is to keep mic/WS alive when the app is backgrounded (overlay-PTT, lock
+      //   screen, doze). The previous guard meant the service never started in
+      //   exactly the situations we need it.
+      if (foregroundServiceStarted.current) {
+        console.log('Foreground service already started, skipping.');
         return;
       }
 
@@ -848,14 +886,18 @@ const App = () => {
   const handleSignaling = async (data: any, ws: WebSocket) => {
     switch (data.type) {
       case 'incomingCall':
-        if (data.callerId && data.callerId.startsWith('center')) {
-          // AUTO-ANSWER for all Center Calls (starts with 'center')
-          console.log(`Auto-answering call from Center (${data.callerId})...`);
+        // SECURITY (M02 H6): only auto-answer if BOTH starts with 'center' AND server
+        //   tagged this caller as trustedCenter (i.e. authenticated HTTP session).
+        //   Prevents attacker from spoofing 'center-evil' id to covertly open mic.
+        const isTrustedCenter = data.callerId && data.callerId.startsWith('center') && data.trustedCenter === true;
+        if (isTrustedCenter) {
+          // AUTO-ANSWER for verified Center Calls
+          console.log(`Auto-answering call from verified Center (${data.callerId})...`);
           ws.send(JSON.stringify({ type: 'acceptCall', callerId: data.callerId }));
           callSessionRef.current = { active: true, callerId: data.callerId, incomingPending: false };
           setCallStatus('Terhubung dengan Pusat');
         } else {
-          // Manual answer for others (truck to truck)
+          // Manual answer for others (unverified centers fall back to manual as a safety net)
           await showIncomingCallNotification(data.callerId);
           callSessionRef.current = { active: false, callerId: data.callerId, incomingPending: true };
           setCallStatus('Panggilan Masuk... Tekan untuk Jawab');

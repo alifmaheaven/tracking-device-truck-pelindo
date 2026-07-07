@@ -53,3 +53,37 @@ export function playPcmAudio(audioCtx, arrayBuffer, nextStartTime) {
     
     return startTime + audioBuffer.duration;
 }
+
+/**
+ * SECURITY (M02 L10): escape user-controlled strings before they hit innerHTML.
+ * Fleet data comes from N8N webhook which is unauthenticated — a malicious deviceId
+ * or serialNumber could inject <script>/<img onerror>. Apply to all dynamic values
+ * interpolated into HTML strings.
+ * @param {*} val
+ * @returns {string}
+ */
+export function escapeHtml(val) {
+    if (val == null) return '';
+    return String(val)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
+ * Escape for safe inclusion inside a single-quoted JS string literal in an
+ * inline HTML event handler (onclick="... 'value' ...").
+ * @param {*} val
+ * @returns {string}
+ */
+export function escapeJsString(val) {
+    if (val == null) return '';
+    return String(val)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/</g, '\\x3c')
+        .replace(/>/g, '\\x3e');
+}

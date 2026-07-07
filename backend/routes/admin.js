@@ -41,9 +41,13 @@ router.post('/users', async (req, res) => {
     return res.status(400).json({ error: 'Role tidak valid' });
   }
   
-  // Password Complexity minimal 8 karakter (tambahan validasi bisa dilakukan disini)
+  // Password Complexity minimal 8 karakter + minimal 1 upper, 1 lower, 1 digit
   if (password.length < 8) {
     return res.status(400).json({ error: 'Password minimal 8 karakter' });
+  }
+  // H5: enforce a real password policy. Without this, "aaaaaaaa" passes.
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+    return res.status(400).json({ error: 'Password harus mengandung huruf besar, huruf kecil, dan angka' });
   }
 
   try {
@@ -146,6 +150,10 @@ router.post('/users/:id/reset-password', async (req, res) => {
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'ID tidak valid' });
   if (!newPassword || newPassword.length < 8) {
     return res.status(400).json({ error: 'Password minimal 8 karakter' });
+  }
+  // H5: same complexity rule on password reset
+  if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+    return res.status(400).json({ error: 'Password harus mengandung huruf besar, huruf kecil, dan angka' });
   }
   
   try {

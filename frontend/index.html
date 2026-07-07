@@ -54,7 +54,7 @@
                 <div id="captchaImage" class="captcha-image-container" title="Klik untuk menukar kode" style="flex: 1; min-width: 120px; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;">
                     <div style="color: #64748b; font-size: 12px; line-height: 50px;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
                 </div>
-                <input type="text" id="captchaInput" class="captcha-input" placeholder="KODE CAPTCHA" maxlength="5" autocomplete="off" style="flex: 1; min-width: 100px;">
+                <input type="text" id="captchaInput" class="captcha-input" placeholder="KODE CAPTCHA" maxlength="6" autocomplete="off" style="flex: 1; min-width: 100px;">
             </div>
             <button id="captchaSubmit" class="captcha-submit">
                 <span>Login</span>
@@ -218,6 +218,7 @@
                     <div style="display: flex; gap: 8px;">
                         <button id="applyHistoryFilterBtn" style="padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;"><i class="fa-solid fa-arrow-rotate-right"></i> Terapkan</button>
                         <button id="resetHistoryFilterBtn" style="padding: 6px 12px; background-color: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                        <button id="exportReportBtn" title="Download laporan CSV untuk tanggal yang sedang ditampilkan" style="padding: 6px 12px; background-color: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
                     </div>
                 </div>
 

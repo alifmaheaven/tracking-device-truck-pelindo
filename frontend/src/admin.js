@@ -1,3 +1,5 @@
+import { escapeHtml } from './utils.js';
+
 let usersCache = [];
 
 export function setupAdminPanel() {
@@ -110,16 +112,18 @@ export function setupAdminPanel() {
 
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid #e2e8f0';
+            // SECURITY (M02 L10): escape user fields before innerHTML
+            const safeId = escapeHtml(u._id);
             tr.innerHTML = `
-                <td style="padding:12px;font-weight:500;">${u.username}${isMe ? ' <span style="font-size:10px;color:#94a3b8;">(Anda)</span>' : ''}</td>
-                <td style="padding:12px;color:#475569;">${u.displayName}</td>
-                <td style="padding:12px;"><span style="color:${roleColors[u.role]};font-weight:600;">${u.role.toUpperCase()}</span></td>
+                <td style="padding:12px;font-weight:500;">${escapeHtml(u.username)}${isMe ? ' <span style="font-size:10px;color:#94a3b8;">(Anda)</span>' : ''}</td>
+                <td style="padding:12px;color:#475569;">${escapeHtml(u.displayName)}</td>
+                <td style="padding:12px;"><span style="color:${roleColors[u.role]};font-weight:600;">${escapeHtml(u.role).toUpperCase()}</span></td>
                 <td style="padding:12px;">${u.isActive ? '<span style="background:#dcfce7;color:#059669;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">Aktif</span>' : '<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">Nonaktif</span>'}</td>
-                <td style="padding:12px;font-size:12px;color:#64748b;">${lastLogin}</td>
+                <td style="padding:12px;font-size:12px;color:#64748b;">${escapeHtml(lastLogin)}</td>
                 <td style="padding:12px;text-align:right;white-space:nowrap;">
-                    <button class="btn-edit" data-id="${u._id}" title="Edit" style="background:none;border:none;color:#3b82f6;cursor:pointer;margin-right:6px;font-size:16px;"><i class="fa-solid fa-pen-to-square"></i></button>
-                    <button class="btn-reset" data-id="${u._id}" title="Reset Password" style="background:none;border:none;color:#f59e0b;cursor:pointer;margin-right:6px;font-size:16px;"><i class="fa-solid fa-key"></i></button>
-                    ${!isMe ? `<button class="btn-delete" data-id="${u._id}" title="Hapus" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    <button class="btn-edit" data-id="${safeId}" title="Edit" style="background:none;border:none;color:#3b82f6;cursor:pointer;margin-right:6px;font-size:16px;"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="btn-reset" data-id="${safeId}" title="Reset Password" style="background:none;border:none;color:#f59e0b;cursor:pointer;margin-right:6px;font-size:16px;"><i class="fa-solid fa-key"></i></button>
+                    ${!isMe ? `<button class="btn-delete" data-id="${safeId}" title="Hapus" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;"><i class="fa-solid fa-trash"></i></button>` : ''}
                 </td>`;
             tbody.appendChild(tr);
         });

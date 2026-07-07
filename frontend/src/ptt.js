@@ -15,6 +15,9 @@ let centerId = ''; // Unique center ID per browser session
 // Track multiple active calls { deviceId: { truckNumber, tags, startTime } }
 const activeCalls = new Map();
 
+// H2: exponential backoff for WS reconnect. Caps at 30s. Reset on success.
+let reconnectAttempt = 0;
+
 /**
  * Generate unique center ID based on timestamp + random value.
  * This ensures each browser tab gets a unique ID while maintaining consistency
@@ -268,6 +271,8 @@ export function initPttWebSocket() {
   state.pttWs.binaryType = 'blob';
 
   state.pttWs.onopen = () => {
+    // H2: reset backoff on successful connect.
+    reconnectAttempt = 0;
     state.pttWs.send(JSON.stringify({
       type: 'register',
       id: centerId, // Use unique center ID per browser session
@@ -359,7 +364,11 @@ export function initPttWebSocket() {
       dot.style.backgroundColor = '#ef4444';
       text.innerText = 'Server PTT Terputus';
     }
-    setTimeout(initPttWebSocket, 3000);
+    // H2: exponential backoff (3s, 6s, 12s, capped at 30s). Previous fixed
+    //     3s reconnect = storm of attempts when backend is down for minutes.
+    const delay = Math.min(30000, 3000 * Math.pow(2, reconnectAttempt));
+    reconnectAttempt++;
+    setTimeout(initPttWebSocket, delay);
   };
 }
 
@@ -399,6 +408,8 @@ export function isOperatorOnline() {
 }
 
 // M01 P4: admin force-logout device dari pusat via WS event.
+// SECURITY (M02 M1): keep function local — do NOT expose to window. Inline onclick
+//   is gone (map.js now binds via addEventListener). Backend enforces admin role.
 export function forceLogoutDevice(deviceId, deviceLabel) {
   if (!confirm(`Logout paksa device "${deviceLabel}" (${deviceId})? Device akan kembali ke layar login.`)) return;
   if (!state.pttWs || state.pttWs.readyState !== WebSocket.OPEN) {
@@ -408,5 +419,3 @@ export function forceLogoutDevice(deviceId, deviceLabel) {
   state.pttWs.send(JSON.stringify({ type: 'forceLogout', targetId: deviceId }));
   console.log(`[PTT] forceLogout sent for ${deviceId}`);
 }
-// Expose ke window agar onclick="forceLogoutDevice(...)" di inline HTML bisa akses.
-window.forceLogoutDevice = forceLogoutDevice;

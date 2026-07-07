@@ -11,15 +11,35 @@ const { connectDB } = require('./db');
 const { seedAdmin } = require('./seed');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const deviceRoutes = require('./routes/device');
+const reportRoutes = require('./routes/reports');
 const { authMiddleware } = require('./middleware/auth');
 const { logAction, ACTIONS } = require('./utils/auditLog');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server, path: '/ws' });
+// SECURITY (M02 M4 + M7): bound payload size to 1MB and verify Origin header to prevent
+//   browser-based WS hijack. Mobile clients (no Origin) allowed; empty/missing Origin from
+//   native clients is expected.
+const wss = new WebSocket.Server({
+  server,
+  path: '/ws',
+  maxPayload: 1024 * 1024, // 1MB max per message
+  verifyClient: ({ origin, req }) => {
+    // Allow no Origin (native mobile / curl / wscat) and whitelisted web origins.
+    if (!origin) return true;
+    try {
+      const { hostname } = new URL(origin);
+      return WS_ALLOWED_ORIGINS.includes(hostname);
+    } catch {
+      return false;
+    }
+  },
+});
 
 const PORT = process.env.PORT || 9090;
-const REGISTRATION_SECRET = process.env.VITE_REGISTRATION_SECRET || '';
+const REGISTRATION_SECRET = process.env.VITE_REGISTRATION_SECRET || process.env.REGISTRATION_SECRET || '';
+const WS_ALLOWED_ORIGINS = (process.env.WS_ALLOWED_ORIGINS || 'ptt.teluklamong.co.id,www.ptt.teluklamong.co.id').split(',').map(s => s.trim()).filter(Boolean);
 
 // Connect to MongoDB
 connectDB().then(async () => {
@@ -32,35 +52,59 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: ['https://ptt.teluklamong.co.id'],
+  origin: ['https://ptt.teluklamong.co.id', 'https://www.ptt.teluklamong.co.id'],
   credentials: true
 }));
-app.use(express.json());
-app.set('trust proxy', 1); // dibutuhkan untuk secure cookies di belakang Cloudflare/nginx
-const cookieSecret = process.env.COOKIE_SECRET || 'fallback_secret_only_for_dev_2026';
+app.use(express.json({ limit: '1mb' })); // M02 L3: bound body size to prevent DoS
+app.set('trust proxy', 2); // M02 L6: Cloudflare (1) + nginx (2) hops. Salah hitung → rate limiter & audit log pakai IP salah.
+// SECURITY (M02 H1): reject startup if COOKIE_SECRET missing — fallback hardcoded in source = forgeable session.
+const cookieSecret = process.env.COOKIE_SECRET;
+if (!cookieSecret || cookieSecret.length < 32) {
+  console.error('FATAL: COOKIE_SECRET env var must be set (>=32 chars). Refusing to start.');
+  process.exit(1);
+}
 app.use(cookieParser(cookieSecret));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/device', deviceRoutes);
+app.use('/api/reports', reportRoutes);
 
-// 1. Generate Captcha (Diperbarui)
+// 1. Generate Captcha (M02 H4: hardening against OCR + add per-IP rate limit)
+const captchaRateLimit = new Map(); // ip -> { count, resetAt }
+const CAPTCHA_LIMIT = 30; // 30 fetches per 5 min per IP
+const CAPTCHA_WINDOW = 5 * 60 * 1000;
 app.get('/api/captcha', (req, res) => {
+  // Per-IP rate limit (defeats mass-OCR to harvest codes)
+  const ip = req.ip;
+  const now = Date.now();
+  const entry = captchaRateLimit.get(ip) || { count: 0, resetAt: now + CAPTCHA_WINDOW };
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + CAPTCHA_WINDOW; }
+  if (entry.count >= CAPTCHA_LIMIT) {
+    return res.status(429).json({ error: 'Too many captcha requests, slow down' });
+  }
+  entry.count++;
+  captchaRateLimit.set(ip, entry);
+
   const captcha = svgCaptcha.create({
-    size: 5,
-    noise: 4,
+    size: 6,         // 6 chars (was 5) — bigger search space
+    noise: 6,        // more noise
     color: true,
-    background: '#f8fafc'
+    background: '#f8fafc',
+    charPreset: '0123456789', // digits only, no letters (smaller OCR-confusable set)
+    width: 180,
+    height: 60,
   });
-  
-  res.cookie('captcha_text', captcha.text, { 
+
+  res.cookie('captcha_text', captcha.text, {
     maxAge: 300000, // 5 minutes
-    httpOnly: true, 
+    httpOnly: true,
     signed: true,
     sameSite: 'none',
-    secure: true 
+    secure: true
   });
-  
+
   res.type('svg');
   res.status(200).send(captcha.data);
 });
@@ -74,9 +118,11 @@ app.get('/api/proxy/n8n', authMiddleware, async (req, res) => {
     // M01: N8N ikut migrasi ke ptt.teluklamong.co.id. Backend rewrite external URL
     //      ke internal Docker hostname (pelindo-n8n:5678) untuk efisiensi.
     //      Client (frontend) akses via ptt.teluklamong.co.id, backend ke N8N lewat Docker network.
+    // C4: only the public hostname is allowed. Internal IP and external freeat hostname
+    //     removed to prevent SSRF to internal infra and external proxy abuse.
     const N8N_EXTERNAL = 'ptt.teluklamong.co.id';
     const N8N_INTERNAL = 'pelindo-n8n:5678';
-    const allowedHosts = ['10.118.62.60:5678', N8N_EXTERNAL, 'n8n-teluk-lamong.freeat.me'];
+    const allowedHosts = [N8N_EXTERNAL];
     let finalUrl = targetUrl;
     
     try {
@@ -93,14 +139,46 @@ app.get('/api/proxy/n8n', authMiddleware, async (req, res) => {
     }
 
     try {
-      console.log('[proxy] calling:', finalUrl);
-      const response = await fetch(finalUrl);
-      const data = await response.json();
+      // H4 fix: log only host + pathname, never the full URL. Query strings
+      //   on N8N webhooks may contain tokens; logging them leaks secrets.
+      let parsedForLog;
+      try { parsedForLog = new URL(finalUrl); } catch { parsedForLog = null; }
+      const logTarget = parsedForLog ? `${parsedForLog.host}${parsedForLog.pathname}` : '<unparseable>';
+      console.log('[proxy] calling:', logTarget);
+      // BE-#6: add timeout + body cap to prevent hanging event loop + OOM
+      //   Previous unbounded fetch could hang forever on slow upstream.
+      //   Cap at 5s timeout and 5MB response body.
+      // BE-#20: drop err.message from client response to prevent hostname/connection info leak
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      let response;
+      try {
+        response = await fetch(finalUrl, { redirect: 'manual', signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      if (response.status >= 300 && response.status < 400) {
+        return res.status(502).json({ error: 'Upstream redirect not allowed' });
+      }
+      // Cap response body size
+      const contentLength = response.headers.get('content-length');
+      if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+        return res.status(502).json({ error: 'Upstream response too large' });
+      }
+      const text = await response.text();
+      if (text.length > 5 * 1024 * 1024) {
+        return res.status(502).json({ error: 'Upstream response too large' });
+      }
+      const data = JSON.parse(text);
       console.log('[proxy] OK, items:', Array.isArray(data) ? data.length : typeof data);
       res.json(data);
     } catch (err) {
+      if (err.name === 'AbortError') {
+        console.error('[proxy] TIMEOUT: upstream did not respond within 5s');
+        return res.status(504).json({ error: 'Upstream timeout' });
+      }
       console.error('[proxy] ERROR:', err.message);
-      res.status(500).json({ error: 'Proxy failed', details: err.message });
+      res.status(500).json({ error: 'Proxy failed' }); // BE-#20: no err.message in response
     }
 });
 
@@ -112,6 +190,9 @@ const sessions = new Map();
 const mutedDevices = new Set();
 // Map of session clientId -> last activity timestamp (for auto-end inactive calls)
 const callActivity = new Map();
+// SECURITY (M02 H6): track trusted center IDs (centers whose auth_token resolved to
+//   a real user session). Mobile trucks only auto-answer incomingCall from these.
+const trustedCenters = new Set();
 
 // Helper to get all command center connections
 function getCenterClients() {
@@ -134,8 +215,7 @@ wss.on('connection', async (ws, req) => {
         // Express signed cookie starts with s%3A (s:)
         const rawValue = decodeURIComponent(cookie.split('=')[1]);
         if (rawValue.startsWith('s:')) {
-          const cookieParser = require('cookie-parser');
-          const cookieSecret = process.env.COOKIE_SECRET || 'fallback_secret_only_for_dev_2026';
+          // SECURITY (M02 H1): use the validated cookieSecret declared at startup (no fallback).
           const unsigned = cookieParser.signedCookie(rawValue.slice(2), cookieSecret);
           if (unsigned !== false) authToken = unsigned;
         } else {
@@ -147,12 +227,24 @@ wss.on('connection', async (ws, req) => {
 
   let currentClientId = null;
   ws.isAlive = true;
+  // SECURITY (M02 M4): per-conn flood control. Max 50 binary frames / second.
+  let audioFrameCount = 0;
+  let audioFrameWindow = Date.now();
 
   // Respond to pong
   ws.on('pong', () => { ws.isAlive = true; });
 
   ws.on('message', async (message, isBinary) => {
     if (isBinary) {
+      // SECURITY (M02 M4): enforce per-conn audio frame rate. If exceeded, drop frame
+      //   and log. This caps broadcast amplification from a single flooder.
+      const now = Date.now();
+      if (now - audioFrameWindow >= 1000) {
+        audioFrameCount = 0;
+        audioFrameWindow = now;
+      }
+      audioFrameCount++;
+      if (audioFrameCount > 50) return;
       // 1. Always forward a copy to ALL center clients for global monitoring
       // MUTE CHECK: skip forwarding audio from muted devices
       if (currentClientId && !currentClientId.startsWith('center') && !mutedDevices.has(currentClientId)) {
@@ -196,38 +288,73 @@ wss.on('connection', async (ws, req) => {
             // Web browser (center-*) sudah login via HTTP, izinkan
             // Mobile truck harus kirim REGISTRATION_SECRET
             if (data.id && data.id.startsWith('center')) {
-              // Browser center: skip credential check (already auth via HTTP login)
-              ws.userRole = 'operator'; // default role, akan di-override jika ada session
+              // BE-#3: reject center connections without a valid HTTP session.
+              //   Previously, unauth browsers could join as 'operator' and receive audio,
+              //   see device lists, and send calls. Now close(4401) if the session
+              //   check fails — only authenticated HTTP users can join via WS.
+              //   This also blocks the privilege-escalation-to-DoS chain where an
+              //   unauthenticated attacker could call/force-logout devices.
+              ws.userRole = 'operator';
+              let sessionValid = false;
               if (authToken) {
                 try {
                   const db = getDb();
                   const session = await db.collection('sessions').findOne({ token: authToken });
                   if (session && session.expiresAt > new Date()) {
                     const user = await db.collection('users').findOne({ _id: session.userId });
-                    if (user && user.isActive) ws.userRole = user.role;
+                    if (user && user.isActive) {
+                      ws.userRole = user.role;
+                      sessionValid = true;
+                    }
                   }
-                } catch(e) { /* fallback to operator */ }
+                } catch(e) {
+                  console.error('[WS] Session lookup error:', e.message);
+                }
               }
-            } else if (true /* Skip mobile auth check */) {
-              // Mobile truck authentication
-              ws.userRole = 'truck';
+              if (!sessionValid) {
+                console.log('[WS] Rejected center connection: no valid session (authToken: ' + !!authToken + ')');
+                ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized: valid login session required' }));
+                ws.close(4401, 'unauthorized');
+                return;
+              }
             } else {
-              console.log(`Registration failed for ${data.id}: Missing credentials`);
-              ws.send(JSON.stringify({ type: 'error', message: 'Authentication failed: Missing credentials' }));
-              ws.close();
-              return;
+              // C5: require REGISTRATION_SECRET for mobile trucks. Previously `else if (true)`
+              //     accepted any client → spoofing deviceId, broadcast audio on behalf of
+              //     others, mute other devices. Now secret is enforced; empty secret = no
+              //     mobile client can connect (set VITE_REGISTRATION_SECRET in deploy env).
+              if (!REGISTRATION_SECRET) {
+                console.error('FATAL: REGISTRATION_SECRET not configured. Refusing truck connection.');
+                ws.send(JSON.stringify({ type: 'error', message: 'Server misconfigured: no registration secret' }));
+                ws.close();
+                return;
+              }
+              if (data.secret !== REGISTRATION_SECRET) {
+                console.log(`Truck registration rejected: bad secret for ${data.id}`);
+                ws.send(JSON.stringify({ type: 'error', message: 'Authentication failed: invalid credentials' }));
+                ws.close();
+                return;
+              }
+              ws.userRole = 'truck';
             }
 
             // Clean up old connection with same ID if exists
             const oldWs = clients.get(data.id);
             if (oldWs && oldWs !== ws) {
+              // BE-#10: tag old connection as replaced so its on('close') handler skips
+              //   cleanup (otherwise it would delete the new connection's entry from clients Map)
+              oldWs._replaced = true;
               console.log(`Closing stale connection for client: ${data.id}`);
               oldWs.close();
             }
 
             currentClientId = data.id;
             clients.set(currentClientId, ws);
-            console.log(`Client registered: ${currentClientId} (total clients: ${clients.size})`);
+            // SECURITY (M02 H6): only centers with a verified HTTP session are trusted
+            //   sources for incomingCall. Mark them so trucks can distinguish.
+            if (currentClientId.startsWith('center') && ws.userRole && ws.userRole !== 'viewer') {
+              trustedCenters.add(currentClientId);
+            }
+            console.log(`Client registered: ${currentClientId} (role: ${ws.userRole || 'unknown'}, total clients: ${clients.size})`);
             
             // Jika client ini masih ada di daftar mute, kirim info mute ke dia agar status mobile menyesuaikan
             if (mutedDevices.has(currentClientId)) {
@@ -260,11 +387,13 @@ wss.on('connection', async (ws, req) => {
                 // For now, call the first available center or broadcast to all centers?
                 // User says: "bisa denger semuanya maupun merespon"
                 // So we broadcast the incoming call to all centers.
+                // SECURITY (M02 H6): tag caller as trustedCenter so receivers can verify.
                 centers.forEach(([id, centerWs]) => {
                   if (centerWs.readyState === WebSocket.OPEN) {
                     centerWs.send(JSON.stringify({
                       type: 'incomingCall',
-                      callerId: currentClientId
+                      callerId: currentClientId,
+                      trustedCenter: trustedCenters.has(currentClientId)
                     }));
                   }
                 });
@@ -276,10 +405,11 @@ wss.on('connection', async (ws, req) => {
             const targetWs = clients.get(finalTargetId);
             console.log(`Call request: ${currentClientId} -> ${finalTargetId}`);
             if (targetWs && targetWs.readyState === WebSocket.OPEN) {
-              // Forward call request
+              // Forward call request (tag trustedCenter so trucks only auto-answer legit centers)
               targetWs.send(JSON.stringify({
                 type: 'incomingCall',
-                callerId: currentClientId
+                callerId: currentClientId,
+                trustedCenter: trustedCenters.has(currentClientId)
               }));
               console.log(`Call initiated from ${currentClientId} to ${finalTargetId}`);
             } else {
@@ -327,8 +457,15 @@ wss.on('connection', async (ws, req) => {
             // { type: 'acceptCall', callerId: 'truck-123' }
             const callerId = data.callerId;
             const callerWs = clients.get(callerId);
-            
+
             if (callerWs && callerWs.readyState === WebSocket.OPEN) {
+              // BE-#2: reject if caller already in a session — prevents double-session
+              //   audio fan-out when two centers simultaneously accept the same call.
+              if (sessions.has(callerId)) {
+                console.log('acceptCall rejected: ' + callerId + ' already in session');
+                ws.send(JSON.stringify({ type: 'error', message: 'Caller already in an active session' }));
+                return;
+              }
               // Establish session for both
               sessions.set(currentClientId, callerId);
               sessions.set(callerId, currentClientId);
@@ -371,59 +508,81 @@ wss.on('connection', async (ws, req) => {
 
           case 'muteDevice':
             // { type: 'muteDevice', targetId: 'device-123' } — sent by Command Center
-            if (currentClientId && currentClientId.startsWith('center')) {
+            // SECURITY: require admin role (M02: privilege escalation fix)
+            if (currentClientId && currentClientId.startsWith('center') && ws.userRole === 'admin') {
               const muteTarget = data.targetId;
               mutedDevices.add(muteTarget);
               console.log(`Device ${muteTarget} muted by ${currentClientId}`);
-              
+
               // Notify the muted device
               const mutedWs = clients.get(muteTarget);
               if (mutedWs && mutedWs.readyState === WebSocket.OPEN) {
                 mutedWs.send(JSON.stringify({ type: 'muteStatus', muted: true }));
               }
-              
+
               // Broadcast updated mute list to all centers
               broadcastMuteStatus();
+            } else {
+              ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: admin role required' }));
             }
             break;
 
           case 'unmuteDevice':
             // { type: 'unmuteDevice', targetId: 'device-123' } — sent by Command Center
-            if (currentClientId && currentClientId.startsWith('center')) {
+            // SECURITY: require admin role
+            if (currentClientId && currentClientId.startsWith('center') && ws.userRole === 'admin') {
               const unmuteTarget = data.targetId;
               mutedDevices.delete(unmuteTarget);
               console.log(`Device ${unmuteTarget} unmuted by ${currentClientId}`);
-              
+
               // Notify the unmuted device
               const unmutedWs = clients.get(unmuteTarget);
               if (unmutedWs && unmutedWs.readyState === WebSocket.OPEN) {
                 unmutedWs.send(JSON.stringify({ type: 'muteStatus', muted: false }));
               }
-              
+
               // Broadcast updated mute list to all centers
               broadcastMuteStatus();
+            } else {
+              ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: admin role required' }));
             }
             break;
 
           case 'forceLogout':
             // { type: 'forceLogout', targetId: 'device-123' } — sent by Command Center (admin)
             // M01 P4: admin kick device dari pusat. Device akan clear state + kembali ke login.
-            if (currentClientId && currentClientId.startsWith('center')) {
+            // SECURITY: require admin role (M02: privilege escalation fix). Operator tidak boleh kick.
+            // BE-#7: close immediately + tag _forceLogoutedAt. Previous setTimeout(1s) created a
+            //   race where if the device reconnects within 1s, the timeout kills the NEW connection.
+            if (currentClientId && currentClientId.startsWith('center') && ws.userRole === 'admin') {
               const targetId = data.targetId;
               console.log(`Device ${targetId} force-logout by ${currentClientId}`);
               const targetWs = clients.get(targetId);
               if (targetWs && targetWs.readyState === WebSocket.OPEN) {
+                targetWs._forceLogoutedAt = Date.now();
                 targetWs.send(JSON.stringify({ type: 'forceLogout', reason: 'logout_from_center' }));
-                setTimeout(() => {
-                  const ws = clients.get(targetId);
-                  if (ws) ws.close(4001, 'force_logout');
-                }, 1000);
+                targetWs.close(4001, 'force_logout');
               }
+            } else {
+              ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: admin role required' }));
             }
             break;
 
           case 'locationUpdate':
             // { type: 'locationUpdate', deviceId: '...', coordinates: [lat, lng] }
+            // SECURITY (M02 H5): validate coordinates to prevent spoofing. Reject if
+            //   coords are out of range or deviceId is empty/wrong-shape.
+            if (data.deviceId !== currentClientId) {
+              console.warn(`locationUpdate rejected: deviceId ${data.deviceId} !== ${currentClientId}`);
+              break;
+            }
+            if (!Array.isArray(data.coordinates) || data.coordinates.length !== 2 ||
+                typeof data.coordinates[0] !== 'number' || typeof data.coordinates[1] !== 'number' ||
+                data.coordinates[0] < -90 || data.coordinates[0] > 90 ||
+                data.coordinates[1] < -180 || data.coordinates[1] > 180) {
+              console.warn(`locationUpdate rejected: bad coords from ${currentClientId}`);
+              break;
+            }
             const centers = getCenterClients();
             centers.forEach(([id, centerWs]) => {
               if (centerWs.readyState === WebSocket.OPEN) {
@@ -439,8 +598,13 @@ wss.on('connection', async (ws, req) => {
   });
 
   ws.on('close', () => {
+    // BE-#7+BE-#10: skip cleanup if this connection was force-logouted or replaced
+    //   by a new registration. Otherwise stale close handler would delete the
+    //   new connection's entry from clients Map.
+    if (ws._forceLogoutedAt || ws._replaced) return;
     if (currentClientId) {
       clients.delete(currentClientId);
+      trustedCenters.delete(currentClientId);
       console.log(`Client disconnected: ${currentClientId}`);
       
       const partnerId = sessions.get(currentClientId);
@@ -509,8 +673,10 @@ const keepaliveInterval = setInterval(() => {
   });
 }, 25000);
 
-// Auto-end inactive calls after 25 seconds of no audio exchange
-const AUTO_END_DELAY = 25000; // 25 seconds threshold
+// H6: bumped from 25s → 90s. The 25s window dropped calls while the
+//     operator was silently monitoring (mic off, audio still playing).
+//     Dispatcher use-case requires longer idle tolerance.
+const AUTO_END_DELAY = 90 * 1000;
 const autoEndInterval = setInterval(() => {
   const now = Date.now();
   sessions.forEach((partnerId, clientId) => {
