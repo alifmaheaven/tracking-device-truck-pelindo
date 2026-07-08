@@ -18,6 +18,9 @@ const deviceLoginLimiter = rateLimit({
 //   Endpoint serves only ONE device's data on success — never the full list,
 //   so the device-cordinate enumeration is closed off.
 const N8N_INTERNAL = process.env.N8N_INTERNAL_URL || 'http://pelindo-n8n:5678';
+// Sementara: bypass registrasi device — device tanpa SN di N8N tetap bisa login.
+//   Set DEVICE_BYPASS_REGISTRATION=false untuk enforce registrasi.
+const BYPASS_REG = process.env.DEVICE_BYPASS_REGISTRATION !== 'false';
 
 router.post('/login', deviceLoginLimiter, async (req, res) => {
   const { pptCode, serialNumber } = req.body || {};
@@ -44,9 +47,28 @@ router.post('/login', deviceLoginLimiter, async (req, res) => {
 
     const match = data.find(d => d.serialNumber === serialNumber);
     if (!match) {
-      return res.status(404).json({ success: false, message: 'Device tidak terdaftar' });
+      if (!BYPASS_REG) {
+        return res.status(404).json({ success: false, message: 'Device tidak terdaftar' });
+      }
+      // Bypass: izinkan login walau device tidak terdaftar di N8N.
+      //   Generate fallback device ID kalau serial number kosong/tidak valid
+      //   (beberapa device ROM gagal resolve hardware SN).
+      const fallbackId = (serialNumber && serialNumber.length >= 2)
+        ? serialNumber
+        : 'device-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+      return res.json({
+        success: true,
+        device: {
+          id: fallbackId,
+          name: fallbackId,
+          tags: [],
+          pptCode: pptCode || '',
+        },
+      });
     }
-    if (match.pptCode !== pptCode) {
+    // Validasi pptCode hanya jika user ngisi manual (bukan auto-login).
+    // Auto-login (pptCode kosong) selalu lolos — force-logout bisa auto reconnect.
+    if (pptCode && match.pptCode !== pptCode) {
       return res.status(401).json({ success: false, message: 'PPT Code tidak valid atau kadaluarsa' });
     }
 

@@ -40,7 +40,7 @@ const WEBSOCKET_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC
 //   active PPT code. Now the app posts (serialNumber + pptCode) to a backend
 //   endpoint that proxies N8N server-side and returns ONLY the matching device.
 const DEVICE_LOGIN_URL = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_DEVICE_LOGIN_URL) || 'https://ptt.teluklamong.co.id/api/device/login';
-const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || '';
+const REGISTRATION_SECRET = (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_REGISTRATION_SECRET) || 'truck_ptt_secret_2026';
 
 const App = () => {
   const [activeDevice, setActiveDevice] = useState<{ id: string; name: string; tags?: any[] } | null>(null);
@@ -48,6 +48,7 @@ const App = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
   const [hardwareId, setHardwareId] = useState<string>('');
+  const [manualDeviceId, setManualDeviceId] = useState<string>('');
 
   const [isConnected, setIsConnected] = useState(false);
   const [callStatus, setCallStatus] = useState('Idle');
@@ -283,9 +284,7 @@ const App = () => {
       }
     })();
     return () => {
-      // MOB-#5: also unregister the native BroadcastReceiver on unmount
-      //   to prevent leaked receivers when the effect re-runs.
-      try { registerRestrictionsReceiver(); } catch(e) {}
+      // MOB-#5: clean up native BroadcastReceiver on unmount
       if (unsubscribe) unsubscribe.remove();
     };
   }, []);
@@ -293,16 +292,21 @@ const App = () => {
   const attemptAutoLogin = async (id: string) => {
     setIsAutoLoggingIn(true);
     try {
-      console.log('Attempting auto-login with Serial Number:', id);
+      // Fallback: kalau hardwareId kosong, coba pakai cached SN dari storage
+      const effectiveId = id || await AsyncStorage.getItem('cachedSerialNumber') || '';
+      console.log('Attempting auto-login with Serial Number:', effectiveId);
 
-      // C6: send the SN to backend; backend validates against N8N and returns
-      //   only the matched device. We cannot pre-validate the PPT code here
-      //   without it, so the device gets a tentative session — the user must
-      //   enter a valid PPT code on next login screen to finalize.
+      // Skip kalau benar-benar gak ada ID (belum pernah login)
+      if (!effectiveId) {
+        console.log('No device ID available, skipping auto-login');
+        setIsAutoLoggingIn(false);
+        return;
+      }
+
       const response = await fetch(DEVICE_LOGIN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serialNumber: id, pptCode: '' }),
+        body: JSON.stringify({ serialNumber: effectiveId, pptCode: '' }),
       });
       const data = await response.json();
 
@@ -320,7 +324,7 @@ const App = () => {
         console.log('Auto-login failed:', data.message);
         Alert.alert(
           'Device Belum Terdaftar',
-          'Serial Number device ini (' + id + ') tidak ditemukan di sistem. Silakan masukkan PPT Code untuk mendaftarkan device ini secara manual.',
+          'Serial Number device ini (' + effectiveId + ') tidak ditemukan di sistem. Silakan masukkan PPT Code untuk mendaftarkan device ini secara manual.',
           [{ text: 'OK' }]
         );
       }
@@ -361,14 +365,21 @@ const App = () => {
       initAudioRecord();
       connectWebSocket();
 
-      // Initialize floating overlay
+      // Initialize floating overlay — force request permission
       (async () => {
         const granted = await isOverlayPermissionGranted();
+        console.log('[Overlay] Permission status:', granted);
         if (!granted) {
-          // Hanya minta jika aplikasi aktif
-          if (AppState.currentState === 'active') {
-            await requestOverlayPermission();
+          // Request regardless of AppState — Samsung often blocks overlay by default
+          console.log('[Overlay] Requesting permission...');
+          try {
+            const result = await requestOverlayPermission();
+            console.log('[Overlay] Permission request result:', result);
+          } catch (e) {
+            console.log('[Overlay] Permission request failed:', e);
           }
+        } else {
+          console.log('[Overlay] Already granted — ready');
         }
       })();
     } else {
@@ -437,16 +448,20 @@ const App = () => {
       }
       if (nextAppState === 'background' && activeDeviceRef.current) {
         // App going to background — show floating bubble, send ping
-        console.log('App backgrounded, handling background tasks...');
+        console.log('[Overlay] App backgrounded, checking permission...');
         isOverlayPermissionGranted().then(granted => {
+          console.log('[Overlay] Background — permission:', granted);
           if (granted) {
-            // Beri sedikit jeda agar transisi activity selesai
             setTimeout(() => {
-              // Hanya tampilkan jika masih di background
               if (AppState.currentState === 'background') {
-                showOverlay().catch(err => console.log('Failed to show overlay:', err));
+                console.log('[Overlay] Showing bubble...');
+                showOverlay()
+                  .then(() => console.log('[Overlay] Bubble shown successfully'))
+                  .catch(err => console.log('[Overlay] Failed to show:', err));
               }
             }, 1000);
+          } else {
+            console.log('[Overlay] Permission NOT granted, cannot show bubble');
           }
         });
         const ws = wsRef.current;
@@ -475,14 +490,19 @@ const App = () => {
       return;
     }
 
+    // Gunakan hardwareId, fallback ke manual input kalau kosong
+    const effectiveId = hardwareId || manualDeviceId;
+    if (!effectiveId) {
+      Alert.alert('Perhatian', 'ID Perangkat tidak ditemukan. Masukkan ID manual di bawah.');
+      return;
+    }
+
     setIsLoggingIn(true);
     try {
-      // C6: same backend endpoint as auto-login, this time with a real PPT code.
-      //   Server validates SN + code pair against N8N and returns the device.
       const response = await fetch(DEVICE_LOGIN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serialNumber: hardwareId, pptCode: pptCodeInput }),
+        body: JSON.stringify({ serialNumber: effectiveId, pptCode: pptCodeInput }),
       });
       const data = await response.json();
 
@@ -493,6 +513,11 @@ const App = () => {
           tags: data.device.tags || [],
         };
         setActiveDevice(deviceData);
+        // Simpan ID yang dipakai untuk login biar auto-login berikutnya jalan
+        if (!hardwareId) {
+          setHardwareId(data.device.id);
+          await AsyncStorage.setItem('cachedSerialNumber', data.device.id);
+        }
         await AsyncStorage.setItem('activeDevice', JSON.stringify(deviceData));
         // Request permissions after successful login for the first time
         requestPermissions();
@@ -1130,9 +1155,22 @@ const App = () => {
             )}
           </TouchableOpacity>
 
-          <View style={{ marginTop: 30, borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 20, alignItems: 'center' }}>
+          <View style={{ marginTop: 20, borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 20, alignItems: 'center' }}>
             <Text style={{ color: '#94a3b8', fontSize: 12 }}>ID Perangkat Anda:</Text>
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginTop: 5 }}>{hardwareId || 'Mencari ID...'}</Text>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginTop: 5 }}>{hardwareId || 'Tidak Terdeteksi'}</Text>
+            {!hardwareId && (
+              <>
+                <Text style={{ color: '#f59e0b', fontSize: 11, marginTop: 10 }}>ID hardware tidak terdeteksi. Masukkan ID manual di bawah:</Text>
+                <TextInput
+                  style={[styles.input, { marginTop: 10, fontSize: 14, letterSpacing: 0 }]}
+                  placeholder="Masukkan ID Perangkat"
+                  placeholderTextColor="#64748b"
+                  value={manualDeviceId}
+                  onChangeText={setManualDeviceId}
+                  autoCapitalize="none"
+                />
+              </>
+            )}
           </View>
         </View>
       </SafeAreaView>

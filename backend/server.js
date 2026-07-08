@@ -319,11 +319,23 @@ wss.on('connection', async (ws, req) => {
         
         switch (data.type) {
           case 'register':
-            // BE-#18: validate client ID format — reject control chars/log injection
-            //   Previously no regex was applied, allowing values like
-            //   'truck-1[CRITICAL]' to inject fake log lines.
-            if (!data.id || typeof data.id !== 'string' || !/^[a-zA-Z0-9._:-]{1,64}$/.test(data.id)) {
-              ws.send(JSON.stringify({ type: 'error', message: 'Invalid client ID format' }));
+            // BE-#18: validate client ID — block control chars + log injection, but allow
+            //   any printable ASCII. Serial numbers from Samsung/Knox devices vary widely
+            //   (alphanumeric, spaces, dashes, etc). Original regex was too strict.
+            if (!data.id || typeof data.id !== 'string' || data.id.length < 2) {
+              console.log('[REGISTER] REJECTED empty/short id:', JSON.stringify(data.id));
+              ws.send(JSON.stringify({ type: 'error', message: 'Invalid client ID' }));
+              ws.close(4002, 'invalid_id');
+              return;
+            }
+            if (data.id.length > 64) {
+              ws.send(JSON.stringify({ type: 'error', message: 'Client ID too long' }));
+              ws.close(4002, 'invalid_id');
+              return;
+            }
+            if (/[\x00-\x1f]/.test(data.id)) {
+              // Block control characters to prevent log injection
+              ws.send(JSON.stringify({ type: 'error', message: 'Invalid characters in client ID' }));
               ws.close(4002, 'invalid_id');
               return;
             }
@@ -616,6 +628,23 @@ wss.on('connection', async (ws, req) => {
                 targetWs._forceLogoutedAt = Date.now();
                 targetWs.send(JSON.stringify({ type: 'forceLogout', reason: 'logout_from_center' }));
                 targetWs.close(4001, 'force_logout');
+                // Cleanup maps + broadcast offline status — close handler will skip
+                //   because of _forceLogoutedAt guard, so we do it here.
+                clients.delete(targetId);
+                trustedCenters.delete(targetId);
+                const partnerId = sessions.get(targetId);
+                if (partnerId) {
+                  const partnerWs = clients.get(partnerId);
+                  if (partnerWs && partnerWs.readyState === WebSocket.OPEN) {
+                    partnerWs.send(JSON.stringify({ type: 'callEnded', peerId: targetId, reason: 'force_logout' }));
+                  }
+                  sessions.delete(targetId);
+                  sessions.delete(partnerId);
+                  callActivity.delete(targetId);
+                  callActivity.delete(partnerId);
+                }
+                mutedDevices.delete(targetId);
+                broadcastConnectionStatus();
               }
             } else {
               ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: admin role required' }));
