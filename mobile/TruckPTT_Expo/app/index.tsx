@@ -67,6 +67,10 @@ const App = () => {
   const callSessionRef = useRef({ active: false, callerId: null as string | null, incomingPending: false });
   // MOB-#3: mutex to prevent double-start of AudioRecord / double-WS-send
   const pttActionInFlight = useRef(false);
+  // Hold-to-talk: user harus tahan 1 detik sebelum recording mulai. Timer dimulai saat pressIn
+  // dan di-clear saat pressOut. Ini mencegah accidental tap dan spam-click crash.
+  const pttHoldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pttOverlayHoldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     requestPermissions();
@@ -143,7 +147,7 @@ const App = () => {
       }
     });
 
-    // Floating overlay event listeners
+    // Floating overlay event listeners — same hold-to-talk pattern as in-app button
     const unsubPressIn = onPttPressIn(() => {
       // MOB-#18: guard — ignore overlay presses when no active device (logged out)
       if (!activeDeviceRef.current) return;
@@ -159,19 +163,30 @@ const App = () => {
         }
       }
       if (callSessionRef.current.active) {
-        notificationRecordingRef.current = true;
-        AudioRecord.start();
-        updateNotificationAction(true);
-        // MOB-#13: sync React state so in-app UI shows recording indicator
-        setIsRecording(true);
-        updateOverlayStatus(callStatus, true).catch(() => {});
+        // Hold-to-talk: tahan 1 detik baru recording mulai dari overlay
+        if (pttOverlayHoldTimer.current) clearTimeout(pttOverlayHoldTimer.current);
+        pttOverlayHoldTimer.current = setTimeout(() => {
+          pttOverlayHoldTimer.current = null;
+          notificationRecordingRef.current = true;
+          try { AudioRecord.start(); } catch (e) { console.log('[PTT] Overlay start error:', e); }
+          updateNotificationAction(true);
+          // MOB-#13: sync React state so in-app UI shows recording indicator
+          setIsRecording(true);
+          updateOverlayStatus(callStatus, true).catch(() => {});
+        }, 1000);
       }
     });
 
     const unsubPressOut = onPttPressOut(() => {
+      // Cancel overlay hold timer if still waiting
+      if (pttOverlayHoldTimer.current) {
+        clearTimeout(pttOverlayHoldTimer.current);
+        pttOverlayHoldTimer.current = null;
+        return;
+      }
       if (notificationRecordingRef.current) {
         notificationRecordingRef.current = false;
-        AudioRecord.stop().catch(() => {});
+        try { AudioRecord.stop(); } catch (e) { console.log('[PTT] Overlay stop error:', e); }
         updateNotificationAction(false);
         updateOverlayStatus(callStatus, false).catch(() => {});
       }
@@ -183,6 +198,9 @@ const App = () => {
     });
 
     return () => {
+      // Cleanup hold-to-talk timers
+      if (pttHoldTimer.current) { clearTimeout(pttHoldTimer.current); pttHoldTimer.current = null; }
+      if (pttOverlayHoldTimer.current) { clearTimeout(pttOverlayHoldTimer.current); pttOverlayHoldTimer.current = null; }
       backHandler.remove();
       unsubscribe();
       unsubPressIn.remove();
@@ -1110,20 +1128,48 @@ const App = () => {
       }
       return;
     }
-    setIsRecording(true);
-    notificationRecordingRef.current = true;
-    AudioRecord.start();
-    updateNotificationAction(true);
+
+    // Hold-to-talk: tahan 1 detik baru recording mulai.
+    // Mencegah accidental tap dan spam-click crash.
+    if (pttHoldTimer.current) clearTimeout(pttHoldTimer.current);
+    pttHoldTimer.current = setTimeout(() => {
+      pttHoldTimer.current = null;
+      setIsRecording(true);
+      notificationRecordingRef.current = true;
+      try {
+        AudioRecord.start();
+      } catch (e) {
+        console.log('[PTT] AudioRecord.start error:', e);
+        setIsRecording(false);
+        notificationRecordingRef.current = false;
+      }
+      updateNotificationAction(true);
+    }, 1000);
   };
 
   const handlePressOut = async () => {
-    // MOB-#3: reset mutex
-    if (pttActionInFlight.current) pttActionInFlight.current = false;
+    // Cancel hold timer — user belum tahan 1 detik, batalkan recording
+    if (pttHoldTimer.current) {
+      clearTimeout(pttHoldTimer.current);
+      pttHoldTimer.current = null;
+      // Reset mutex karena timer tidak jadi
+      pttActionInFlight.current = false;
+      return;
+    }
+
     if (!isRecording) return;
     setIsRecording(false);
     notificationRecordingRef.current = false;
-    await AudioRecord.stop();
+    try {
+      await AudioRecord.stop();
+    } catch (e) {
+      console.log('[PTT] AudioRecord.stop error:', e);
+    }
     updateNotificationAction(false);
+    // MOB-#3: reset mutex AFTER AudioRecord.stop() completes — jika reset
+    //   dilakukan sebelumnya, spam-click bisa panggil AudioRecord.start()
+    //   sebelum stop() selesai → crash.
+    if (pttActionInFlight.current) pttActionInFlight.current = false;
   };
 
   // --- RENDER LOGIN SCREEN ---

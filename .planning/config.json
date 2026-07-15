@@ -1,1 +1,5 @@
-{"graphify": {"enabled": true}}
+{
+  "graphify": {
+    "enabled": true
+  }
+}
