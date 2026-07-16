@@ -370,6 +370,53 @@
         </div>
     </div>
 
+    <!-- Tag Edit Modal -->
+    <div id="tagEditModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 480px; height: auto; min-height: 400px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-tags"></i> Edit Tag: <span id="tagModalDeviceName">-</span></h3>
+                <button id="closeTagEditModalBtn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                <div id="tagModalLoading" style="text-align: center; color: var(--text-muted); padding: 30px 20px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i><br>
+                    Memuat tags...
+                </div>
+                <div id="tagModalContent" style="display: none; flex-direction: column; gap: 16px;">
+                    <div>
+                        <label style="font-size: 13px; font-weight: 600; color: #475569;">
+                            <i class="fa-solid fa-tag"></i> Tags Saat Ini
+                        </label>
+                        <div id="tagChipsContainer" class="tag-chips-container">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-size: 13px; font-weight: 600; color: #475569;">
+                            <i class="fa-solid fa-plus"></i> Tambah Tag Baru
+                        </label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="newTagInput"
+                                   placeholder="Nama tag..." maxlength="30"
+                                   style="flex: 1; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none;">
+                            <button id="addTagBtn"
+                                    style="padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                <i class="fa-solid fa-plus"></i> Tambah
+                            </button>
+                        </div>
+                        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Maksimal 10 tags. Enter untuk menambah.</div>
+                    </div>
+                    <div id="tagEditError" style="display: none; padding: 10px 14px; background: #fee2e2; color: #dc2626; border-radius: 8px; font-size: 13px; font-weight: 500;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> <span id="tagEditErrorText">Terjadi kesalahan.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tag-modal-footer">
+                <button id="cancelTagEditBtn" class="tag-modal-btn tag-modal-btn-cancel">Batal</button>
+                <button id="saveTagBtn" class="tag-modal-btn tag-modal-btn-save"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <!-- Chart.js -->

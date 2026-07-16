@@ -224,11 +224,14 @@ export function renderDeviceList(devices) {
     const safeTruck = escapeJsString(device.truckNumber || device.id);
     const safeSerial = escapeHtml(device.serialNumber || 'N/A');
 
-    let tagsHtml = '<div style="color: var(--text-muted); font-size: 13px; font-style: italic;">No Tag</div>';
+    let tagsContent = '';
     if (device.tags && device.tags.length > 0) {
       const badges = device.tags.map(tag => `<span class="tag-badge" style="font-size: 15px; padding: 6px 12px; border-radius: 6px;"><i class="fa-solid fa-tag"></i> ${escapeHtml(tag.tagValue || tag)}</span>`).join('');
-      tagsHtml = `<div class="device-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">${badges}</div>`;
+      tagsContent = `<div class="device-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">${badges}</div>`;
+    } else {
+      tagsContent = '<div style="color: var(--text-muted); font-size: 13px; font-style: italic;">No Tag</div>';
     }
+    const tagsHtml = `<div class="tags-wrapper">${tagsContent}<button class="tag-edit-btn" id="edit-tag-btn-${safeId}" data-device-id="${safeId}" data-device-name="${safeTruck}" title="Edit tags"><i class="fa-solid fa-pen-to-square"></i></button></div>`;
 
     const battery = getBatteryDisplay(device.battery);
     const isPttOnline = state.onlineDeviceIds.includes(device.id);
@@ -293,6 +296,16 @@ export function renderDeviceList(devices) {
   //   onclick. Avoids exposing forceLogoutDevice to window. Re-bind on every render
   //   (cheap — small list, listener replaces prior one).
   bindForceLogoutButtons(container);
+
+  // Bind tag edit buttons
+  container.querySelectorAll('.tag-edit-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.deviceId;
+      const name = btn.dataset.deviceName;
+      if (id) openTagModal(id, name);
+    };
+  });
 }
 
 /**
@@ -363,3 +376,316 @@ export function updateDeviceCoordinates(deviceId, coordinates) {
     }
   }
 }
+
+// ==========================================
+// TAG EDIT MODAL LOGIC
+// ==========================================
+
+/**
+ * Internal state for tag editing — persists across modal open/close.
+ * @type {{ deviceId: string|null, originalTags: string[], currentTags: string[] }}
+ */
+let _tagState = { deviceId: null, originalTags: [], currentTags: [] };
+const TAG_MAX_COUNT = 10;
+
+/**
+ * Open the tag edit modal for a specific device.
+ * Fetches current tags from N8N via backend proxy.
+ * @param {string} deviceId
+ * @param {string} truckNumber
+ */
+export function openTagModal(deviceId, truckNumber) {
+  const modal = document.getElementById('tagEditModal');
+  const nameEl = document.getElementById('tagModalDeviceName');
+  const loading = document.getElementById('tagModalLoading');
+  const content = document.getElementById('tagModalContent');
+  const error = document.getElementById('tagEditError');
+  const input = document.getElementById('newTagInput');
+
+  if (!modal) return;
+
+  // Reset state
+  _tagState.deviceId = deviceId;
+  nameEl.textContent = truckNumber;
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  error.style.display = 'none';
+  input.value = '';
+  input.disabled = false;
+
+  modal.classList.add('active');
+
+  // Fetch current tags from N8N
+  _fetchDeviceTags(deviceId);
+}
+
+/**
+ * Fetch tags for a device from N8N via backend proxy.
+ * GET /api/proxy/n8n?url=https://ptt.teluklamong.co.id/webhook/tags?deviceId=...
+ */
+async function _fetchDeviceTags(deviceId) {
+  const proxyUrl = '/api/proxy/n8n?url=' + encodeURIComponent('https://ptt.teluklamong.co.id/webhook/tags?deviceId=' + deviceId);
+
+  try {
+    const resp = await fetch(proxyUrl, { credentials: 'include', cache: 'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+
+    console.log('[tagEdit] raw response:', data);
+
+    // N8N returns envelope: [{ resultValue: [...], resultCode, resultMessage }]
+    // resultValue is the array of tag objects: { tagValue, domain, tenantId, mappedId }
+    // We store the full tag objects so PUT can send them back whole.
+    let tags = [];
+    if (Array.isArray(data) && data.length > 0 && Array.isArray(data[0].resultValue)) {
+      tags = data[0].resultValue;
+    } else if (Array.isArray(data)) {
+      tags = data;
+    }
+
+    console.log('[tagEdit] normalized tags:', tags);
+
+    _tagState.originalTags = [...tags];
+    _tagState.currentTags = [...tags];
+
+    document.getElementById('tagModalLoading').style.display = 'none';
+    document.getElementById('tagModalContent').style.display = 'flex';
+    _renderTagChips();
+  } catch (err) {
+    console.error('Gagal fetch tags:', err);
+    const loadingEl = document.getElementById('tagModalLoading');
+    loadingEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i> Gagal memuat tags.<br><button onclick="document.getElementById(\'closeTagEditModalBtn\').click()" style="margin-top: 10px; padding: 8px 16px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">Tutup</button>';
+  }
+}
+
+/**
+ * Extract display value from a tag object.
+ * Tag can be plain string, or object { tagValue, ... }
+ * @param {*} tag
+ * @returns {string}
+ */
+function _tagDisplayValue(tag) {
+  if (typeof tag === 'string') return tag;
+  if (tag && typeof tag.tagValue === 'string') return tag.tagValue;
+  if (tag && typeof tag === 'object') return String(tag);
+  return '';
+}
+
+/**
+ * Render current tag chips in the modal container.
+ * Reads from _tagState.currentTags.
+ */
+function _renderTagChips() {
+  const container = document.getElementById('tagChipsContainer');
+  if (!container) return;
+
+  const tags = _tagState.currentTags;
+  if (!tags.length) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = tags.map((tag, idx) =>
+    `<span class="tag-chip">
+      <i class="fa-solid fa-tag"></i> ${escapeHtml(_tagDisplayValue(tag))}
+      <button class="tag-chip-remove" data-tag-idx="${idx}" title="Hapus tag">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </span>`
+  ).join('');
+
+  // Bind remove buttons
+  container.querySelectorAll('.tag-chip-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.tagIdx);
+      if (!isNaN(idx) && idx >= 0 && idx < _tagState.currentTags.length) {
+        _tagState.currentTags.splice(idx, 1);
+        _renderTagChips();
+      }
+    });
+  });
+}
+
+/**
+ * Save current tags to N8N via backend proxy.
+ * PUT /api/proxy/n8n?url=https://ptt.teluklamong.co.id/webhook/update-tags
+ * Body: { deviceId, tags: string[] }
+ */
+async function _saveTags() {
+  const saveBtn = document.getElementById('saveTagBtn');
+  const error = document.getElementById('tagEditError');
+  const errorText = document.getElementById('tagEditErrorText');
+
+  if (!_tagState.deviceId) return;
+
+  // Disable button while saving
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+  error.style.display = 'none';
+
+  try {
+    const proxyUrl = '/api/proxy/n8n?url=' + encodeURIComponent('https://ptt.teluklamong.co.id/webhook/update-tags');
+    const resp = await fetch(proxyUrl, {
+      method: 'PUT',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      // N8N expects tags as plain string array, not objects.
+      // GET returns full objects {tagValue, domain, ...} but PUT only needs the values.
+      body: JSON.stringify({
+        deviceId: _tagState.deviceId,
+        tags: _tagState.currentTags.map(_tagDisplayValue)
+      })
+    });
+
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => '');
+      throw new Error('Server merespon ' + resp.status + (errBody ? ': ' + errBody.slice(0, 100) : ''));
+    }
+
+    // Success — close modal and refresh device data
+    document.getElementById('tagEditModal').classList.remove('active');
+    fetchDeviceData();
+    _showToast(
+      '<i class="fa-solid fa-circle-check"></i> Perubahan menunggu beberapa saat, periksa lagi dalam beberapa menit. Terima kasih!',
+      'success'
+    );
+  } catch (err) {
+    console.error('Gagal update tags:', err);
+    errorText.textContent = 'Gagal menyimpan tags: ' + err.message + '. Silakan coba lagi.';
+    error.style.display = 'block';
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
+  }
+}
+
+/**
+ * Validate and add a tag to the current list.
+ * New tags follow N8N format: { tagValue, domain, tenantId }
+ */
+function _addTag() {
+  const input = document.getElementById('newTagInput');
+  const error = document.getElementById('tagEditError');
+  const errorText = document.getElementById('tagEditErrorText');
+  const value = input.value.trim();
+
+  if (!value) return;
+
+  // Max count check
+  if (_tagState.currentTags.length >= TAG_MAX_COUNT) {
+    errorText.textContent = 'Maksimal ' + TAG_MAX_COUNT + ' tags per device. Hapus tag lain terlebih dahulu.';
+    error.style.display = 'block';
+    return;
+  }
+
+  // Duplicate check (case-insensitive on tagValue)
+  const isDuplicate = _tagState.currentTags.some(t => _tagDisplayValue(t).toLowerCase() === value.toLowerCase());
+  if (isDuplicate) {
+    errorText.textContent = 'Tag "' + value + '" sudah ada.';
+    error.style.display = 'block';
+    return;
+  }
+
+  // Clear error
+  error.style.display = 'none';
+
+  // Build new tag object matching N8N format.
+  // Use domain/tenantId from first existing tag if available; else defaults.
+  const existingTag = _tagState.currentTags.find(t => typeof t === 'object' && t.domain);
+  const newTag = {
+    tagValue: value,
+    domain: existingTag ? existingTag.domain : 'DEVICE',
+    tenantId: existingTag ? existingTag.tenantId : 'teluklamong.co.id',
+  };
+
+  _tagState.currentTags.push(newTag);
+  _renderTagChips();
+  input.value = '';
+  input.focus();
+}
+
+// ==========================================
+// TAG MODAL EVENT HANDLERS (bound once on first use)
+// ==========================================
+
+/**
+ * Show a floating toast notification that auto-dismisses.
+ * @param {string} message HTML content
+ * @param {'success'|'error'} type
+ */
+function _showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'tag-toast tag-toast-' + (type || 'success');
+  toast.innerHTML = message;
+  document.body.appendChild(toast);
+
+  // Trigger animation
+  requestAnimationFrame(() => toast.classList.add('show'));
+
+  // Auto-remove after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
+}
+
+// Use DOMContentLoaded to ensure DOM is ready, but module scripts are deferred
+// so the DOM is already parsed when this runs.
+function _initTagModalHandlers() {
+  if (_initTagModalHandlers._done) return;
+  _initTagModalHandlers._done = true;
+
+  // Close button
+  const closeBtn = document.getElementById('closeTagEditModalBtn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      document.getElementById('tagEditModal').classList.remove('active');
+    });
+  }
+
+  // Cancel button
+  const cancelBtn = document.getElementById('cancelTagEditBtn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      document.getElementById('tagEditModal').classList.remove('active');
+    });
+  }
+
+  // Save button
+  const saveBtn = document.getElementById('saveTagBtn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', _saveTags);
+  }
+
+  // Add tag button
+  const addBtn = document.getElementById('addTagBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', _addTag);
+  }
+
+  // Enter key in tag input
+  const input = document.getElementById('newTagInput');
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        _addTag();
+      }
+    });
+  }
+
+  // Close on overlay click (but not on content click)
+  const modal = document.getElementById('tagEditModal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+      }
+    });
+  }
+}
+
+// Initialize handlers on module load
+_initTagModalHandlers();

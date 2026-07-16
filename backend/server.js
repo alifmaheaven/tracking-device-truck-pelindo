@@ -124,7 +124,7 @@ app.get('/api/captcha', (req, res) => {
 });
 
 // 2. Proxy for N8N (Secure access - Diperbaiki untuk cegah SSRF)
-app.get('/api/proxy/n8n', authMiddleware, async (req, res) => {
+app.all('/api/proxy/n8n', authMiddleware, async (req, res) => {
     const targetUrl = req.query.url;
     if (!targetUrl) return res.status(400).send('Missing url parameter');
 
@@ -165,9 +165,22 @@ app.get('/api/proxy/n8n', authMiddleware, async (req, res) => {
       // BE-#20: drop err.message from client response to prevent hostname/connection info leak
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
+      // BE-#21: forward method + body for non-GET requests (e.g. PUT update-tags)
+      //   DO NOT forward url/query param from body — request body is pure N8N payload.
+      const fetchOptions = {
+        method: req.method,
+        redirect: 'manual',
+        signal: controller.signal,
+      };
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        fetchOptions.headers = { 'Content-Type': 'application/json' };
+        if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+          fetchOptions.body = JSON.stringify(req.body);
+        }
+      }
       let response;
       try {
-        response = await fetch(finalUrl, { redirect: 'manual', signal: controller.signal });
+        response = await fetch(finalUrl, fetchOptions);
       } finally {
         clearTimeout(timeoutId);
       }
