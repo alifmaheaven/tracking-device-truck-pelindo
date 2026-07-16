@@ -173,12 +173,12 @@ const App = () => {
           // MOB-#13: sync React state so in-app UI shows recording indicator
           setIsRecording(true);
           updateOverlayStatus(callStatus, true).catch(() => {});
-        }, 1000);
+        }, 200);
       }
     });
 
     const unsubPressOut = onPttPressOut(() => {
-      // Cancel overlay hold timer if still waiting
+      // Cancel overlay hold timer if still waiting (user released < 1s)
       if (pttOverlayHoldTimer.current) {
         clearTimeout(pttOverlayHoldTimer.current);
         pttOverlayHoldTimer.current = null;
@@ -188,6 +188,8 @@ const App = () => {
         notificationRecordingRef.current = false;
         try { AudioRecord.stop(); } catch (e) { console.log('[PTT] Overlay stop error:', e); }
         updateNotificationAction(false);
+        // MOB-#25: sync React state so in-app UI doesn't show stale recording
+        setIsRecording(false);
         updateOverlayStatus(callStatus, false).catch(() => {});
       }
     });
@@ -1105,6 +1107,7 @@ const App = () => {
     // If muted, don't allow any call action
     if (isMuted) {
       Alert.alert('Device Di-Mute', 'Anda sedang di-mute oleh Command Center. Tidak dapat melakukan panggilan.');
+      pttActionInFlight.current = false; // MOB-#25: reset mutex on early return
       return;
     }
 
@@ -1116,16 +1119,21 @@ const App = () => {
         setCallStatus('Terhubung dengan Pusat');
         dismissCallNotification();
       }
+      pttActionInFlight.current = false; // MOB-#25: reset mutex on early return
       return;
     }
 
     if (!callSessionRef.current.active) {
       // Guard against duplicate call requests when already calling
-      if (callStatus === 'Menghubungi Pusat...') return;
+      if (callStatus === 'Menghubungi Pusat...') {
+        pttActionInFlight.current = false; // MOB-#25: reset mutex on early return
+        return;
+      }
       if (wsRef.current && isConnected) {
         wsRef.current.send(JSON.stringify({ type: 'call', targetId: 'center-main' }));
         setCallStatus('Menghubungi Pusat...');
       }
+      pttActionInFlight.current = false; // MOB-#25: reset mutex on call-initiation return
       return;
     }
 
@@ -1144,7 +1152,7 @@ const App = () => {
         notificationRecordingRef.current = false;
       }
       updateNotificationAction(true);
-    }, 1000);
+    }, 200);
   };
 
   const handlePressOut = async () => {
@@ -1157,7 +1165,13 @@ const App = () => {
       return;
     }
 
-    if (!isRecording) return;
+    // MOB-#25: reset mutex in every code path. If we get here with recording=false
+    //   (e.g. pressed without active call, or call-initiated-and-released),
+    //   the mutex from handlePressIn is still true. Clear it.
+    if (!isRecording) {
+      pttActionInFlight.current = false;
+      return;
+    }
     setIsRecording(false);
     notificationRecordingRef.current = false;
     try {
